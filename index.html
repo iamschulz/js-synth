@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css" type="text/css"></style>
+</head>
+<body>
+    <section class="controls">
+        <h1>JSSynth</h1>
+        <label for="waveform">Waveform</label>
+        <select id="waveform" data-control-name="waveform">
+            <option>Sine</option>
+            <option>Square</option>
+            <option>Triangle</option>
+            <option>Sawtooth</option>
+        </select>
+
+        <label for="offset">Offset</label>
+        <input id="offset" type="range" data-control-name="offset" min="-4" max="100" value="20"></input>
+    </section>
+    <section class="keyboard">
+        <button class="white" data-note="c">A</button>
+        <button class="black" data-note="cs">W</button>
+        <button class="white" data-note="d">S</button>
+        <button class="black" data-note="eb">E</button>
+        <button class="white" data-note="e">D</button>
+        <button class="white" data-note="f">F</button>
+        <button class="black" data-note="fs">T</button>
+        <button class="white" data-note="g">G</button>
+        <button class="black" data-note="gs">Z</button>
+        <button class="white" data-note="a">H</button>
+        <button class="black" data-note="bb">U</button>
+        <button class="white" data-note="b">J</button>
+        <button class="white" data-note="c2">K</button>
+    </section>
+
+    <script src="script.js" type="module" defer></script>
+</body>
+
+</html>

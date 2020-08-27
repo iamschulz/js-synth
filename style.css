@@ -1,0 +1,65 @@
+* {
+    box-sizing: border-box;
+}
+
+body {
+    background: DarkSlateGrey;
+    color: white;
+    font-family: 'Press Start 2P', cursive;
+}
+
+.controls {
+    max-width: 700px;
+    margin: auto;
+    height: 40vh;
+}
+
+.keyboard {
+    position: relative;
+    display: flex;
+    justify-items: stretch;
+    max-width: 700px;
+    margin: auto;
+    user-select: none;
+}
+
+.keyboard button {
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+    padding-bottom: 1em;
+    font-family: 'Press Start 2P', cursive;
+    font-size: 1.2em;
+}
+
+.keyboard button.white {
+    flex: 1 0 calc(100% / 12);
+    height: 50vh;
+    background-color: white;
+    color: grey;
+    margin: 0 2px;
+}
+
+.keyboard button.white + button.white {
+    margin-left: -4px
+}
+
+.keyboard button.black {
+    flex: 1 0 calc(100% / 12 * 0.4);
+    height: 35vh;
+    margin-left: calc(100% / 12 * -0.5 - 4px);
+    margin-right: calc(100% / 12 * -0.5 - 4px);
+    z-index: 1;
+    background-color: black;
+    color: darkgrey;
+}
+
+.keyboard button:focus {
+    outline: none;
+    /*background: lightpink;*/
+}
+
+.keyboard button.active {
+    background: SpringGreen;
+    color: DarkSlateGrey;
+}
