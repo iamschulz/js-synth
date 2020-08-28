@@ -1,0 +1,100 @@
+:root {
+    --bg: DarkSlateGrey;
+    --fg: white;
+    --accent: SpringGreen;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    background: var(--bg);
+    color: var(--fg);
+    font-family: 'Press Start 2P', cursive;
+}
+
+h1 {
+    max-width: 700px;
+    margin: 0 auto 24px;
+}
+
+.controls {
+    max-width: 700px;
+    margin: 0 auto 24px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+
+    &-box [type="radio"] {
+        display: none;
+
+        + label {
+            display: block;
+        }
+
+        &:checked + label {
+            color: var(--accent);
+        }
+    }
+}
+
+.keyboard {
+    position: relative;
+    display: flex;
+    justify-items: stretch;
+    max-width: 700px;
+    margin: auto;
+    user-select: none;
+
+    button {
+        display: flex;
+        justify-content: center;
+        align-items: flex-end;
+        padding-bottom: 1em;
+        font-family: 'Press Start 2P', cursive;
+        border-color: black;
+        font-size: 0;
+
+        &.white {
+            flex: 1 0 calc(100% / 12);
+            height: 50vh;
+            max-height: 350px;
+            background-color: white;
+            color: grey;
+            margin: 0 2px;
+
+            + button.white {
+                margin-left: -4px
+            }
+        }
+
+        &.black {
+            flex: 1 0 calc(100% / 12 * 0.4);
+            height: 35vh;
+            max-height: 245px;
+            margin-left: calc(100% / 12 * -0.5 - 4px);
+            margin-right: calc(100% / 12 * -0.5 - 4px);
+            z-index: 1;
+            background-color: black;
+            color: darkgrey;
+        }
+
+        &:focus {
+            outline: none;
+            /*background: lightpink;*/
+        }
+    
+        &.active {
+            background: var(--accent);
+            color: var(--bg);
+        }
+    }
+}
+
+@media (min-width: 768px) {
+    .keyboard {
+        button {
+            font-size: 1.2em;
+        }
+    }
+}

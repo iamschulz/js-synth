@@ -1,76 +1,91 @@
+:root {
+  --bg: DarkSlateGrey;
+  --fg: white;
+  --accent: SpringGreen;
+}
+
 * {
-    box-sizing: border-box;
+  box-sizing: border-box;
 }
 
 body {
-    background: DarkSlateGrey;
-    color: white;
-    font-family: 'Press Start 2P', cursive;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: "Press Start 2P", cursive;
+}
+
+h1 {
+  max-width: 700px;
+  margin: 0 auto 24px;
 }
 
 .controls {
-    max-width: 700px;
-    margin: 0 auto 24px;
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  max-width: 700px;
+  margin: 0 auto 24px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
 }
-
-.controls-box [type="radio"] {
-    display: none;
+.controls-box [type=radio] {
+  display: none;
 }
-
-.controls-box [type="radio"]:checked + label {
-    color: SpringGreen;
+.controls-box [type=radio] + label {
+  display: block;
+}
+.controls-box [type=radio]:checked + label {
+  color: var(--accent);
 }
 
 .keyboard {
-    position: relative;
-    display: flex;
-    justify-items: stretch;
-    max-width: 700px;
-    margin: auto;
-    user-select: none;
+  position: relative;
+  display: flex;
+  justify-items: stretch;
+  max-width: 700px;
+  margin: auto;
+  user-select: none;
 }
-
 .keyboard button {
-    display: flex;
-    justify-content: center;
-    align-items: flex-end;
-    padding-bottom: 1em;
-    font-family: 'Press Start 2P', cursive;
-    font-size: 1.2em;
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  padding-bottom: 1em;
+  font-family: "Press Start 2P", cursive;
+  border-color: black;
+  font-size: 0;
 }
-
 .keyboard button.white {
-    flex: 1 0 calc(100% / 12);
-    height: 50vh;
-    max-height: 350px;
-    background-color: white;
-    color: grey;
-    margin: 0 2px;
+  flex: 1 0 calc(100% / 12);
+  height: 50vh;
+  max-height: 350px;
+  background-color: white;
+  color: grey;
+  margin: 0 2px;
 }
-
 .keyboard button.white + button.white {
-    margin-left: -4px
+  margin-left: -4px;
 }
-
 .keyboard button.black {
-    flex: 1 0 calc(100% / 12 * 0.4);
-    height: 35vh;
-    max-height: 245px;
-    margin-left: calc(100% / 12 * -0.5 - 4px);
-    margin-right: calc(100% / 12 * -0.5 - 4px);
-    z-index: 1;
-    background-color: black;
-    color: darkgrey;
+  flex: 1 0 calc(100% / 12 * 0.4);
+  height: 35vh;
+  max-height: 245px;
+  margin-left: calc(100% / 12 * -0.5 - 4px);
+  margin-right: calc(100% / 12 * -0.5 - 4px);
+  z-index: 1;
+  background-color: black;
+  color: darkgrey;
 }
-
 .keyboard button:focus {
-    outline: none;
-    /*background: lightpink;*/
+  outline: none;
+  /*background: lightpink;*/
+}
+.keyboard button.active {
+  background: var(--accent);
+  color: var(--bg);
 }
 
-.keyboard button.active {
-    background: SpringGreen;
-    color: DarkSlateGrey;
+@media (min-width: 768px) {
+  .keyboard button {
+    font-size: 1.2em;
+  }
 }
+
+/*# sourceMappingURL=style.css.map */
