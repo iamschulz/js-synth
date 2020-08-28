@@ -1,69 +1,124 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>JSSynth</title>
-    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css" type="text/css"></style>
-    <meta name="theme-color" content="DarkSlateGrey">
-</head>
-<body>
-    <h1>JSSynth</h1>
-    <form class="controls">
-        <div class="controls-box">
-            <input type="radio" id="waveform-sine" name="waveform" value="sine" checked>
-            <label for="waveform-sine">Sine</label>
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>JSSynth</title>
+		<link
+			href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap"
+			rel="stylesheet"
+		/>
+		<link rel="stylesheet" href="style.css" type="text/css" />
+		<meta name="theme-color" content="DarkSlateGrey" />
+	</head>
+	<body>
+		<h1>JSSynth</h1>
+		<form class="controls">
+			<div class="controls-box">
+				<input
+					type="radio"
+					id="waveform-sine"
+					name="waveform"
+					value="sine"
+					checked
+				/>
+				<label for="waveform-sine">Sine</label>
 
-            <input type="radio" id="waveform-square" name="waveform" value="square">
-            <label for="waveform-square">Square</label>
+				<input
+					type="radio"
+					id="waveform-square"
+					name="waveform"
+					value="square"
+				/>
+				<label for="waveform-square">Square</label>
 
-            <input type="radio" id="waveform-triangle" name="waveform" value="triangle">
-            <label for="waveform-triangle">Triangle</label>
+				<input
+					type="radio"
+					id="waveform-triangle"
+					name="waveform"
+					value="triangle"
+				/>
+				<label for="waveform-triangle">Triangle</label>
 
-            <input type="radio" id="waveform-sawtooth" name="waveform" value="sawtooth">
-            <label for="waveform-sawtooth">Sawtooth</label>
-        </div>
+				<input
+					type="radio"
+					id="waveform-sawtooth"
+					name="waveform"
+					value="sawtooth"
+				/>
+				<label for="waveform-sawtooth">Sawtooth</label>
+			</div>
 
-        <div class="controls-box">
-            <div>
-                <label for="offset">Offset</label>
-                <input name="offset" id="offset" type="range" data-control-name="offset" min="-4" max="100" value="20"></input>
-            </div>
+			<div class="controls-box">
+				<div>
+					<label for="offset">Offset</label>
+					<input
+						name="offset"
+						id="offset"
+						type="range"
+						data-control-name="offset"
+						min="-4"
+						max="100"
+						value="20"
+					/>
+				</div>
 
-            <div>
-                <label for="attack">Attack</label>
-                <input name="attack" id="attack" type="range" data-control-name="attack" min="0" max="1000" value="0"></input>
-            </div>
+				<div>
+					<label for="attack">Attack</label>
+					<input
+						name="attack"
+						id="attack"
+						type="range"
+						data-control-name="attack"
+						min="0"
+						max="1000"
+						value="0"
+					/>
+				</div>
 
-            <div>
-                <label for="delay">Delay</label>
-                <input name="delay" id="delay" type="range" data-control-name="delay" min="0" max="1000" value="0"></input>
-            </div>
+				<div>
+					<label for="delay">Delay</label>
+					<input
+						name="delay"
+						id="delay"
+						type="range"
+						data-control-name="delay"
+						min="0"
+						max="1000"
+						value="0"
+					/>
+				</div>
 
-            <div>
-                <label for="release">Release</label>
-                <input name="release" id="release" type="range" data-control-name="release" min="0" max="10000" value="0"></input>
-            </div>
-        </div>
-    </form>
-    <section class="keyboard">
-        <button class="white" data-note="c">A</button>
-        <button class="black" data-note="cs">W</button>
-        <button class="white" data-note="d">S</button>
-        <button class="black" data-note="eb">E</button>
-        <button class="white" data-note="e">D</button>
-        <button class="white" data-note="f">F</button>
-        <button class="black" data-note="fs">T</button>
-        <button class="white" data-note="g">G</button>
-        <button class="black" data-note="gs">Z</button>
-        <button class="white" data-note="a">H</button>
-        <button class="black" data-note="bb">U</button>
-        <button class="white" data-note="b">J</button>
-        <button class="white" data-note="c2">K</button>
-    </section>
+				<div>
+					<label for="release">Release</label>
+					<input
+						name="release"
+						id="release"
+						type="range"
+						data-control-name="release"
+						min="0"
+						max="10000"
+						value="0"
+					/>
+				</div>
+			</div>
+		</form>
+		<section class="keyboard">
+			<button class="white" data-note="c">A</button>
+			<button class="black" data-note="cs">W</button>
+			<button class="white" data-note="d">S</button>
+			<button class="black" data-note="eb">E</button>
+			<button class="white" data-note="e">D</button>
+			<button class="white" data-note="f">F</button>
+			<button class="black" data-note="fs">T</button>
+			<button class="white" data-note="g">G</button>
+			<button class="black" data-note="gs">Z</button>
+			<button class="white" data-note="a">H</button>
+			<button class="black" data-note="bb">U</button>
+			<button class="white" data-note="b">J</button>
+			<button class="white" data-note="c2">K</button>
+		</section>
 
-    <script src="script.js" type="module" defer></script>
-</body>
-
+		<script src="script.js" type="module" defer></script>
+	</body>
 </html>
