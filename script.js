@@ -81,6 +81,7 @@ class Synth {
 		const release = node.release;
 
 		/* configure release */
+		release.gain.setValueAtTime(1, ctx.currentTime);
 		release.gain.exponentialRampToValueAtTime(
 			0.00001,
 			ctx.currentTime + this.release
