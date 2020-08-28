@@ -9,9 +9,18 @@
 }
 
 body {
-  background: var(--bg);
   color: var(--fg);
   font-family: "Press Start 2P", cursive;
+}
+body:before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(160deg, var(--bg) 30%, var(--accent) 500%);
+  z-index: -1;
 }
 
 h1 {

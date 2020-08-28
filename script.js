@@ -6,6 +6,8 @@ class Synth {
         this.freqs = Freqs;
         this.keys = Keys;
         this.wave = "sine";
+        this.attack = 0;
+        this.delay = 0;
         this.release = 0;
         this.offset = 4;
         this.nodes = {};
@@ -36,14 +38,23 @@ class Synth {
         osc.frequency.value = freq;
 
         /* configure attack */
-        attack.gain.setValueAtTime(0.00001, ctx.currentTime);
-        attack.gain.exponentialRampToValueAtTime(
-            1,
-            ctx.currentTime + this.attack
-        );
+        if (this.attack > 0.01) {
+            attack.gain.setValueAtTime(0.00001, ctx.currentTime);
+            attack.gain.exponentialRampToValueAtTime(
+                1,
+                ctx.currentTime + this.attack
+            );
+        }
         attack.connect(delay);
 
         /* configure delay */
+        if (this.delay > 0.001) {
+            delay.gain.setValueAtTime(1, ctx.currentTime + this.attack);
+            delay.gain.exponentialRampToValueAtTime(
+                0.2,
+                ctx.currentTime + this.attack + this.delay
+            );
+        }
         delay.connect(release);
         
         release.connect(ctx.destination);
@@ -177,9 +188,9 @@ class Synth {
         const applyOptions = () => {
             const data = Object.fromEntries(new FormData(this.controls));
             this.wave = data.waveform;
-            this.attack = parseInt(data.attack) / 1000;
-            this.delay = parseInt(data.delay) / 1000;
-            this.release = parseInt(data.release) / 1000;
+            this.attack = parseInt(data.attack) / 1000 + 0.01;
+            this.delay = parseInt(data.delay) / 1000 + 0.001;
+            this.release = parseInt(data.release) / 1000 + 0.1;
             this.offset = parseInt(data.offset) + 5;
         }
         
