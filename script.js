@@ -9,7 +9,7 @@ class Synth {
 		this.attack = 0;
 		this.delay = 0;
 		this.release = 0;
-		this.offset = 4;
+		this.pitch = 4;
 		this.nodes = {};
 		this.keyBtns = document.querySelectorAll('.keyboard button');
 		this.controls = document.querySelector('.controls');
@@ -30,7 +30,7 @@ class Synth {
 		const attack = ctx.createGain();
 		const delay = ctx.createGain();
 		const release = ctx.createGain();
-		const freq = this.freqs[key] * this.offset || 440;
+		const freq = this.freqs[key] * this.pitch || 440;
 
 		/* configure oscillator */
 		osc.type = this.wave;
@@ -191,7 +191,7 @@ class Synth {
 			this.attack = parseInt(data.attack) / 1000 + 0.01;
 			this.delay = parseInt(data.delay) / 1000 + 0.001;
 			this.release = parseInt(data.release) / 1000 + 0.1;
-			this.offset = parseInt(data.offset) + 5;
+			this.pitch = parseInt(data.pitch) + 5;
 		};
 
 		this.controls.addEventListener('change', () => {

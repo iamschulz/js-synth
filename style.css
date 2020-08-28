@@ -61,7 +61,7 @@ h1 {
   align-items: flex-end;
   padding-bottom: 1em;
   font-family: "Press Start 2P", cursive;
-  border-color: black;
+  border: 1px solid black;
   font-size: 0;
 }
 .keyboard button.white {
