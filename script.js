@@ -17,17 +17,35 @@ class Synth {
         this.optionControls();
     }
 
+    /**
+     * Called when a note starts playing
+     * 
+     * @param {String} key 
+     */
     playNote(key = "a") {
         const ctx = new AudioContext();
         const osc = ctx.createOscillator();
+        const attack = ctx.createGain();
+        const delay = ctx.createGain();
         const release = ctx.createGain();
         const freq = this.freqs[key] * this.offset || 440;
 
+        /* configure oscillator */
         osc.type = this.wave;
-        osc.connect(release);
+        osc.connect(attack);
         osc.frequency.value = freq;
-        
 
+        /* configure attack */
+        attack.gain.setValueAtTime(0.00001, ctx.currentTime);
+        attack.gain.exponentialRampToValueAtTime(
+            1,
+            ctx.currentTime + this.attack
+        );
+        attack.connect(delay);
+
+        /* configure delay */
+        delay.connect(release);
+        
         release.connect(ctx.destination);
         osc.start(0);
 
@@ -42,10 +60,16 @@ class Synth {
         };
     }
 
+    /**
+     * Called when a node stops playing
+     * 
+     * @param {Object} node 
+     */
     endNote(node) {
         const ctx = node.ctx;
         const release = node.release;
 
+        /* configure release */
         release.gain.exponentialRampToValueAtTime(
             0.00001,
             ctx.currentTime + this.release
@@ -153,9 +177,9 @@ class Synth {
         const applyOptions = () => {
             const data = Object.fromEntries(new FormData(this.controls));
             this.wave = data.waveform;
-            this.attack = parseInt(data.attack);
-            this.delay = parseInt(data.delay);
-            this.release = parseInt(data.release);
+            this.attack = parseInt(data.attack) / 1000;
+            this.delay = parseInt(data.delay) / 1000;
+            this.release = parseInt(data.release) / 1000;
             this.offset = parseInt(data.offset) + 5;
         }
         
