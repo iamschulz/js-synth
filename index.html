@@ -8,19 +8,27 @@
     <link rel="stylesheet" href="style.css" type="text/css"></style>
 </head>
 <body>
-    <section class="controls">
-        <h1>JSSynth</h1>
-        <label for="waveform">Waveform</label>
-        <select id="waveform" data-control-name="waveform">
-            <option>Sine</option>
-            <option>Square</option>
-            <option>Triangle</option>
-            <option>Sawtooth</option>
-        </select>
+    <h1>JSSynth</h1>
+    <form class="controls">
+        <div class="controls-box">
+            <input type="radio" id="waveform-sine" name="waveform" value="sine" checked>
+            <label for="waveform-sine">Sine</label>
 
-        <label for="offset">Offset</label>
-        <input id="offset" type="range" data-control-name="offset" min="-4" max="100" value="20"></input>
-    </section>
+            <input type="radio" id="waveform-square" name="waveform" value="square">
+            <label for="waveform-square">Square</label>
+
+            <input type="radio" id="waveform-triangle" name="waveform" value="triangle">
+            <label for="waveform-triangle">Triangle</label>
+
+            <input type="radio" id="waveform-sawtooth" name="waveform" value="sawtooth">
+            <label for="waveform-sawtooth">Sawtooth</label>
+        </div>
+
+        <div class="controls-box">
+            <label for="offset">Offset</label>
+            <input name="offset" id="offset" type="range" data-control-name="offset" min="-4" max="100" value="20"></input>
+        </div>
+    </form>
     <section class="keyboard">
         <button class="white" data-note="c">A</button>
         <button class="black" data-note="cs">W</button>

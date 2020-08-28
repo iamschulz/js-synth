@@ -9,13 +9,11 @@ class Synth {
         this.offset = 4;
         this.nodes = {};
         this.keyBtns = document.querySelectorAll(".keyboard button");
-        this.waveCtrl = document.querySelector('[data-control-name="waveform"]');
-        this.offsetCtrl = document.querySelector('[data-control-name="offset"]');
+        this.controls = document.querySelector(".controls");
 
         this.keyboardControls();
         this.buttonControls();
-        this.controlWave();
-        this.controlOffset();
+        this.optionControls();
     }
 
     playNote(key = "a") {
@@ -149,20 +147,18 @@ class Synth {
         });
     }
 
-    controlWave() {
-        this.waveCtrl.addEventListener("change", () => {
-            this.wave = this.waveCtrl.value.toLowerCase();
-        });
+    optionControls() {
+        const applyOptions = () => {
+            const data = Object.fromEntries(new FormData(this.controls));
+            this.wave = data.waveform;
+            this.offset = parseInt(data.offset) + 5;
+        }
+        
+        this.controls.addEventListener("change", () => {
+            applyOptions();
+        })
 
-        this.wave = this.waveCtrl.value.toLowerCase();
-    }
-
-    controlOffset() {
-        this.offsetCtrl.addEventListener("change", () => {
-            this.offset = parseInt(this.offsetCtrl.value) + 5;
-        });
-
-        this.offset = parseInt(this.offsetCtrl.value) + 5 || 4;
+        applyOptions();
     }
 }
 
