@@ -1,114 +1,114 @@
 :root {
-    --bg: DarkSlateGrey;
-    --fg: white;
-    --accent: SpringGreen;
+	--bg: DarkSlateGrey;
+	--fg: white;
+	--accent: SpringGreen;
 }
 
 * {
-    box-sizing: border-box;
+	box-sizing: border-box;
 }
 
 body {
-    color: var(--fg);
-    font-family: 'Press Start 2P', cursive;
+	color: var(--fg);
+	font-family: 'Press Start 2P', cursive;
 
-    &:before {
-        content: "";
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: linear-gradient(160deg, var(--bg) 30%,var(--accent) 500%);
-        z-index: -1;
-    }
+	&:before {
+		content: '';
+		position: fixed;
+		top: 0;
+		left: 0;
+		right: 0;
+		bottom: 0;
+		background: linear-gradient(160deg, var(--bg) 30%, var(--accent) 500%);
+		z-index: -1;
+	}
 }
 
 h1 {
-    max-width: 700px;
-    margin: 0 auto 24px;
+	max-width: 700px;
+	margin: 0 auto 24px;
 }
 
 .controls {
-    max-width: 700px;
-    margin: 0 auto;
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+	max-width: 700px;
+	margin: 0 auto;
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
 
-    &-box {
-        margin-bottom: 24px;
-    }
+	&-box {
+		margin-bottom: 24px;
+	}
 
-    [type="radio"] {
-        display: none;
+	[type='radio'] {
+		display: none;
 
-        + label {
-            display: block;
-        }
+		+ label {
+			display: block;
+		}
 
-        &:checked + label {
-            color: var(--accent);
-        }
-    }
+		&:checked + label {
+			color: var(--accent);
+		}
+	}
 }
 
 .keyboard {
-    position: relative;
-    display: flex;
-    justify-items: stretch;
-    max-width: 700px;
-    margin: auto;
-    user-select: none;
+	position: relative;
+	display: flex;
+	justify-items: stretch;
+	max-width: 700px;
+	margin: auto;
+	user-select: none;
 
-    button {
-        display: flex;
-        justify-content: center;
-        align-items: flex-end;
-        padding-bottom: 1em;
-        font-family: 'Press Start 2P', cursive;
-        border-color: black;
-        font-size: 0;
+	button {
+		display: flex;
+		justify-content: center;
+		align-items: flex-end;
+		padding-bottom: 1em;
+		font-family: 'Press Start 2P', cursive;
+		border-color: black;
+		font-size: 0;
 
-        &.white {
-            flex: 1 0 calc(100% / 12);
-            height: 50vh;
-            max-height: 350px;
-            background-color: white;
-            color: grey;
-            margin: 0 2px;
+		&.white {
+			flex: 1 0 calc(100% / 12);
+			height: 50vh;
+			max-height: 350px;
+			background-color: white;
+			color: grey;
+			margin: 0 2px;
 
-            + button.white {
-                margin-left: -4px
-            }
-        }
+			+ button.white {
+				margin-left: -4px;
+			}
+		}
 
-        &.black {
-            flex: 1 0 calc(100% / 12 * 0.4);
-            height: 35vh;
-            max-height: 245px;
-            margin-left: calc(100% / 12 * -0.5 - 4px);
-            margin-right: calc(100% / 12 * -0.5 - 4px);
-            z-index: 1;
-            background-color: black;
-            color: darkgrey;
-        }
+		&.black {
+			flex: 1 0 calc(100% / 12 * 0.4);
+			height: 35vh;
+			max-height: 245px;
+			margin-left: calc(100% / 12 * -0.5 - 4px);
+			margin-right: calc(100% / 12 * -0.5 - 4px);
+			z-index: 1;
+			background-color: black;
+			color: darkgrey;
+		}
 
-        &:focus {
-            outline: none;
-            /*background: lightpink;*/
-        }
-    
-        &.active {
-            background: var(--accent);
-            color: var(--bg);
-        }
-    }
+		&:focus {
+			outline: none;
+			/*background: lightpink;*/
+		}
+
+		&.active {
+			background: var(--accent);
+			color: var(--bg);
+		}
+	}
 }
 
 @media (min-width: 768px) {
-    .keyboard {
-        button {
-            font-size: 1.2em;
-        }
-    }
+	.keyboard {
+		button {
+			font-size: 1.2em;
+		}
+	}
 }
