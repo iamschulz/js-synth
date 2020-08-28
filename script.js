@@ -89,18 +89,20 @@ class Synth {
         this.keyBtns.forEach((btn) => {
 
             /*  click button */
-            btn.addEventListener("mousedown", () => {
+            btn.addEventListener("mousedown", (e) => {
                 const key = btn.dataset.note;
                 if (!key || !this.freqs[key]) return;
 
                 this.playNote(key);
+                e.preventDefault();
             });
 
-            btn.addEventListener("touchstart", () => {
+            btn.addEventListener("touchstart", (e) => {
                 const key = btn.dataset.note;
                 if (!key || !this.freqs[key]) return;
 
                 this.playNote(key);
+                e.preventDefault();
             });
 
             /* change button while clicked */
@@ -109,35 +111,40 @@ class Synth {
                 if (!e.buttons || !key || !this.freqs[key]) return;
 
                 this.playNote(key);
+                e.preventDefault();
             });
 
             /* release button */
-            btn.addEventListener("mouseup", () => {
+            btn.addEventListener("mouseup", (e) => {
                 const key = btn.dataset.note;
                 if (!key || !this.freqs[key] || !this.nodes[key]) return;
 
                 this.endNote(this.nodes[key]);
+                e.preventDefault();
             });
 
-            btn.addEventListener("mouseout", () => {
+            btn.addEventListener("mouseout", (e) => {
                 const key = btn.dataset.note;
                 if (!key || !this.freqs[key] || !this.nodes[key]) return;
 
                 this.endNote(this.nodes[key]);
+                e.preventDefault();
             });
 
-            btn.addEventListener("touchend", () => {
+            btn.addEventListener("touchend", (e) => {
                 const key = btn.dataset.note;
                 if (!key || !this.freqs[key] || !this.nodes[key]) return;
 
                 this.endNote(this.nodes[key]);
+                e.preventDefault();
             });
 
-            btn.addEventListener("touchcancel", () => {
+            btn.addEventListener("touchcancel", (e) => {
                 const key = btn.dataset.note;
                 if (!key || !this.freqs[key] || !this.nodes[key]) return;
 
                 this.endNote(this.nodes[key]);
+                e.preventDefault();
             });
         });
     }
