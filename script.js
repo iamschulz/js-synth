@@ -6,6 +6,7 @@ class Synth {
         this.freqs = Freqs;
         this.keys = Keys;
         this.wave = "sine";
+        this.release = 0;
         this.offset = 4;
         this.nodes = {};
         this.keyBtns = document.querySelectorAll(".keyboard button");
@@ -18,15 +19,17 @@ class Synth {
 
     playNote(key = "a") {
         const ctx = new AudioContext();
-        const o = ctx.createOscillator();
-        const g = ctx.createGain();
+        const osc = ctx.createOscillator();
+        const release = ctx.createGain();
         const freq = this.freqs[key] * this.offset || 440;
 
-        o.type = this.wave;
-        o.connect(g);
-        o.frequency.value = freq;
-        g.connect(ctx.destination);
-        o.start(0);
+        osc.type = this.wave;
+        osc.connect(release);
+        osc.frequency.value = freq;
+        
+
+        release.connect(ctx.destination);
+        osc.start(0);
 
         Array.from(this.keyBtns)
             .filter((btn) => btn.dataset.note === key)[0]
@@ -34,24 +37,23 @@ class Synth {
 
         this.nodes[key] = {
             ctx: ctx,
-            o: o,
-            g: g,
+            osc: osc,
+            release: release,
         };
     }
 
     endNote(node) {
-        const hallDuration = 1;
         const ctx = node.ctx;
-        const g = node.g;
+        const release = node.release;
 
-        g.gain.exponentialRampToValueAtTime(
+        release.gain.exponentialRampToValueAtTime(
             0.00001,
-            ctx.currentTime + hallDuration
+            ctx.currentTime + this.release
         );
 
         window.setTimeout(() => {
             ctx.close();
-        }, 1000 * hallDuration);
+        }, 1000 * this.release);
 
         Object.keys(this.nodes).forEach((key) => {
             if (this.nodes[key] === node) {
@@ -151,6 +153,9 @@ class Synth {
         const applyOptions = () => {
             const data = Object.fromEntries(new FormData(this.controls));
             this.wave = data.waveform;
+            this.attack = parseInt(data.attack);
+            this.delay = parseInt(data.delay);
+            this.release = parseInt(data.release);
             this.offset = parseInt(data.offset) + 5;
         }
         

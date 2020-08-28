@@ -21,11 +21,15 @@ h1 {
 
 .controls {
     max-width: 700px;
-    margin: 0 auto 24px;
+    margin: 0 auto;
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
 
-    &-box [type="radio"] {
+    &-box {
+        margin-bottom: 24px;
+    }
+
+    [type="radio"] {
         display: none;
 
         + label {

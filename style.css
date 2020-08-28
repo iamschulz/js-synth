@@ -21,17 +21,20 @@ h1 {
 
 .controls {
   max-width: 700px;
-  margin: 0 auto 24px;
+  margin: 0 auto;
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
 }
-.controls-box [type=radio] {
+.controls-box {
+  margin-bottom: 24px;
+}
+.controls [type=radio] {
   display: none;
 }
-.controls-box [type=radio] + label {
+.controls [type=radio] + label {
   display: block;
 }
-.controls-box [type=radio]:checked + label {
+.controls [type=radio]:checked + label {
   color: var(--accent);
 }
 
