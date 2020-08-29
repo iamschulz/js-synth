@@ -2,6 +2,8 @@
   --bg: DarkSlateGrey;
   --fg: white;
   --accent: SpringGreen;
+  --ui-width: 43.75rem;
+  --gap-y: 2rem;
 }
 
 * {
@@ -24,18 +26,22 @@ body:before {
 }
 
 h1 {
-  max-width: 700px;
+  max-width: var(--ui-width);
   margin: 0 auto 24px;
 }
 
+a {
+  color: white;
+}
+
 .controls {
-  max-width: 700px;
+  max-width: var(--ui-width);
   margin: 0 auto;
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
 }
 .controls-box {
-  margin-bottom: 24px;
+  margin-bottom: var(--gap-y);
 }
 .controls [type=radio] {
   display: none;
@@ -51,7 +57,7 @@ h1 {
   position: relative;
   display: flex;
   justify-items: stretch;
-  max-width: 700px;
+  max-width: var(--ui-width);
   margin: auto;
   user-select: none;
 }
@@ -59,15 +65,15 @@ h1 {
   display: flex;
   justify-content: center;
   align-items: flex-end;
-  padding-bottom: 1em;
+  padding-bottom: 1rem;
   font-family: "Press Start 2P", cursive;
   border: 1px solid black;
   font-size: 0;
 }
 .keyboard button.white {
   flex: 1 0 calc(100% / 12);
-  height: 50vh;
-  max-height: 350px;
+  max-height: 50vw;
+  height: 18rem;
   background-color: white;
   color: grey;
   margin: 0 2px;
@@ -77,8 +83,8 @@ h1 {
 }
 .keyboard button.black {
   flex: 1 0 calc(100% / 12 * 0.4);
-  height: 35vh;
-  max-height: 245px;
+  max-height: 30vw;
+  height: 11rem;
   margin-left: calc(100% / 12 * -0.5 - 4px);
   margin-right: calc(100% / 12 * -0.5 - 4px);
   z-index: 1;
@@ -90,8 +96,15 @@ h1 {
   /*background: lightpink;*/
 }
 .keyboard button.active {
-  background: var(--accent);
+  background: linear-gradient(160deg, var(--bg) -150%, var(--accent) 100%);
   color: var(--bg);
+}
+
+footer {
+  max-width: var(--ui-width);
+  margin: var(--gap-y) auto 0;
+  text-align: center;
+  font-size: 0.7em;
 }
 
 @media (min-width: 768px) {
