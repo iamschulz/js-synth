@@ -7,7 +7,7 @@ class Synth {
 		this.keys = Keys;
 		this.wave = 'sine';
 		this.attack = 0;
-		this.delay = 0;
+		this.decay = 0;
 		this.release = 0;
 		this.pitch = 0;
 		this.nodes = {};
@@ -28,7 +28,7 @@ class Synth {
 		const ctx = new AudioContext();
 		const osc = ctx.createOscillator();
 		const attack = ctx.createGain();
-		const delay = ctx.createGain();
+		const decay = ctx.createGain();
 		const release = ctx.createGain();
 		const freq = this.getFreq(key);
 
@@ -45,17 +45,17 @@ class Synth {
 				ctx.currentTime + this.attack
 			);
 		}
-		attack.connect(delay);
+		attack.connect(decay);
 
-		/* configure delay */
-		if (this.delay > 0.001) {
-			delay.gain.setValueAtTime(1, ctx.currentTime + this.attack);
-			delay.gain.exponentialRampToValueAtTime(
+		/* configure decay */
+		if (this.decay > 0.001) {
+			decay.gain.setValueAtTime(1, ctx.currentTime + this.attack);
+			decay.gain.exponentialRampToValueAtTime(
 				0.2,
-				ctx.currentTime + this.attack + this.delay
+				ctx.currentTime + this.attack + this.decay
 			);
 		}
-		delay.connect(release);
+		decay.connect(release);
 
 		release.connect(ctx.destination);
 		osc.start(0);
@@ -199,7 +199,7 @@ class Synth {
 			const data = Object.fromEntries(new FormData(this.controls));
 			this.wave = data.waveform;
 			this.attack = parseInt(data.attack) / 1000 + 0.01;
-			this.delay = parseInt(data.delay) / 1000 + 0.001;
+			this.decay = parseInt(data.decay) / 1000 + 0.001;
 			this.release = parseInt(data.release) / 1000 + 0.1;
 			this.pitch = parseInt(data.pitch) + 3;
 		};
