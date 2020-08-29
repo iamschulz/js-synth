@@ -13,6 +13,7 @@ class Synth {
 		this.nodes = {};
 		this.keyBtns = document.querySelectorAll('.keyboard button');
 		this.controls = document.querySelector('.controls');
+		this.adsrDiagram = document.querySelector('#adsr-vis');
 
 		this.keyboardControls();
 		this.buttonControls();
@@ -202,6 +203,7 @@ class Synth {
 			this.decay = parseInt(data.decay) / 1000 + 0.001;
 			this.release = parseInt(data.release) / 1000 + 0.1;
 			this.pitch = parseInt(data.pitch) + 3;
+			this.drawAdsr();
 		};
 
 		this.controls.addEventListener('change', () => {
@@ -209,6 +211,35 @@ class Synth {
 		});
 
 		applyOptions();
+	}
+
+	drawAdsr() {
+		const a = this.adsrDiagram.querySelector('#adsr-a');
+		const d = this.adsrDiagram.querySelector('#adsr-d');
+		const s = this.adsrDiagram.querySelector('#adsr-s');
+		const r = this.adsrDiagram.querySelector('#adsr-r');
+
+		const ax = (this.attack - 0.01) * 100;
+		a.toggleAttribute('hidden', ax === 0);
+		a.setAttribute('x2', ax);
+		d.setAttribute('x1', ax);
+
+		const dx = (this.decay - 0.001) * 100 + ax;
+		const dy = dx - ax === 0 ? 0 : 100;
+		d.toggleAttribute('hidden', dx === 0);
+		d.setAttribute('x2', dx);
+		d.setAttribute('y2', dy);
+		s.setAttribute('x1', dx);
+		s.setAttribute('y1', dy);
+		s.setAttribute('y2', dy);
+
+		const rx = 400 - (this.release - 0.1) * 10;
+		r.toggleAttribute('hidden', rx === 400);
+		s.setAttribute('x2', rx);
+		r.setAttribute('x1', rx);
+		r.setAttribute('y1', dy);
+
+		s.toggleAttribute('hidden', ax === 0 && dx === 0 && rx === 400);
 	}
 }
 

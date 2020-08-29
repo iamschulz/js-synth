@@ -12,7 +12,23 @@
 		<meta name="theme-color" content="DarkSlateGrey" />
 	</head>
 	<body>
-		<h1>JSSynth</h1>
+		<header>
+			<h1>JSSynth</h1>
+			<svg
+				id="adsr-vis"
+				xmlns="http://www.w3.org/2000/svg"
+				width="100"
+				height="50"
+				viewbox="0 0 400 200"
+				stroke="SpringGreen"
+				stroke-width="5"
+			>
+				<line id="adsr-a" x1="0" y1="200" x2="100" y2="0" />
+				<line id="adsr-d" x1="100" y1="0" x2="200" y2="100" />
+				<line id="adsr-s" x1="200" y1="100" x2="300" y2="100" />
+				<line id="adsr-r" x1="300" y1="100" x2="400" y2="200" />
+			</svg>
+		</header>
 		<form class="controls">
 			<div class="controls-box">
 				<input

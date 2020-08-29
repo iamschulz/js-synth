@@ -26,8 +26,15 @@ body {
 	}
 }
 
-h1 {
+[hidden] {
+	display: none;
+}
+
+header {
+	display: flex;
 	max-width: var(--ui-width);
+	align-items: center;
+	gap: 1ch;
 	margin: 0 auto 24px;
 }
 
