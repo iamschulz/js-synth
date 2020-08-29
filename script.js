@@ -13,7 +13,7 @@ class Synth {
 		this.nodes = {};
 		this.keyBtns = document.querySelectorAll('.keyboard button');
 		this.controls = document.querySelector('.controls');
-		this.adsrDiagram = document.querySelector('#adsr-vis');
+		this.headerDiagram = document.querySelector('#header-vis');
 
 		this.keyboardControls();
 		this.buttonControls();
@@ -203,6 +203,7 @@ class Synth {
 			this.decay = parseInt(data.decay) / 1000 + 0.001;
 			this.release = parseInt(data.release) / 1000 + 0.1;
 			this.pitch = parseInt(data.pitch) + 3;
+			this.drawWave();
 			this.drawAdsr();
 		};
 
@@ -213,11 +214,23 @@ class Synth {
 		applyOptions();
 	}
 
+	drawWave() {
+		const waveDiagrams = this.headerDiagram.querySelectorAll(
+			'[id^="wave"]'
+		);
+		waveDiagrams.forEach((waveDiagram) => {
+			waveDiagram.toggleAttribute(
+				'hidden',
+				waveDiagram.id !== `wave-${this.wave}`
+			);
+		});
+	}
+
 	drawAdsr() {
-		const a = this.adsrDiagram.querySelector('#adsr-a');
-		const d = this.adsrDiagram.querySelector('#adsr-d');
-		const s = this.adsrDiagram.querySelector('#adsr-s');
-		const r = this.adsrDiagram.querySelector('#adsr-r');
+		const a = this.headerDiagram.querySelector('#adsr-a');
+		const d = this.headerDiagram.querySelector('#adsr-d');
+		const s = this.headerDiagram.querySelector('#adsr-s');
+		const r = this.headerDiagram.querySelector('#adsr-r');
 
 		const ax = (this.attack - 0.01) * 100;
 		a.toggleAttribute('hidden', ax === 0);
@@ -228,18 +241,12 @@ class Synth {
 		const dy = dx - ax === 0 ? 0 : 100;
 		d.toggleAttribute('hidden', dx === 0);
 		d.setAttribute('x2', dx);
-		d.setAttribute('y2', dy);
 		s.setAttribute('x1', dx);
-		s.setAttribute('y1', dy);
-		s.setAttribute('y2', dy);
 
 		const rx = 400 - (this.release - 0.1) * 10;
 		r.toggleAttribute('hidden', rx === 400);
 		s.setAttribute('x2', rx);
 		r.setAttribute('x1', rx);
-		r.setAttribute('y1', dy);
-
-		s.toggleAttribute('hidden', ax === 0 && dx === 0 && rx === 400);
 	}
 }
 

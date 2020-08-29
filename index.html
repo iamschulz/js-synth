@@ -15,14 +15,39 @@
 		<header>
 			<h1>JSSynth</h1>
 			<svg
-				id="adsr-vis"
+				id="header-vis"
 				xmlns="http://www.w3.org/2000/svg"
 				width="100"
 				height="50"
-				viewbox="0 0 400 200"
+				viewbox="-10 -10 420 220"
 				stroke="SpringGreen"
-				stroke-width="5"
+				stroke-width="10"
+				fill="none"
 			>
+				<path
+					id="wave-sine"
+					stroke="white"
+					d="m0,100c0,0 0,-100 100,-100c100,0 100,100 100,100c0,0 0,100 100,100c100,0 100,-100 100,-100"
+				/>
+				<polyline
+					id="wave-square"
+					points="0,160 100,160 100,40, 300,40 300,160 400,160"
+					stroke="white"
+					hidden
+				/>
+				<polyline
+					id="wave-triangle"
+					points="0,40 133,160 266,40 400,160"
+					stroke="white"
+					hidden
+				/>
+				<polyline
+					id="wave-sawtooth"
+					points="0,160 100,160 100,40, 300,160 400,160"
+					stroke="white"
+					hidden
+				/>
+
 				<line id="adsr-a" x1="0" y1="200" x2="100" y2="0" />
 				<line id="adsr-d" x1="100" y1="0" x2="200" y2="100" />
 				<line id="adsr-s" x1="200" y1="100" x2="300" y2="100" />
