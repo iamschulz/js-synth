@@ -4,9 +4,17 @@
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<title>JSSynth</title>
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+		<link
+			rel="preload"
+			as="style"
+			href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap"
+		/>
 		<link
 			href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap"
 			rel="stylesheet"
+			media="print"
+			onload="this.media='all'"
 		/>
 		<link rel="stylesheet" href="./style.css" type="text/css" />
 		<link rel="manifest" href="./manifest.json" />
@@ -171,7 +179,8 @@
 		</section>
 
 		<footer>
-			made with &lt;3 by <a href="https://iamschulz.com">iamschulz</a>
+			made with &lt;3<br />
+			<a href="https://iamschulz.com">Daniel Schulz</a>
 		</footer>
 
 		<script src="./script.js" type="module" defer></script>
