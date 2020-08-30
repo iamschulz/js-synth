@@ -112,8 +112,8 @@
 			</div>
 
 			<div class="controls-box">
-				<div>
-					<label for="pitch">Ptc</label>
+				<div class="range">
+					<label for="pitch">Pitch</label>
 					<input
 						name="pitch"
 						id="pitch"
@@ -125,8 +125,8 @@
 					/>
 				</div>
 
-				<div>
-					<label for="attack">Atk</label>
+				<div class="range">
+					<label for="attack">Attack</label>
 					<input
 						name="attack"
 						id="attack"
@@ -138,8 +138,8 @@
 					/>
 				</div>
 
-				<div>
-					<label for="decay">Dcy</label>
+				<div class="range">
+					<label for="decay">Decay</label>
 					<input
 						name="decay"
 						id="decay"
@@ -151,8 +151,8 @@
 					/>
 				</div>
 
-				<div>
-					<label for="release">Rls</label>
+				<div class="range">
+					<label for="release">Release</label>
 					<input
 						name="release"
 						id="release"
@@ -166,19 +166,33 @@
 			</div>
 		</form>
 		<section class="keyboard">
-			<button class="white" data-note="c">A</button>
-			<button class="black" data-note="cs">W</button>
-			<button class="white" data-note="d">S</button>
-			<button class="black" data-note="eb">E</button>
-			<button class="white" data-note="e">D</button>
-			<button class="white" data-note="f">F</button>
-			<button class="black" data-note="fs">T</button>
-			<button class="white" data-note="g">G</button>
-			<button class="black" data-note="gs">Z</button>
-			<button class="white" data-note="a">H</button>
-			<button class="black" data-note="bb">U</button>
-			<button class="white" data-note="b">J</button>
-			<button class="white" data-note="c2">K</button>
+			<button class="white" data-note="c" label="C">
+				<key>A</key>
+			</button>
+			<button class="black" data-note="cs" label="C sharp">
+				<key>W</key>
+			</button>
+			<button class="white" data-note="d" label="D"><key>S</key></button>
+			<button class="black" data-note="eb" label="E sharp">
+				<key>E</key>
+			</button>
+			<button class="white" data-note="e" label="E"><key>D</key></button>
+			<button class="white" data-note="f" label="F"><key>F</key></button>
+			<button class="black" data-note="fs" label="F sharp">
+				<key>T</key>
+			</button>
+			<button class="white" data-note="g" label="G"><key>G</key></button>
+			<button class="black" data-note="gs" label="G sharp">
+				<key>Y</key>
+			</button>
+			<button class="white" data-note="a" label="A"><key>H</key></button>
+			<button class="black" data-note="bb" label="A sharp">
+				<key>U</key>
+			</button>
+			<button class="white" data-note="b" label="B"><key>J</key></button>
+			<button class="white" data-note="c2" label="C2">
+				<key>K</key>
+			</button>
 		</section>
 
 		<footer>

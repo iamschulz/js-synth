@@ -1,15 +1,15 @@
 export default {
-    65: "c", // a
-    87: "cs", // w
-    83: "d", // s
-    69: "eb", // e
-    68: "e", // d
-    70: "f", // f
-    84: "fs", // t
-    71: "g", // g
-    90: "gs", // z
-    72: "a", // h
-    85: "bb", // u
-    74: "b", // j
-    75: "c2", // k
+	KeyA: 'c',
+	KeyW: 'cs',
+	KeyS: 'd',
+	KeyE: 'eb',
+	KeyD: 'e',
+	KeyF: 'f',
+	KeyT: 'fs',
+	KeyG: 'g',
+	KeyY: 'gs',
+	KeyH: 'a',
+	KeyU: 'bb',
+	KeyJ: 'b',
+	KeyK: 'c2',
 };

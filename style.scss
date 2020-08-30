@@ -69,6 +69,13 @@ a {
 			color: var(--accent);
 		}
 	}
+
+	.range {
+		label {
+			display: inline-block;
+			width: 7ch;
+		}
+	}
 }
 
 .keyboard {
@@ -99,6 +106,11 @@ a {
 			+ button.white {
 				margin-left: -4px;
 			}
+
+			&:focus:not(.active) {
+				background: orchid;
+				outline: none;
+			}
 		}
 
 		&.black {
@@ -110,11 +122,11 @@ a {
 			z-index: 1;
 			background-color: black;
 			color: darkgrey;
-		}
 
-		&:focus {
-			outline: none;
-			/*background: lightpink;*/
+			&:focus:not(.active) {
+				background: darkorchid;
+				outline: none;
+			}
 		}
 
 		&.active {
@@ -124,6 +136,7 @@ a {
 				var(--accent) 100%
 			);
 			color: var(--bg);
+			outline: none;
 		}
 	}
 }

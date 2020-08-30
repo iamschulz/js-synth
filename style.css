@@ -61,6 +61,10 @@ a {
 .controls [type=radio]:checked + label {
   color: var(--accent);
 }
+.controls .range label {
+  display: inline-block;
+  width: 7ch;
+}
 
 .keyboard {
   position: relative;
@@ -90,6 +94,10 @@ a {
 .keyboard button.white + button.white {
   margin-left: -4px;
 }
+.keyboard button.white:focus:not(.active) {
+  background: orchid;
+  outline: none;
+}
 .keyboard button.black {
   flex: 1 0 calc(100% / 12 * 0.4);
   max-height: 30vw;
@@ -100,13 +108,14 @@ a {
   background-color: black;
   color: darkgrey;
 }
-.keyboard button:focus {
+.keyboard button.black:focus:not(.active) {
+  background: darkorchid;
   outline: none;
-  /*background: lightpink;*/
 }
 .keyboard button.active {
   background: linear-gradient(160deg, var(--bg) -150%, var(--accent) 100%);
   color: var(--bg);
+  outline: none;
 }
 
 footer {

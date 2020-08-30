@@ -116,19 +116,18 @@ class Synth {
 	keyboardControls() {
 		document.addEventListener('keydown', (e) => {
 			if (
-				!this.keys[e.keyCode] || // key doesn't have a note
-				this.nodes[this.keys[e.keyCode]] // note is already playing
+				!this.keys[e.code] || // key doesn't have a note
+				this.nodes[this.keys[e.code]] // note is already playing
 			)
 				return;
 
-			this.playNote(this.keys[e.keyCode]);
+			this.playNote(this.keys[e.code]);
 		});
 
 		document.addEventListener('keyup', (e) => {
-			if (!this.keys[e.keyCode] || !this.nodes[this.keys[e.keyCode]])
-				return;
+			if (!this.keys[e.code] || !this.nodes[this.keys[e.code]]) return;
 
-			this.endNote(this.nodes[this.keys[e.keyCode]]);
+			this.endNote(this.nodes[this.keys[e.code]]);
 		});
 	}
 
@@ -164,6 +163,13 @@ class Synth {
 				e.preventDefault();
 			});
 
+			/* trigger button with tab controls */
+			btn.addEventListener('keydown', (e) => {
+				if (!(e.code === 'Space' || e.key === 'Enter')) return;
+
+				this.playNote(e.target.dataset.note);
+			});
+
 			/* release button */
 			btn.addEventListener('mouseup', (e) => {
 				const key = btn.dataset.note;
@@ -190,6 +196,23 @@ class Synth {
 			});
 
 			btn.addEventListener('touchcancel', (e) => {
+				const key = btn.dataset.note;
+				if (!key || !this.freqs[key] || !this.nodes[key]) return;
+
+				this.endNote(this.nodes[key]);
+				e.preventDefault();
+			});
+
+			btn.addEventListener('keyup', (e) => {
+				const key = btn.dataset.note;
+				if (!(e.code === 'Space' || e.key === 'Enter')) return;
+				if (!key || !this.freqs[key] || !this.nodes[key]) return;
+
+				this.endNote(this.nodes[key]);
+				e.preventDefault();
+			});
+
+			btn.addEventListener('blur', (e) => {
 				const key = btn.dataset.note;
 				if (!key || !this.freqs[key] || !this.nodes[key]) return;
 
