@@ -62,7 +62,7 @@ a {
 		display: none;
 
 		+ label {
-			display: block;
+			display: inline-block;
 		}
 
 		&:checked + label {

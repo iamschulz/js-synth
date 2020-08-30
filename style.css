@@ -56,7 +56,7 @@ a {
   display: none;
 }
 .controls [type=radio] + label {
-  display: block;
+  display: inline-block;
 }
 .controls [type=radio]:checked + label {
   color: var(--accent);
