@@ -55,6 +55,8 @@ a {
 	grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
 
 	&-box {
+		display: flex;
+		flex-direction: column;
 		margin-bottom: var(--gap-y);
 	}
 
