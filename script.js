@@ -152,7 +152,7 @@ class Synth {
 					this.playNote(key);
 					e.preventDefault();
 				},
-				true
+				false
 			);
 
 			/* change button while clicked */
