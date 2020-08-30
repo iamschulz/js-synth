@@ -143,13 +143,17 @@ class Synth {
 				e.preventDefault();
 			});
 
-			btn.addEventListener('touchstart', (e) => {
-				const key = btn.dataset.note;
-				if (!key || !this.freqs[key]) return;
+			btn.addEventListener(
+				'touchstart',
+				(e) => {
+					const key = btn.dataset.note;
+					if (!key || !this.freqs[key]) return;
 
-				this.playNote(key);
-				e.preventDefault();
-			});
+					this.playNote(key);
+					e.preventDefault();
+				},
+				true
+			);
 
 			/* change button while clicked */
 			btn.addEventListener('mouseenter', (e) => {
@@ -251,3 +255,11 @@ class Synth {
 }
 
 new Synth();
+
+window.onload = () => {
+	'use strict';
+
+	if ('serviceWorker' in navigator) {
+		navigator.serviceWorker.register('./serviceworker.js');
+	}
+};
