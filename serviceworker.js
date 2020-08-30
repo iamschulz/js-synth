@@ -1,12 +1,12 @@
 const ver = '1.0.0';
 const cacheName = `js-synth-${ver}`;
 const filesToCache = [
-	'/',
-	'/index.html',
-	'/style.css',
-	'/script.js',
-	'/freqs.js',
-	'/keys.js',
+	'./',
+	'./index.html',
+	'./style.css',
+	'./script.js',
+	'./freqs.js',
+	'./keys.js',
 ];
 
 /* Start the service worker and cache all of the app's content */
