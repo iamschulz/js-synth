@@ -6,8 +6,10 @@ class Synth {
 		this.freqs = Freqs;
 		this.keys = Keys;
 		this.wave = 'sine';
+		this.threshold = 0.05;
 		this.attack = 0;
 		this.decay = 0;
+		this.sustain = 50;
 		this.release = 0;
 		this.pitch = 0;
 		this.nodes = {};
@@ -39,23 +41,26 @@ class Synth {
 		osc.frequency.value = freq;
 
 		/* configure attack */
-		if (this.attack > 0.01) {
-			attack.gain.setValueAtTime(0.00001, ctx.currentTime);
+		attack.gain.setValueAtTime(0.00001, ctx.currentTime);
+		if (this.attack > this.threshold) {
 			attack.gain.exponentialRampToValueAtTime(
-				1,
-				ctx.currentTime + this.attack
+				0.9,
+				ctx.currentTime + this.threshold + this.attack
+			);
+		} else {
+			attack.gain.exponentialRampToValueAtTime(
+				0.9,
+				ctx.currentTime + this.threshold
 			);
 		}
 		attack.connect(decay);
 
 		/* configure decay */
-		if (this.decay > 0.001) {
-			decay.gain.setValueAtTime(1, ctx.currentTime + this.attack);
-			decay.gain.exponentialRampToValueAtTime(
-				0.2,
-				ctx.currentTime + this.attack + this.decay
-			);
-		}
+		decay.gain.setValueAtTime(1, ctx.currentTime + this.attack);
+		decay.gain.exponentialRampToValueAtTime(
+			this.sustain / 100,
+			ctx.currentTime + this.attack + this.decay
+		);
 		decay.connect(release);
 
 		release.connect(ctx.destination);
@@ -82,15 +87,15 @@ class Synth {
 		const release = node.release;
 
 		/* configure release */
-		release.gain.setValueAtTime(1, ctx.currentTime);
+		release.gain.setValueAtTime(0.9, ctx.currentTime);
 		release.gain.exponentialRampToValueAtTime(
 			0.00001,
-			ctx.currentTime + this.release
+			ctx.currentTime + Math.max(this.release, this.threshold)
 		);
 
 		window.setTimeout(() => {
 			ctx.close();
-		}, 1000 * this.release);
+		}, 1000 * Math.max(this.release, this.threshold));
 
 		Object.keys(this.nodes).forEach((key) => {
 			if (this.nodes[key] === node) {
@@ -228,6 +233,7 @@ class Synth {
 			this.wave = data.waveform;
 			this.attack = parseInt(data.attack) / 1000 + 0.01;
 			this.decay = parseInt(data.decay) / 1000 + 0.001;
+			this.sustain = parseInt(data.sustain) + 0.001;
 			this.release = parseInt(data.release) / 1000 + 0.1;
 			this.pitch = parseInt(data.pitch) + 3;
 			this.drawWave();
@@ -254,26 +260,33 @@ class Synth {
 	}
 
 	drawAdsr() {
+		// header diagram is 400 x 200
 		const a = this.headerDiagram.querySelector('#adsr-a');
 		const d = this.headerDiagram.querySelector('#adsr-d');
 		const s = this.headerDiagram.querySelector('#adsr-s');
 		const r = this.headerDiagram.querySelector('#adsr-r');
 
 		const ax = (this.attack - 0.01) * 100;
+		const dx = (this.decay - 0.001) * 100 + ax;
+		const sy = 200 - this.sustain * 2;
+		const rx = 400 - (this.release - 0.1) * 10;
+
 		a.toggleAttribute('hidden', ax === 0);
 		a.setAttribute('x2', ax);
-		d.setAttribute('x1', ax);
 
-		const dx = (this.decay - 0.001) * 100 + ax;
-		const dy = dx - ax === 0 ? 0 : 100;
 		d.toggleAttribute('hidden', dx === 0);
+		d.setAttribute('x1', ax);
 		d.setAttribute('x2', dx);
-		s.setAttribute('x1', dx);
+		d.setAttribute('y2', sy);
 
-		const rx = 400 - (this.release - 0.1) * 10;
-		r.toggleAttribute('hidden', rx === 400);
+		s.setAttribute('x1', dx);
+		s.setAttribute('y1', sy);
 		s.setAttribute('x2', rx);
+		s.setAttribute('y2', sy);
+
+		r.toggleAttribute('hidden', rx === 400);
 		r.setAttribute('x1', rx);
+		r.setAttribute('y1', sy);
 	}
 }
 
