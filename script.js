@@ -6,7 +6,7 @@ class Synth {
 		this.freqs = Freqs;
 		this.keys = Keys;
 		this.wave = 'sine';
-		this.threshold = 0.05;
+		this.threshold = 0.001;
 		this.attack = 0;
 		this.decay = 0;
 		this.sustain = 50;
