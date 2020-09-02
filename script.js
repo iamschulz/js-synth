@@ -3,6 +3,11 @@ import Keys from './keys.js';
 
 class Synth {
 	constructor() {
+		if (!window.AudioContext) {
+			document.querySelector('dialog').setAttribute('open', 'open');
+			return;
+		}
+
 		this.freqs = Freqs;
 		this.keys = Keys;
 		this.wave = 'sine';
@@ -28,7 +33,7 @@ class Synth {
 	 * @param {String} key
 	 */
 	playNote(key = 'a') {
-		const ctx = new AudioContext();
+		const ctx = new window.AudioContext();
 		const osc = ctx.createOscillator();
 		const attack = ctx.createGain();
 		const decay = ctx.createGain();
@@ -294,7 +299,6 @@ new Synth();
 
 window.onload = () => {
 	'use strict';
-
 	if ('serviceWorker' in navigator) {
 		navigator.serviceWorker.register('./serviceworker.js');
 	}
