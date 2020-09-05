@@ -8,5 +8,5 @@ a synthesizer PWA written in javascript
 -   demo: https://iamschulz.github.io/js-synth/
 
 -   compile the stylesheet:
-    -   install sass locally
+    -   install sass locally (https://sass-lang.com/install)
     -   `sass style.scss style.css`
