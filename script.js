@@ -144,13 +144,17 @@ class Synth {
 	buttonControls() {
 		this.keyBtns.forEach((btn) => {
 			/*  click button */
-			btn.addEventListener('mousedown', (e) => {
-				const key = btn.dataset.note;
-				if (!key || !this.freqs[key]) return;
+			btn.addEventListener(
+				'mousedown',
+				(e) => {
+					const key = btn.dataset.note;
+					if (!key || !this.freqs[key]) return;
 
-				this.playNote(key);
-				e.preventDefault();
-			});
+					this.playNote(key);
+					e.preventDefault();
+				},
+				{ passive: true }
+			);
 
 			btn.addEventListener(
 				'touchstart',
@@ -161,17 +165,21 @@ class Synth {
 					this.playNote(key);
 					e.preventDefault();
 				},
-				false
+				{ passive: true }
 			);
 
 			/* change button while clicked */
-			btn.addEventListener('mouseenter', (e) => {
-				const key = btn.dataset.note;
-				if (!e.buttons || !key || !this.freqs[key]) return;
+			btn.addEventListener(
+				'mouseenter',
+				(e) => {
+					const key = btn.dataset.note;
+					if (!e.buttons || !key || !this.freqs[key]) return;
 
-				this.playNote(key);
-				e.preventDefault();
-			});
+					this.playNote(key);
+					e.preventDefault();
+				},
+				{ passive: true }
+			);
 
 			/* trigger button with tab controls */
 			btn.addEventListener('keydown', (e) => {
@@ -181,37 +189,53 @@ class Synth {
 			});
 
 			/* release button */
-			btn.addEventListener('mouseup', (e) => {
-				const key = btn.dataset.note;
-				if (!key || !this.freqs[key] || !this.nodes[key]) return;
+			btn.addEventListener(
+				'mouseup',
+				(e) => {
+					const key = btn.dataset.note;
+					if (!key || !this.freqs[key] || !this.nodes[key]) return;
 
-				this.endNote(this.nodes[key]);
-				e.preventDefault();
-			});
+					this.endNote(this.nodes[key]);
+					e.preventDefault();
+				},
+				{ passive: true }
+			);
 
-			btn.addEventListener('mouseout', (e) => {
-				const key = btn.dataset.note;
-				if (!key || !this.freqs[key] || !this.nodes[key]) return;
+			btn.addEventListener(
+				'mouseout',
+				(e) => {
+					const key = btn.dataset.note;
+					if (!key || !this.freqs[key] || !this.nodes[key]) return;
 
-				this.endNote(this.nodes[key]);
-				e.preventDefault();
-			});
+					this.endNote(this.nodes[key]);
+					e.preventDefault();
+				},
+				{ passive: true }
+			);
 
-			btn.addEventListener('touchend', (e) => {
-				const key = btn.dataset.note;
-				if (!key || !this.freqs[key] || !this.nodes[key]) return;
+			btn.addEventListener(
+				'touchend',
+				(e) => {
+					const key = btn.dataset.note;
+					if (!key || !this.freqs[key] || !this.nodes[key]) return;
 
-				this.endNote(this.nodes[key]);
-				e.preventDefault();
-			});
+					this.endNote(this.nodes[key]);
+					e.preventDefault();
+				},
+				{ passive: true }
+			);
 
-			btn.addEventListener('touchcancel', (e) => {
-				const key = btn.dataset.note;
-				if (!key || !this.freqs[key] || !this.nodes[key]) return;
+			btn.addEventListener(
+				'touchcancel',
+				(e) => {
+					const key = btn.dataset.note;
+					if (!key || !this.freqs[key] || !this.nodes[key]) return;
 
-				this.endNote(this.nodes[key]);
-				e.preventDefault();
-			});
+					this.endNote(this.nodes[key]);
+					e.preventDefault();
+				},
+				{ passive: true }
+			);
 
 			btn.addEventListener('keyup', (e) => {
 				const key = btn.dataset.note;
