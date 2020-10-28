@@ -315,10 +315,10 @@ class Synth {
 		const s = this.headerDiagram.querySelector('#adsr-s');
 		const r = this.headerDiagram.querySelector('#adsr-r');
 
-		const ax = (this.attack - 0.01) * 50;
+		const ax = this.attack * 50 - 0.05;
 		const dx = (this.decay - 0.001) * 20 + ax;
 		const sy = 200 - this.sustain * 2;
-		const rx = 400 - (this.release - 0.1) * 10;
+		const rx = 400 - this.release * 10 + 0.01;
 
 		a.toggleAttribute('hidden', ax === 0);
 		a.setAttribute('x2', ax);
