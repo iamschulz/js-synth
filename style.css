@@ -68,9 +68,15 @@ a {
 .controls [type='radio']:checked + label {
 	color: var(--accent);
 }
+.controls .range {
+	display: flex;
+}
 .controls .range label {
 	display: inline-block;
-	width: 7ch;
+	min-width: 8ch;
+}
+.controls .range input {
+	width: 100%;
 }
 
 .error {
