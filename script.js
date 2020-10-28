@@ -151,7 +151,6 @@ class Synth {
 					if (!key || !this.freqs[key]) return;
 
 					this.playNote(key);
-					e.preventDefault();
 				},
 				{ passive: true }
 			);
@@ -163,7 +162,6 @@ class Synth {
 					if (!key || !this.freqs[key]) return;
 
 					this.playNote(key);
-					e.preventDefault();
 				},
 				{ passive: true }
 			);
@@ -176,7 +174,6 @@ class Synth {
 					if (!e.buttons || !key || !this.freqs[key]) return;
 
 					this.playNote(key);
-					e.preventDefault();
 				},
 				{ passive: true }
 			);
@@ -196,7 +193,6 @@ class Synth {
 					if (!key || !this.freqs[key] || !this.nodes[key]) return;
 
 					this.endNote(this.nodes[key]);
-					e.preventDefault();
 				},
 				{ passive: true }
 			);
@@ -208,7 +204,6 @@ class Synth {
 					if (!key || !this.freqs[key] || !this.nodes[key]) return;
 
 					this.endNote(this.nodes[key]);
-					e.preventDefault();
 				},
 				{ passive: true }
 			);
@@ -220,7 +215,6 @@ class Synth {
 					if (!key || !this.freqs[key] || !this.nodes[key]) return;
 
 					this.endNote(this.nodes[key]);
-					e.preventDefault();
 				},
 				{ passive: true }
 			);
@@ -232,7 +226,6 @@ class Synth {
 					if (!key || !this.freqs[key] || !this.nodes[key]) return;
 
 					this.endNote(this.nodes[key]);
-					e.preventDefault();
 				},
 				{ passive: true }
 			);
@@ -243,7 +236,6 @@ class Synth {
 				if (!key || !this.freqs[key] || !this.nodes[key]) return;
 
 				this.endNote(this.nodes[key]);
-				e.preventDefault();
 			});
 
 			btn.addEventListener('blur', (e) => {
@@ -251,7 +243,6 @@ class Synth {
 				if (!key || !this.freqs[key] || !this.nodes[key]) return;
 
 				this.endNote(this.nodes[key]);
-				e.preventDefault();
 			});
 		});
 	}
@@ -260,20 +251,49 @@ class Synth {
 		const applyOptions = () => {
 			const data = Object.fromEntries(new FormData(this.controls));
 			this.wave = data.waveform;
-			this.attack = parseInt(data.attack) / 1000 + 0.01;
-			this.decay = parseInt(data.decay) / 1000 + 0.001;
-			this.sustain = parseInt(data.sustain) + 0.001;
-			this.release = parseInt(data.release) / 1000 + 0.1;
-			this.pitch = parseInt(data.pitch) + 3;
+			this.attack = parseFloat(data.attack) + 0.001;
+			this.decay = parseFloat(data.decay) + 0.001;
+			this.sustain = parseFloat(data.sustain);
+			this.release = parseFloat(data.release) + 0.001;
+			this.pitch = parseInt(data.pitch);
 			this.drawWave();
 			this.drawAdsr();
+
+			localStorage.synthConfig = JSON.stringify({
+				wave: this.wave,
+				attack: this.attack,
+				decay: this.decay,
+				sustain: this.sustain,
+				release: this.release,
+				pitch: this.pitch,
+			});
 		};
 
 		this.controls.addEventListener('change', () => {
 			applyOptions();
 		});
 
+		this.restoreConfig();
+
 		applyOptions();
+	}
+
+	restoreConfig() {
+		if (!localStorage.synthConfig) return;
+
+		const synthConfig = JSON.parse(localStorage.synthConfig);
+		Object.keys(synthConfig).map((conf) => {
+			this[synthConfig] = synthConfig[conf];
+
+			if (conf === 'wave') {
+				this.controls
+					.querySelector(`[name=waveform][value=${synthConfig[conf]}`)
+					.setAttribute('checked', 'checked');
+			} else {
+				this.controls.querySelector(`#${conf}`).value =
+					synthConfig[conf];
+			}
+		});
 	}
 
 	drawWave() {
@@ -295,8 +315,8 @@ class Synth {
 		const s = this.headerDiagram.querySelector('#adsr-s');
 		const r = this.headerDiagram.querySelector('#adsr-r');
 
-		const ax = (this.attack - 0.01) * 100;
-		const dx = (this.decay - 0.001) * 100 + ax;
+		const ax = (this.attack - 0.01) * 50;
+		const dx = (this.decay - 0.001) * 20 + ax;
 		const sy = 200 - this.sustain * 2;
 		const rx = 400 - (this.release - 0.1) * 10;
 
