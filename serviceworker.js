@@ -7,6 +7,7 @@ const filesToCache = [
 	'./script.js',
 	'./freqs.js',
 	'./keys.js',
+	'./impulse.js'
 ];
 
 /* Start the service worker and cache all of the app's content */

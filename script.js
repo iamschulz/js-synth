@@ -1,7 +1,65 @@
 import Freqs from './freqs.js';
 import Keys from './keys.js';
+import impulseResponse from './impulse.js';
 
 class Synth {
+	waveSine(n) {
+		// Returns a sine wave in the domains of x[0,1] y[0,1]
+		return (1+Math.sin(n*Math.PI*4))/2;
+	}
+	waveSquare(n) {
+		// Returns a square wave in the domains of x[0,1] y[0,1]
+		if(n<.5)
+			return 1;
+		else
+			return 0;
+	}
+	waveSaw(n) {
+		if(n<.5)
+			return n*2;
+		else
+			return (n*2)-1;
+	}
+	waveTriangle(n) {
+		if(n<.5)
+			return n*2;
+		else
+			return 1-(2*n-1);
+	}
+	wavePWM(x) {
+		return (1+(Math.cos(x*Math.PI)*(this.pwm/100)))/2;
+	}
+	defineWave() {
+		// Generate a wave from 0 to 100.... you know the deal
+		var real = new Float32Array(100);
+		var imag = new Float32Array(100);
+		var fn;
+		switch ( this.wave ) {
+			case "sine":
+				fn = this.waveSine;
+				break;
+			case "square":
+				fn = this.waveSquare;
+				break;
+			case "triangle":
+				fn = this.waveTriangle;
+				break;
+			case "sawtooth":
+				fn = this.waveSaw;
+				break;
+		}
+		var z = 0;
+		for(var i=0; i<100; i+=1)
+		{
+
+			real[i] = (2*Math.min(fn(z/50),1))-1;
+			z += this.wavePWM(i/100);
+			imag[i] = 0;
+		}
+
+
+		return [real, imag];
+	}
 	constructor() {
 		if (!window.AudioContext) {
 			document.querySelector('dialog').setAttribute('open', 'open');
@@ -27,6 +85,20 @@ class Synth {
 		this.optionControls();
 	}
 
+	// See https://developer.mozilla.org/en-US/docs/Web/API/WaveShaperNode
+	makeDistortionCurve(amount) {
+	  var k = typeof amount === 'number' ? amount : 50,
+	    n_samples = 44100,
+	    curve = new Float32Array(n_samples),
+	    deg = Math.PI / 180,
+	    i = 0,
+	    x;
+	  for ( ; i < n_samples; ++i ) {
+	    x = i * 2 / n_samples - 1;
+	    curve[i] = ( 3 + k ) * x * 20 * deg / ( Math.PI + k * Math.abs(x) );
+	  }
+	  return curve;
+	};
 	/**
 	 * Called when a note starts playing
 	 *
@@ -39,9 +111,16 @@ class Synth {
 		const decay = ctx.createGain();
 		const release = ctx.createGain();
 		const freq = this.getFreq(key);
+		const biquadFilter = ctx.createBiquadFilter();
+		const reverbNode = ctx.createConvolver();
+		const distortion = ctx.createWaveShaper();
 
 		/* configure oscillator */
-		osc.type = this.wave;
+
+		const [real, imag] = this.defineWave();
+		var wave = ctx.createPeriodicWave(real, imag);
+		osc.setPeriodicWave(wave);
+
 		osc.connect(attack);
 		osc.frequency.value = freq;
 
@@ -67,8 +146,39 @@ class Synth {
 			ctx.currentTime + this.attack + this.decay
 		);
 		decay.connect(release);
+		release.connect(distortion);
 
-		release.connect(ctx.destination);
+		// distortion
+
+		distortion.curve = this.makeDistortionCurve(this.distortion);
+		distortion.oversample = this.oversample+'x';
+		distortion.connect(biquadFilter);
+
+		// filter!
+
+		biquadFilter.type = this.filterform;
+		biquadFilter.frequency.value = this.filterfreq;
+		biquadFilter.Q.value = this.filterq;
+
+		// reverb!
+		if( this.reverb == 1 ) {
+			biquadFilter.connect(reverbNode);
+			var reverbSoundArrayBuffer =  impulseResponse.slice(0);
+			ctx.decodeAudioData(reverbSoundArrayBuffer,
+			   function(buffer) {
+			     reverbNode.buffer = buffer;
+			   },
+			   function(e) {
+			     alert("Error when decoding audio data" + e.err);
+			   }
+			 );
+
+
+			reverbNode.connect(ctx.destination);
+		} else {
+			biquadFilter.connect(ctx.destination);
+		}
+		//release.connect(ctx.destination);
 		osc.start(0);
 
 		Array.from(this.keyBtns)
@@ -251,6 +361,13 @@ class Synth {
 		const applyOptions = () => {
 			const data = Object.fromEntries(new FormData(this.controls));
 			this.wave = data.waveform;
+			this.filterform = data.filterform;
+			this.pwm = parseFloat(data.pwm);
+			this.filterq = parseFloat(data.filterq);
+			this.distortion = parseFloat(data.distortion);
+			this.filterfreq = parseFloat(data.filterfreq);
+			this.oversample = parseInt(data.oversample);
+			this.reverb = parseFloat(data.reverb);
 			this.attack = parseFloat(data.attack) + 0.001;
 			this.decay = parseFloat(data.decay) + 0.001;
 			this.sustain = parseFloat(data.sustain);
@@ -303,8 +420,16 @@ class Synth {
 		waveDiagrams.forEach((waveDiagram) => {
 			waveDiagram.toggleAttribute(
 				'hidden',
-				waveDiagram.id !== `wave-${this.wave}`
+				waveDiagram.id !== `wave-custom`//`wave-${this.wave}`
 			);
+			if( waveDiagram.id == `wave-custom` ) {
+				const [real, imag] = this.defineWave();
+				var points = "";
+				for(var i=0;i<100; i++){
+					points += (i*4.2)+","+((50*real[i])+100)+" ";
+				}
+				waveDiagram.setAttribute("points", points);
+			}
 		});
 	}
 

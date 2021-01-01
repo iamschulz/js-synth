@@ -69,6 +69,12 @@
 					stroke="white"
 					hidden
 				/>
+				<polyline
+					id="wave-custom"
+					points=""
+					stroke="white"
+					hidden
+				/>
 
 				<line id="adsr-a" x1="0" y1="200" x2="100" y2="0" />
 				<line id="adsr-d" x1="100" y1="0" x2="200" y2="100" />
@@ -88,7 +94,6 @@
 					id="waveform-sine"
 					name="waveform"
 					value="sine"
-					checked
 				/>
 				<label for="waveform-sine">Sine</label>
 
@@ -97,6 +102,7 @@
 					id="waveform-square"
 					name="waveform"
 					value="square"
+					checked
 				/>
 				<label for="waveform-square">Square</label>
 
@@ -118,6 +124,41 @@
 			</div>
 
 			<div class="controls-box">
+				<input
+					type="radio"
+					id="filterform-lowpass"
+					name="filterform"
+					value="lowpass"
+					checked
+				/>
+				<label for="filterform-lowpass">Lowpass</label>
+
+				<input
+					type="radio"
+					id="filterform-highpass"
+					name="filterform"
+					value="highpass"
+				/>
+				<label for="filterform-highpass">Highpass</label>
+
+				<input
+					type="radio"
+					id="filterform-bandpass"
+					name="filterform"
+					value="bandpass"
+				/>
+				<label for="filterform-bandpass">Bandpass</label>
+
+				<input
+					type="radio"
+					id="filterform-bandstop"
+					name="filterform"
+					value="notch"
+				/>
+				<label for="filterform-bandstop">Bandstop</label>
+			</div>
+
+			<div class="controls-box">
 				<div class="range">
 					<label for="pitch">Pitch</label>
 					<input
@@ -127,7 +168,7 @@
 						data-control-name="pitch"
 						min="-1"
 						max="8"
-						value="3"
+						value="1"
 					/>
 				</div>
 
@@ -155,7 +196,7 @@
 						min="0"
 						max="5"
 						step="0.1"
-						value="0"
+						value="2"
 					/>
 				</div>
 
@@ -168,7 +209,7 @@
 						data-control-name="sustain"
 						min="0"
 						max="100"
-						value="50"
+						value="75"
 					/>
 				</div>
 
@@ -182,7 +223,85 @@
 						min="0"
 						max="10"
 						step="0.1"
+						value="3"
+					/>
+				</div>
+				<div class="range">
+					<label for="pwm">PWM</label>
+					<input
+						name="pwm"
+						id="pwm"
+						type="range"
+						data-control-name="pwm"
+						min="0"
+						max="100"
+						step="0.1"
+						value="50"
+					/>
+				</div>
+				<div class="range">
+					<label for="reverb">Reverb</label>
+					<input
+						name="reverb"
+						id="reverb"
+						type="range"
+						data-control-name="reverb"
+						min="0"
+						max="1"
+						step="1"
 						value="0"
+					/>
+				</div>
+				<div class="range">
+					<label for="filterfreq">Filter Freq</label>
+					<input
+						name="filterfreq"
+						id=""
+						type="range"
+						data-control-name="filterfreq"
+						min="0"
+						max="1000"
+						step="0.1"
+						value="350"
+					/>
+				</div>
+				<div class="range">
+					<label for="filterq">Filter Q</label>
+					<input
+						name="filterq"
+						id="filterq"
+						type="range"
+						data-control-name="filterq"
+						min="0"
+						max="5"
+						step="0.1"
+						value="0"
+					/>
+				</div>
+				<div class="range">
+					<label for="distortion">Distort</label>
+					<input
+						name="distortion"
+						id="distortion"
+						type="range"
+						data-control-name="distortion"
+						min="0"
+						max="1000"
+						step="1"
+						value="400"
+					/>
+				</div>
+				<div class="range">
+					<label for="oversample">Sample</label>
+					<input
+						name="oversample"
+						id="oversample"
+						type="range"
+						data-control-name="oversample"
+						min="0"
+						max="5"
+						step="1"
+						value="1"
 					/>
 				</div>
 			</div>
