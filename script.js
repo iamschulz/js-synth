@@ -1,65 +1,80 @@
 import Freqs from './freqs.js';
 import Keys from './keys.js';
-import impulseResponse from './impulse.js';
 
 class Synth {
 	waveSine(n) {
-		// Returns a sine wave in the domains of x[0,1] y[0,1]
-		return (1+Math.sin(n*Math.PI*2))/2;
+        if( n == 0 ) {
+            return 0;
+        } else if( n == 1 ) {
+            return 1;// - this.pwm/100;
+        } else {
+            return (0.1/n) * this.pwm/100;
+        }
 	}
 	waveSquare(n) {
-		// Returns a square wave in the domains of x[0,1] y[0,1]
-		if(n<.5)
-			return 1;
-		else
-			return 0;
+        var m = (this.pwm/110)+1;
+        if( n == 0 ) {
+            return m;
+        } else if ( n&1 == 1 ) {
+            return ( 2 / (n * Math.PI) ) * Math.sin(n * Math.PI * m / 2);
+        } else {
+            return 0;
+        }
 	}
 	waveSaw(n) {
-		if(n<.5)
-			return n*2;
-		else
-			return (n*2)-1;
+        var m = this.pwm/100;
+        if( n == 0 ) {
+            return 1;
+        }
+        else if( n&1 == 1 ) {
+            return (m-1) / (n * Math.PI);
+        } else {
+            return (m-2) / (n * Math.PI);
+        }
 	}
 	waveTriangle(n) {
-		if(n<.5)
-			return n*2;
-		else
-			return 1-(2*n-1);
-	}
-	wavePWM(x) {
-		return (1+(Math.cos(x*Math.PI)*(this.pwm/100)))/2;
+        if( n != 0 )
+        {
+            var m = this.pwm/10;
+            if( m < 2 ) {
+                m = 2;
+            }
+            return ( ( Math.pow(-1, n) * Math.pow(m, 2) ) / ( Math.pow(n, 2) * (m - 1) * Math.pow(Math.PI, 2) ) ) * Math.sin( ( n * (m - 1) * Math.PI ) / m );
+        }
+        else
+        {
+            return 0;
+        }
 	}
 	defineWave() {
-		// Generate a wave from 0 to 100.... you know the deal
-        var samples = this.samples;
-		var real = new Float32Array(samples);
-		var imag = new Float32Array(samples);
-		var fn;
-		switch ( this.wave ) {
-			case "sine":
-				fn = this.waveSine;
-				break;
-			case "square":
-				fn = this.waveSquare;
-				break;
-			case "triangle":
-				fn = this.waveTriangle;
-				break;
-			case "sawtooth":
-				fn = this.waveSaw;
-				break;
-		}
-		var z = 0;
-		for(var i=0; i<samples; i+=1)
-		{
-
-			real[i] = (2*Math.min(fn(z/samples/2),1))-1;
-			z += this.wavePWM(i/samples);
-			imag[i] = 0;
-		}
+        // Note, this function generates in the frequency domain
+        var samples = 4096;
+        var real = new Float32Array(samples);
+        var imag = new Float32Array(samples);
 
 
-		return [real, imag];
+        for( var i = 0; i<samples; i++) {
+            switch ( this.wave ) {
+                case "sine":
+                    real[i] = this.waveSine(i);
+                    imag[i] = 0;
+                    break;
+                case "square":
+                    real[i] = this.waveSquare(i);
+                    imag[i] = 0;
+                    break;
+                case "triangle":
+                    real[i] = 0;
+                    imag[i] = this.waveTriangle(i);
+                    break;
+                case "sawtooth":
+                    real[i] = 0;
+                    imag[i] = this.waveSaw(i);
+                    break;
+            }
+        }
+
+        return [real, imag];
 	}
 	constructor() {
 		if (!window.AudioContext) {
@@ -73,11 +88,11 @@ class Synth {
 		this.threshold = 0.001;
 		this.attack = 0;
 		this.decay = 0;
+        this.pwm = 50;
 		this.sustain = 50;
 		this.release = 0;
 		this.pitch = 0;
 		this.nodes = {};
-        this.samples = 1000;
 		this.keyBtns = document.querySelectorAll('.keyboard button');
 		this.controls = document.querySelector('.controls');
 		this.headerDiagram = document.querySelector('#header-vis');
@@ -122,7 +137,6 @@ class Synth {
 		const [real, imag] = this.defineWave();
         var wave = ctx.createPeriodicWave(real, imag);
 		osc.setPeriodicWave(wave);
-        //osc.type='sine';
 
 		osc.connect(attack);
 		osc.frequency.value = freq;
@@ -153,7 +167,7 @@ class Synth {
         var last_node = release;
 
 		// distortion
-        if( this.distortion == 0 ) {
+        if( this.distortion != 0 ) {
             last_node.connect(distortion);
             distortion.curve = this.makeDistortionCurve(this.distortion);
             switch( this.oversample ) {
@@ -182,17 +196,19 @@ class Synth {
         }
 
 		// reverb!
-		if( this.reverb == 1 ) {
+		if( this.reverb != 0) {
 			last_node.connect(reverbNode);
-			var reverbSoundArrayBuffer =  impulseResponse.slice(0);
-			ctx.decodeAudioData(reverbSoundArrayBuffer,
-			   function(buffer) {
-			     reverbNode.buffer = buffer;
-			   },
-			   function(e) {
-			     alert("Error when decoding audio data" + e.err);
-			   }
-			 );
+
+            var c_buffer;
+            c_buffer = ctx.createBuffer(2, 48000*2*3, 48000); // 3 second reverb
+            for(var channel_index=0; channel_index<c_buffer.numberOfChannels; channel_index+=1) {
+                var c_data = c_buffer.getChannelData(channel_index);
+                for( var i = 0; i < c_data.length; i++ ) {
+                    c_data[i] = (Math.random() * 2 * (1 - (i/c_data.length))) - 1;
+                }
+            }
+            reverbNode.buffer = c_buffer;
+
             last_node = reverbNode;
 		}
 
@@ -439,16 +455,8 @@ class Synth {
 		waveDiagrams.forEach((waveDiagram) => {
 			waveDiagram.toggleAttribute(
 				'hidden',
-				waveDiagram.id !== `wave-custom`//`wave-${this.wave}`
+                waveDiagram.id !== `wave-${this.wave}`
 			);
-			if( waveDiagram.id == `wave-custom` ) {
-				const [real, imag] = this.defineWave();
-				var points = "";
-				for(var i=0;i<this.samples; i++){
-					points += (i*(420/this.samples))+","+((50*real[i])+100)+" ";
-				}
-				waveDiagram.setAttribute("points", points);
-			}
 		});
 	}
 
