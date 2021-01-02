@@ -5,7 +5,7 @@ import impulseResponse from './impulse.js';
 class Synth {
 	waveSine(n) {
 		// Returns a sine wave in the domains of x[0,1] y[0,1]
-		return (1+Math.sin(n*Math.PI*4))/2;
+		return (1+Math.sin(n*Math.PI*2))/2;
 	}
 	waveSquare(n) {
 		// Returns a square wave in the domains of x[0,1] y[0,1]
@@ -31,8 +31,9 @@ class Synth {
 	}
 	defineWave() {
 		// Generate a wave from 0 to 100.... you know the deal
-		var real = new Float32Array(100);
-		var imag = new Float32Array(100);
+        var samples = this.samples;
+		var real = new Float32Array(samples);
+		var imag = new Float32Array(samples);
 		var fn;
 		switch ( this.wave ) {
 			case "sine":
@@ -49,11 +50,11 @@ class Synth {
 				break;
 		}
 		var z = 0;
-		for(var i=0; i<100; i+=1)
+		for(var i=0; i<samples; i+=1)
 		{
 
-			real[i] = (2*Math.min(fn(z/50),1))-1;
-			z += this.wavePWM(i/100);
+			real[i] = (2*Math.min(fn(z/samples/2),1))-1;
+			z += this.wavePWM(i/samples);
 			imag[i] = 0;
 		}
 
@@ -76,6 +77,7 @@ class Synth {
 		this.release = 0;
 		this.pitch = 0;
 		this.nodes = {};
+        this.samples = 1000;
 		this.keyBtns = document.querySelectorAll('.keyboard button');
 		this.controls = document.querySelector('.controls');
 		this.headerDiagram = document.querySelector('#header-vis');
@@ -118,8 +120,9 @@ class Synth {
 		/* configure oscillator */
 
 		const [real, imag] = this.defineWave();
-		var wave = ctx.createPeriodicWave(real, imag);
+        var wave = ctx.createPeriodicWave(real, imag);
 		osc.setPeriodicWave(wave);
+        //osc.type='sine';
 
 		osc.connect(attack);
 		osc.frequency.value = freq;
@@ -146,23 +149,41 @@ class Synth {
 			ctx.currentTime + this.attack + this.decay
 		);
 		decay.connect(release);
-		release.connect(distortion);
+
+        var last_node = release;
 
 		// distortion
-
-		distortion.curve = this.makeDistortionCurve(this.distortion);
-		distortion.oversample = this.oversample+'x';
-		distortion.connect(biquadFilter);
+        if( this.distortion == 0 ) {
+            last_node.connect(distortion);
+            distortion.curve = this.makeDistortionCurve(this.distortion);
+            switch( this.oversample ) {
+                case 0:
+                    distortion.oversample = 'none';
+                    break;
+                case 1:
+                    distortion.oversample = '2x';
+                    break;
+                case 2:
+                    distortion.oversample = '4x';
+                    break;
+            }
+            distortion.connect(biquadFilter);
+            last_node = distortion;
+        }
 
 		// filter!
 
-		biquadFilter.type = this.filterform;
-		biquadFilter.frequency.value = this.filterfreq;
-		biquadFilter.Q.value = this.filterq;
+        if( this.filterfreq != 1000 ) {
+            last_node.connect(biquadFilter);
+            biquadFilter.type = this.filterform;
+            biquadFilter.frequency.value = this.filterfreq;
+            biquadFilter.Q.value = this.filterq;
+            last_node = biquadFilter;
+        }
 
 		// reverb!
 		if( this.reverb == 1 ) {
-			biquadFilter.connect(reverbNode);
+			last_node.connect(reverbNode);
 			var reverbSoundArrayBuffer =  impulseResponse.slice(0);
 			ctx.decodeAudioData(reverbSoundArrayBuffer,
 			   function(buffer) {
@@ -172,13 +193,11 @@ class Synth {
 			     alert("Error when decoding audio data" + e.err);
 			   }
 			 );
-
-
-			reverbNode.connect(ctx.destination);
-		} else {
-			biquadFilter.connect(ctx.destination);
+            last_node = reverbNode;
 		}
-		//release.connect(ctx.destination);
+
+        last_node.connect(ctx.destination);
+
 		osc.start(0);
 
 		Array.from(this.keyBtns)
@@ -425,8 +444,8 @@ class Synth {
 			if( waveDiagram.id == `wave-custom` ) {
 				const [real, imag] = this.defineWave();
 				var points = "";
-				for(var i=0;i<100; i++){
-					points += (i*4.2)+","+((50*real[i])+100)+" ";
+				for(var i=0;i<this.samples; i++){
+					points += (i*(420/this.samples))+","+((50*real[i])+100)+" ";
 				}
 				waveDiagram.setAttribute("points", points);
 			}
