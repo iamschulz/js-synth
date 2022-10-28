@@ -68,15 +68,9 @@ a {
 .controls [type='radio']:checked + label {
 	color: var(--accent);
 }
-.controls .range {
-	display: flex;
-}
 .controls .range label {
 	display: inline-block;
-	min-width: 8ch;
-}
-.controls .range input {
-	width: 100%;
+	width: 7ch;
 }
 
 .error {
@@ -110,7 +104,7 @@ a {
 	justify-content: center;
 	align-items: flex-end;
 	padding-bottom: 1rem;
-	font-family: 'Press Start 2P', cursive;
+	font-family: 'Press Start 2P', monospace;
 	border: 1px solid black;
 	font-size: 0;
 }
