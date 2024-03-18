@@ -1,16 +1,16 @@
-import Freqs from './freqs.js';
-import Keys from './keys.js';
+import Freqs from "./freqs.js";
+import Keys from "./keys.js";
 
 class Synth {
 	constructor() {
 		if (!window.AudioContext) {
-			document.querySelector('dialog').setAttribute('open', 'open');
+			document.querySelector("dialog").setAttribute("open", "open");
 			return;
 		}
 
 		this.freqs = Freqs;
 		this.keys = Keys;
-		this.wave = 'sine';
+		this.wave = "sine";
 		this.threshold = 0.001;
 		this.attack = 0;
 		this.decay = 0;
@@ -18,9 +18,9 @@ class Synth {
 		this.release = 0;
 		this.pitch = 0;
 		this.nodes = {};
-		this.keyBtns = document.querySelectorAll('.keyboard button');
-		this.controls = document.querySelector('.controls');
-		this.headerDiagram = document.querySelector('#header-vis');
+		this.keyBtns = document.querySelectorAll(".keyboard button");
+		this.controls = document.querySelector(".controls");
+		this.headerDiagram = document.querySelector("#header-vis");
 
 		this.keyboardControls();
 		this.buttonControls();
@@ -32,7 +32,7 @@ class Synth {
 	 *
 	 * @param {String} key
 	 */
-	playNote(key = 'a') {
+	playNote(key = "a") {
 		const ctx = new window.AudioContext();
 		const osc = ctx.createOscillator();
 		const attack = ctx.createGain();
@@ -48,24 +48,15 @@ class Synth {
 		/* configure attack */
 		attack.gain.setValueAtTime(0.00001, ctx.currentTime);
 		if (this.attack > this.threshold) {
-			attack.gain.exponentialRampToValueAtTime(
-				0.9,
-				ctx.currentTime + this.threshold + this.attack
-			);
+			attack.gain.exponentialRampToValueAtTime(0.9, ctx.currentTime + this.threshold + this.attack);
 		} else {
-			attack.gain.exponentialRampToValueAtTime(
-				0.9,
-				ctx.currentTime + this.threshold
-			);
+			attack.gain.exponentialRampToValueAtTime(0.9, ctx.currentTime + this.threshold);
 		}
 		attack.connect(decay);
 
 		/* configure decay */
 		decay.gain.setValueAtTime(1, ctx.currentTime + this.attack);
-		decay.gain.exponentialRampToValueAtTime(
-			this.sustain / 100,
-			ctx.currentTime + this.attack + this.decay
-		);
+		decay.gain.exponentialRampToValueAtTime(this.sustain / 100, ctx.currentTime + this.attack + this.decay);
 		decay.connect(release);
 
 		release.connect(ctx.destination);
@@ -73,7 +64,7 @@ class Synth {
 
 		Array.from(this.keyBtns)
 			.filter((btn) => btn.dataset.note === key)[0]
-			.classList.add('active');
+			.classList.add("active");
 
 		this.nodes[key] = {
 			ctx: ctx,
@@ -93,10 +84,7 @@ class Synth {
 
 		/* configure release */
 		release.gain.setValueAtTime(0.9, ctx.currentTime);
-		release.gain.exponentialRampToValueAtTime(
-			0.00001,
-			ctx.currentTime + Math.max(this.release, this.threshold)
-		);
+		release.gain.exponentialRampToValueAtTime(0.00001, ctx.currentTime + Math.max(this.release, this.threshold));
 
 		window.setTimeout(() => {
 			ctx.close();
@@ -106,7 +94,7 @@ class Synth {
 			if (this.nodes[key] === node) {
 				Array.from(this.keyBtns)
 					.filter((btn) => btn.dataset.note === key)[0]
-					.classList.remove('active');
+					.classList.remove("active");
 
 				delete this.nodes[key];
 			}
@@ -124,7 +112,7 @@ class Synth {
 	}
 
 	keyboardControls() {
-		document.addEventListener('keydown', (e) => {
+		document.addEventListener("keydown", (e) => {
 			if (
 				!this.keys[e.code] || // key doesn't have a note
 				this.nodes[this.keys[e.code]] // note is already playing
@@ -134,7 +122,7 @@ class Synth {
 			this.playNote(this.keys[e.code]);
 		});
 
-		document.addEventListener('keyup', (e) => {
+		document.addEventListener("keyup", (e) => {
 			if (!this.keys[e.code] || !this.nodes[this.keys[e.code]]) return;
 
 			this.endNote(this.nodes[this.keys[e.code]]);
@@ -145,7 +133,7 @@ class Synth {
 		this.keyBtns.forEach((btn) => {
 			/*  click button */
 			btn.addEventListener(
-				'mousedown',
+				"mousedown",
 				(e) => {
 					const key = btn.dataset.note;
 					if (!key || !this.freqs[key]) return;
@@ -156,7 +144,7 @@ class Synth {
 			);
 
 			btn.addEventListener(
-				'touchstart',
+				"touchstart",
 				(e) => {
 					const key = btn.dataset.note;
 					if (!key || !this.freqs[key]) return;
@@ -168,7 +156,7 @@ class Synth {
 
 			/* change button while clicked */
 			btn.addEventListener(
-				'mouseenter',
+				"mouseenter",
 				(e) => {
 					const key = btn.dataset.note;
 					if (!e.buttons || !key || !this.freqs[key]) return;
@@ -179,15 +167,15 @@ class Synth {
 			);
 
 			/* trigger button with tab controls */
-			btn.addEventListener('keydown', (e) => {
-				if (!(e.code === 'Space' || e.key === 'Enter')) return;
+			btn.addEventListener("keydown", (e) => {
+				if (!(e.code === "Space" || e.key === "Enter")) return;
 
 				this.playNote(e.target.dataset.note);
 			});
 
 			/* release button */
 			btn.addEventListener(
-				'mouseup',
+				"mouseup",
 				(e) => {
 					const key = btn.dataset.note;
 					if (!key || !this.freqs[key] || !this.nodes[key]) return;
@@ -198,7 +186,7 @@ class Synth {
 			);
 
 			btn.addEventListener(
-				'mouseout',
+				"mouseout",
 				(e) => {
 					const key = btn.dataset.note;
 					if (!key || !this.freqs[key] || !this.nodes[key]) return;
@@ -209,7 +197,7 @@ class Synth {
 			);
 
 			btn.addEventListener(
-				'touchend',
+				"touchend",
 				(e) => {
 					const key = btn.dataset.note;
 					if (!key || !this.freqs[key] || !this.nodes[key]) return;
@@ -220,7 +208,7 @@ class Synth {
 			);
 
 			btn.addEventListener(
-				'touchcancel',
+				"touchcancel",
 				(e) => {
 					const key = btn.dataset.note;
 					if (!key || !this.freqs[key] || !this.nodes[key]) return;
@@ -230,15 +218,15 @@ class Synth {
 				{ passive: true }
 			);
 
-			btn.addEventListener('keyup', (e) => {
+			btn.addEventListener("keyup", (e) => {
 				const key = btn.dataset.note;
-				if (!(e.code === 'Space' || e.key === 'Enter')) return;
+				if (!(e.code === "Space" || e.key === "Enter")) return;
 				if (!key || !this.freqs[key] || !this.nodes[key]) return;
 
 				this.endNote(this.nodes[key]);
 			});
 
-			btn.addEventListener('blur', (e) => {
+			btn.addEventListener("blur", (e) => {
 				const key = btn.dataset.note;
 				if (!key || !this.freqs[key] || !this.nodes[key]) return;
 
@@ -269,7 +257,7 @@ class Synth {
 			});
 		};
 
-		this.controls.addEventListener('change', () => {
+		this.controls.addEventListener("change", () => {
 			applyOptions();
 		});
 
@@ -285,65 +273,59 @@ class Synth {
 		Object.keys(synthConfig).map((conf) => {
 			this[synthConfig] = synthConfig[conf];
 
-			if (conf === 'wave') {
+			if (conf === "wave") {
 				this.controls
 					.querySelector(`[name=waveform][value=${synthConfig[conf]}`)
-					.setAttribute('checked', 'checked');
+					.setAttribute("checked", "checked");
 			} else {
-				this.controls.querySelector(`#${conf}`).value =
-					synthConfig[conf];
+				this.controls.querySelector(`#${conf}`).value = synthConfig[conf];
 			}
 		});
 	}
 
 	drawWave() {
-		const waveDiagrams = this.headerDiagram.querySelectorAll(
-			'[id^="wave"]'
-		);
+		const waveDiagrams = this.headerDiagram.querySelectorAll('[id^="wave"]');
 		waveDiagrams.forEach((waveDiagram) => {
-			waveDiagram.toggleAttribute(
-				'hidden',
-				waveDiagram.id !== `wave-${this.wave}`
-			);
+			waveDiagram.toggleAttribute("hidden", waveDiagram.id !== `wave-${this.wave}`);
 		});
 	}
 
 	drawAdsr() {
 		// header diagram is 400 x 200
-		const a = this.headerDiagram.querySelector('#adsr-a');
-		const d = this.headerDiagram.querySelector('#adsr-d');
-		const s = this.headerDiagram.querySelector('#adsr-s');
-		const r = this.headerDiagram.querySelector('#adsr-r');
+		const a = this.headerDiagram.querySelector("#adsr-a");
+		const d = this.headerDiagram.querySelector("#adsr-d");
+		const s = this.headerDiagram.querySelector("#adsr-s");
+		const r = this.headerDiagram.querySelector("#adsr-r");
 
 		const ax = this.attack * 50 - 0.05;
 		const dx = (this.decay - 0.001) * 20 + ax;
 		const sy = 200 - this.sustain * 2;
 		const rx = 400 - this.release * 10 + 0.01;
 
-		a.toggleAttribute('hidden', ax === 0);
-		a.setAttribute('x2', ax);
+		a.toggleAttribute("hidden", ax === 0);
+		a.setAttribute("x2", ax);
 
-		d.toggleAttribute('hidden', dx === 0);
-		d.setAttribute('x1', ax);
-		d.setAttribute('x2', dx);
-		d.setAttribute('y2', sy);
+		d.toggleAttribute("hidden", dx === 0);
+		d.setAttribute("x1", ax);
+		d.setAttribute("x2", dx);
+		d.setAttribute("y2", sy);
 
-		s.setAttribute('x1', dx);
-		s.setAttribute('y1', sy);
-		s.setAttribute('x2', rx);
-		s.setAttribute('y2', sy);
+		s.setAttribute("x1", dx);
+		s.setAttribute("y1", sy);
+		s.setAttribute("x2", rx);
+		s.setAttribute("y2", sy);
 
-		r.toggleAttribute('hidden', rx === 400);
-		r.setAttribute('x1', rx);
-		r.setAttribute('y1', sy);
+		r.toggleAttribute("hidden", rx === 400);
+		r.setAttribute("x1", rx);
+		r.setAttribute("y1", sy);
 	}
 }
 
 new Synth();
 
 window.onload = () => {
-	'use strict';
-	if ('serviceWorker' in navigator) {
-		navigator.serviceWorker.register('./serviceworker.js');
+	"use strict";
+	if ("serviceWorker" in navigator) {
+		navigator.serviceWorker.register("./serviceworker.js");
 	}
 };

@@ -3,7 +3,20 @@
 	--fg: white;
 	--accent: SpringGreen;
 	--ui-width: 43.75rem; // 700px
+	--octaves: 1;
 	--gap-y: 2rem;
+}
+
+@media (min-width: 86rem) {
+	:root {
+		--octaves: 2;
+	}
+}
+
+@media (min-width: 132rem) {
+	:root {
+		--octaves: 3;
+	}
 }
 
 * {
@@ -12,22 +25,18 @@
 
 body {
 	color: var(--fg);
-	font-family: 'Press Start 2P', monospace;
+	font-family: "Press Start 2P", monospace;
 	line-height: 1.3em;
 
 	&:before {
-		content: '';
+		content: "";
 		position: fixed;
 		top: 0;
 		left: 0;
 		right: 0;
 		bottom: 0;
 		background-color: var(--bg);
-		background-image: linear-gradient(
-			160deg,
-			var(--bg) 30%,
-			var(--accent) 200%
-		);
+		background-image: linear-gradient(160deg, var(--bg) 30%, var(--accent) 200%);
 		z-index: -1;
 	}
 }
@@ -60,7 +69,7 @@ a {
 		margin-bottom: var(--gap-y);
 	}
 
-	[type='radio'] {
+	[type="radio"] {
 		display: none;
 
 		+ label {
@@ -89,7 +98,7 @@ a {
 	display: none;
 	align-items: center;
 	justify-content: center;
-	background: rgba(0,0,0,0.7);
+	background: rgba(0, 0, 0, 0.7);
 	backdrop-filter: blur(5px);
 	-webkit-backdrop-filter: blur(5px);
 	z-index: 10;
@@ -103,7 +112,7 @@ a {
 	position: relative;
 	display: flex;
 	justify-items: stretch;
-	max-width: var(--ui-width);
+	max-width: calc(var(--ui-width) * var(--octaves));
 	margin: auto;
 	user-select: none;
 
@@ -112,12 +121,12 @@ a {
 		justify-content: center;
 		align-items: flex-end;
 		padding-bottom: 1rem;
-		font-family: 'Press Start 2P', monospace;
+		font-family: "Press Start 2P", monospace;
 		border: 1px solid black;
 		font-size: 0;
 
 		&.white {
-			flex: 1 0 calc(100% / 12);
+			flex: 1 0 calc(100% / (12 * var(--octaves)));
 			max-height: 50vw;
 			height: 18rem;
 			background-color: white;
@@ -125,7 +134,7 @@ a {
 			margin: 0 2px;
 
 			+ button.white {
-				margin-left: -4px;
+				margin-left: -1px;
 			}
 
 			&:focus:not(.active) {
@@ -135,13 +144,16 @@ a {
 		}
 
 		&.black {
-			flex: 1 0 calc(100% / 12 * 0.4);
+			flex: 1 0 calc(100% / (12 * var(--octaves)) * 0.4);
 			max-height: 30vw;
 			height: 11rem;
-			margin-left: calc(100% / 12 * -0.5 - 4px);
-			margin-right: calc(100% / 12 * -0.5 - 4px);
+			margin-left: calc(100% / (12 * var(--octaves)) * -0.5 - 4px);
+			margin-right: calc(100% / (12 * var(--octaves)) * -0.5 - 4px);
 			z-index: 1;
 			background-color: black;
+			border-left-color: white;
+			border-right-color: white;
+			border-bottom-color: white;
 			color: darkgrey;
 
 			&:focus:not(.active) {
@@ -151,11 +163,7 @@ a {
 		}
 
 		&.active {
-			background: linear-gradient(
-				160deg,
-				var(--bg) -150%,
-				var(--accent) 100%
-			);
+			background: linear-gradient(160deg, var(--bg) -150%, var(--accent) 100%);
 			color: var(--bg);
 			outline: none;
 		}
@@ -169,10 +177,22 @@ footer {
 	font-size: 0.75rem;
 }
 
-@media (min-width: 768px) {
+@media (min-width: 48rem) {
 	.keyboard {
 		button {
 			font-size: 1.2em;
 		}
+	}
+}
+
+@media (max-width: 85.999rem) {
+	.md {
+		display: none !important;
+	}
+}
+
+@media (max-width: 131.999rem) {
+	.lg {
+		display: none !important;
 	}
 }

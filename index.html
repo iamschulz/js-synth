@@ -1,235 +1,220 @@
 <!DOCTYPE html>
 <html lang="en">
-	<head>
-		<meta charset="UTF-8" />
-		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>JSSynth</title>
-		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-		<link
-			rel="preload"
-			as="style"
-			href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap"
-		/>
-		<link
-			href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap"
-			rel="stylesheet"
-			media="print"
-			onload="this.media='all'"
-		/>
-		<link rel="preload" href="./freqs.js" as="script" crossorigin />
-		<link rel="preload" href="./keys.js" as="script" crossorigin />
-		<link rel="preload" href="./style.css" as="style" />
-		<link rel="stylesheet" href="./style.css" type="text/css" />
-		<link rel="manifest" href="./manifest.json" />
-		<link rel="icon" href="./icons/icon.svg" type="image/svg" />
-		<link rel="apple-touch-icon" href="./icons/icon-192.png" />
-		<meta name="theme-color" content="DarkSlateGrey" />
-		<meta name="apple-mobile-web-app-capable" content="yes" />
-		<meta name="apple-mobile-web-app-status-bar-style" content="black" />
-		<meta name="apple-mobile-web-app-title" content="Hello World" />
-		<meta name="msapplication-TileImage" content="icons/icon-144.png" />
-		<meta name="msapplication-TileImage" content="icons/icon-144.png" />
-		<meta name="msapplication-TileColor" content="DarkSlateGrey" />
-		<meta name="description" content="A Javascript Synthesizer" />
-	</head>
-	<body>
-		<header>
-			<h1>JSSynth</h1>
-			<svg
-				id="header-vis"
-				xmlns="http://www.w3.org/2000/svg"
-				width="100"
-				height="50"
-				viewbox="-10 -10 420 220"
-				stroke="SpringGreen"
-				stroke-width="10"
-				stroke-linecap="round"
-				fill="none"
-			>
-				<path
-					id="wave-sine"
-					stroke="white"
-					d="m0,100c0,0 0,-100 100,-100c100,0 100,100 100,100c0,0 0,100 100,100c100,0 100,-100 100,-100"
-				/>
-				<polyline
-					id="wave-square"
-					points="0,160 100,160 100,40, 300,40 300,160 400,160"
-					stroke="white"
-					hidden
-				/>
-				<polyline
-					id="wave-triangle"
-					points="0,40 133,160 266,40 400,160"
-					stroke="white"
-					hidden
-				/>
-				<polyline
-					id="wave-sawtooth"
-					points="0,160 100,160 100,40, 300,160 400,160"
-					stroke="white"
-					hidden
-				/>
 
-				<line id="adsr-a" x1="0" y1="200" x2="100" y2="0" />
-				<line id="adsr-d" x1="100" y1="0" x2="200" y2="100" />
-				<line id="adsr-s" x1="200" y1="100" x2="300" y2="100" />
-				<line id="adsr-r" x1="300" y1="100" x2="400" y2="200" />
-			</svg>
-		</header>
-		<dialog class="error">
-			Sorry.<br />
-			Your Browser can't play sounds with this synth.<br />
-			Maybe try Chrome or Firefox?
-		</dialog>
-		<form class="controls">
-			<div class="controls-box">
-				<input
-					type="radio"
-					id="waveform-sine"
-					name="waveform"
-					value="sine"
-					checked
-				/>
-				<label for="waveform-sine">Sine</label>
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>JSSynth</title>
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+	<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" />
+	<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet" media="print"
+		onload="this.media='all'" />
+	<link rel="preload" href="./freqs.js" as="script" crossorigin />
+	<link rel="preload" href="./keys.js" as="script" crossorigin />
+	<link rel="preload" href="./style.css" as="style" />
+	<link rel="stylesheet" href="./style.css" type="text/css" />
+	<link rel="manifest" href="./manifest.json" />
+	<link rel="icon" href="./icons/icon.svg" type="image/svg" />
+	<link rel="apple-touch-icon" href="./icons/icon-192.png" />
+	<meta name="theme-color" content="DarkSlateGrey" />
+	<meta name="apple-mobile-web-app-capable" content="yes" />
+	<meta name="apple-mobile-web-app-status-bar-style" content="black" />
+	<meta name="apple-mobile-web-app-title" content="Hello World" />
+	<meta name="msapplication-TileImage" content="icons/icon-144.png" />
+	<meta name="msapplication-TileImage" content="icons/icon-144.png" />
+	<meta name="msapplication-TileColor" content="DarkSlateGrey" />
+	<meta name="description" content="A Javascript Synthesizer" />
+</head>
 
-				<input
-					type="radio"
-					id="waveform-square"
-					name="waveform"
-					value="square"
-				/>
-				<label for="waveform-square">Square</label>
+<body>
+	<header>
+		<h1>JSSynth</h1>
+		<svg id="header-vis" xmlns="http://www.w3.org/2000/svg" width="100" height="50" viewbox="-10 -10 420 220"
+			stroke="SpringGreen" stroke-width="10" stroke-linecap="round" fill="none">
+			<path id="wave-sine" stroke="white"
+				d="m0,100c0,0 0,-100 100,-100c100,0 100,100 100,100c0,0 0,100 100,100c100,0 100,-100 100,-100" />
+			<polyline id="wave-square" points="0,160 100,160 100,40, 300,40 300,160 400,160" stroke="white" hidden />
+			<polyline id="wave-triangle" points="0,40 133,160 266,40 400,160" stroke="white" hidden />
+			<polyline id="wave-sawtooth" points="0,160 100,160 100,40, 300,160 400,160" stroke="white" hidden />
 
-				<input
-					type="radio"
-					id="waveform-triangle"
-					name="waveform"
-					value="triangle"
-				/>
-				<label for="waveform-triangle">Triangle</label>
+			<line id="adsr-a" x1="0" y1="200" x2="100" y2="0" />
+			<line id="adsr-d" x1="100" y1="0" x2="200" y2="100" />
+			<line id="adsr-s" x1="200" y1="100" x2="300" y2="100" />
+			<line id="adsr-r" x1="300" y1="100" x2="400" y2="200" />
+		</svg>
+	</header>
+	<dialog class="error">
+		Sorry.<br />
+		Your Browser can't play sounds with this synth.<br />
+		Maybe try Chrome or Firefox?
+	</dialog>
+	<form class="controls">
+		<div class="controls-box">
+			<input type="radio" id="waveform-sine" name="waveform" value="sine" checked />
+			<label for="waveform-sine">Sine</label>
 
-				<input
-					type="radio"
-					id="waveform-sawtooth"
-					name="waveform"
-					value="sawtooth"
-				/>
-				<label for="waveform-sawtooth">Sawtooth</label>
+			<input type="radio" id="waveform-square" name="waveform" value="square" />
+			<label for="waveform-square">Square</label>
+
+			<input type="radio" id="waveform-triangle" name="waveform" value="triangle" />
+			<label for="waveform-triangle">Triangle</label>
+
+			<input type="radio" id="waveform-sawtooth" name="waveform" value="sawtooth" />
+			<label for="waveform-sawtooth">Sawtooth</label>
+		</div>
+
+		<div class="controls-box">
+			<div class="range">
+				<label for="pitch">Pitch</label>
+				<input name="pitch" id="pitch" type="range" data-control-name="pitch" min="-1" max="8" value="3" />
 			</div>
 
-			<div class="controls-box">
-				<div class="range">
-					<label for="pitch">Pitch</label>
-					<input
-						name="pitch"
-						id="pitch"
-						type="range"
-						data-control-name="pitch"
-						min="-1"
-						max="8"
-						value="3"
-					/>
-				</div>
-
-				<div class="range">
-					<label for="attack">Attack</label>
-					<input
-						name="attack"
-						id="attack"
-						type="range"
-						data-control-name="attack"
-						min="0"
-						max="2"
-						step="0.05"
-						value="0"
-					/>
-				</div>
-
-				<div class="range">
-					<label for="decay">Decay</label>
-					<input
-						name="decay"
-						id="decay"
-						type="range"
-						data-control-name="decay"
-						min="0"
-						max="5"
-						step="0.1"
-						value="0"
-					/>
-				</div>
-
-				<div class="range">
-					<label for="sustain">Sustain</label>
-					<input
-						name="sustain"
-						id="sustain"
-						type="range"
-						data-control-name="sustain"
-						min="0"
-						max="100"
-						value="50"
-					/>
-				</div>
-
-				<div class="range">
-					<label for="release">Release</label>
-					<input
-						name="release"
-						id="release"
-						type="range"
-						data-control-name="release"
-						min="0"
-						max="10"
-						step="0.1"
-						value="0"
-					/>
-				</div>
+			<div class="range">
+				<label for="attack">Attack</label>
+				<input name="attack" id="attack" type="range" data-control-name="attack" min="0" max="2" step="0.05"
+					value="0" />
 			</div>
-		</form>
-		<section class="keyboard">
-			<button class="white" data-note="c" label="C">
-				<key>A</key>
-			</button>
-			<button class="black" data-note="cs" label="C sharp">
-				<key>W</key>
-			</button>
-			<button class="white" data-note="d" label="D"><key>S</key></button>
-			<button class="black" data-note="eb" label="E sharp">
-				<key>E</key>
-			</button>
-			<button class="white" data-note="e" label="E"><key>D</key></button>
-			<button class="white" data-note="f" label="F"><key>F</key></button>
-			<button class="black" data-note="fs" label="F sharp">
-				<key>T</key>
-			</button>
-			<button class="white" data-note="g" label="G"><key>G</key></button>
-			<button class="black" data-note="gs" label="G sharp">
-				<key>Y</key>
-			</button>
-			<button class="white" data-note="a" label="A"><key>H</key></button>
-			<button class="black" data-note="bb" label="A sharp">
-				<key>U</key>
-			</button>
-			<button class="white" data-note="b" label="B"><key>J</key></button>
-			<button class="white" data-note="c2" label="C2">
-				<key>K</key>
-			</button>
-		</section>
 
-		<footer>
-			made with &lt;3<br />
-			<a href="https://iamschulz.com/" target="_blank" rel="noopener">
-				Daniel Schulz</a
-			><br />
-			(<a
-				href="https://github.com/iamschulz/js-synth"
-				target="_blank"
-				rel="noopener"
-				>Code</a
-			>)
-		</footer>
+			<div class="range">
+				<label for="decay">Decay</label>
+				<input name="decay" id="decay" type="range" data-control-name="decay" min="0" max="5" step="0.1"
+					value="0" />
+			</div>
 
-		<script src="./script.js" type="module" defer></script>
-	</body>
+			<div class="range">
+				<label for="sustain">Sustain</label>
+				<input name="sustain" id="sustain" type="range" data-control-name="sustain" min="0" max="100"
+					value="50" />
+			</div>
+
+			<div class="range">
+				<label for="release">Release</label>
+				<input name="release" id="release" type="range" data-control-name="release" min="0" max="10" step="0.1"
+					value="0" />
+			</div>
+		</div>
+	</form>
+	<section class="keyboard">
+		<button class="white md" data-note="c1" label="C">
+			<key>A</key>
+		</button>
+		<button class="black md" data-note="cs1" label="C sharp">
+			<key>S</key>
+		</button>
+		<button class="white md" data-note="d1" label="D">
+			<key>D</key>
+		</button>
+		<button class="black md" data-note="eb1" label="E sharp">
+			<key>F</key>
+		</button>
+		<button class="white md" data-note="e1" label="E">
+			<key>G</key>
+		</button>
+		<button class="white md" data-note="f1" label="F">
+			<key>H</key>
+		</button>
+		<button class="black md" data-note="fs1" label="F sharp">
+			<key>J</key>
+		</button>
+		<button class="white md" data-note="g1" label="G">
+			<key>K</key>
+		</button>
+		<button class="black md" data-note="gs1" label="G sharp">
+			<key>L</key>
+		</button>
+		<button class="white md" data-note="a1" label="A">
+			<key>;</key>
+		</button>
+		<button class="black md" data-note="bb1" label="A sharp">
+			<key>'</key>
+		</button>
+		<button class="white md" data-note="b1" label="B">
+			<key>\</key>
+		</button>
+
+		<button class="white" data-note="c2" label="C">
+			<key>Q</key>
+		</button>
+		<button class="black" data-note="cs2" label="C sharp">
+			<key>W</key>
+		</button>
+		<button class="white" data-note="d2" label="D">
+			<key>E</key>
+		</button>
+		<button class="black" data-note="eb2" label="E sharp">
+			<key>R</key>
+		</button>
+		<button class="white" data-note="e2" label="E">
+			<key>T</key>
+		</button>
+		<button class="white" data-note="f2" label="F">
+			<key>Z</key>
+		</button>
+		<button class="black" data-note="fs2" label="F sharp">
+			<key>U</key>
+		</button>
+		<button class="white" data-note="g2" label="G">
+			<key>I</key>
+		</button>
+		<button class="black" data-note="gs2" label="G sharp">
+			<key>O</key>
+		</button>
+		<button class="white" data-note="a2" label="A">
+			<key>P</key>
+		</button>
+		<button class="black" data-note="bb2" label="A sharp">
+			<key>[</key>
+		</button>
+		<button class="white" data-note="b2" label="B">
+			<key>]</key>
+		</button>
+
+		<button class="white lg" data-note="c3" label="C3">
+			<key>1</key>
+		</button>
+		<button class="black lg" data-note="cs3" label="C sharp">
+			<key>2</key>
+		</button>
+		<button class="white lg" data-note="d3" label="D">
+			<key>3</key>
+		</button>
+		<button class="black lg" data-note="eb3" label="E sharp">
+			<key>4</key>
+		</button>
+		<button class="white lg" data-note="e3" label="E">
+			<key>5</key>
+		</button>
+		<button class="white lg" data-note="f3" label="F">
+			<key>6</key>
+		</button>
+		<button class="black lg" data-note="fs3" label="F sharp">
+			<key>7</key>
+		</button>
+		<button class="white lg" data-note="g3" label="G">
+			<key>8</key>
+		</button>
+		<button class="black lg" data-note="gs3" label="G sharp">
+			<key>9</key>
+		</button>
+		<button class="white lg" data-note="a3" label="A">
+			<key>0</key>
+		</button>
+		<button class="black lg" data-note="bb3" label="A sharp">
+			<key>-</key>
+		</button>
+		<button class="white lg" data-note="b3" label="B">
+			<key>=</key>
+		</button>
+	</section>
+
+	<footer>
+		made with &lt;3<br />
+		<a href="https://iamschulz.com/" target="_blank" rel="noopener">
+			Daniel Schulz</a><br />
+		(<a href="https://github.com/iamschulz/js-synth" target="_blank" rel="noopener">Code</a>)
+	</footer>
+
+	<script src="./script.js" type="module" defer></script>
+</body>
+
 </html>
