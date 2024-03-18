@@ -124,6 +124,7 @@ a {
 		font-family: "Press Start 2P", monospace;
 		border: 1px solid black;
 		font-size: 0;
+		text-transform: uppercase;
 
 		&.white {
 			flex: 1 0 calc(100% / (12 * var(--octaves)));

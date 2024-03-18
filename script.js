@@ -25,6 +25,7 @@ class Synth {
 		this.keyboardControls();
 		this.buttonControls();
 		this.optionControls();
+		this.updateLegend();
 	}
 
 	/**
@@ -318,6 +319,20 @@ class Synth {
 		r.toggleAttribute("hidden", rx === 400);
 		r.setAttribute("x1", rx);
 		r.setAttribute("y1", sy);
+	}
+
+	async updateLegend() {
+		if (!navigator.keyboard?.getLayoutMap) {
+			return;
+		}
+
+		const layoutMap = await navigator.keyboard.getLayoutMap();
+		Object.keys(this.keys).forEach((key) => {
+			const note = this.keys[key];
+			const keyBtn = document.querySelector(`[data-note=${note}]`);
+			const keyText = layoutMap.get(key);
+			keyBtn.textContent = keyText;
+		});
 	}
 }
 
