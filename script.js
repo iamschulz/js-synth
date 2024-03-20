@@ -1,5 +1,6 @@
 import Freqs from "./freqs.js";
 import Keys from "./keys.js";
+import { MidiAdapter } from "./midi.js";
 
 class Synth {
 	constructor() {
@@ -49,15 +50,24 @@ class Synth {
 		/* configure attack */
 		attack.gain.setValueAtTime(0.00001, ctx.currentTime);
 		if (this.attack > this.threshold) {
-			attack.gain.exponentialRampToValueAtTime(0.9, ctx.currentTime + this.threshold + this.attack);
+			attack.gain.exponentialRampToValueAtTime(
+				0.9,
+				ctx.currentTime + this.threshold + this.attack
+			);
 		} else {
-			attack.gain.exponentialRampToValueAtTime(0.9, ctx.currentTime + this.threshold);
+			attack.gain.exponentialRampToValueAtTime(
+				0.9,
+				ctx.currentTime + this.threshold
+			);
 		}
 		attack.connect(decay);
 
 		/* configure decay */
 		decay.gain.setValueAtTime(1, ctx.currentTime + this.attack);
-		decay.gain.exponentialRampToValueAtTime(this.sustain / 100, ctx.currentTime + this.attack + this.decay);
+		decay.gain.exponentialRampToValueAtTime(
+			this.sustain / 100,
+			ctx.currentTime + this.attack + this.decay
+		);
 		decay.connect(release);
 
 		release.connect(ctx.destination);
@@ -85,7 +95,10 @@ class Synth {
 
 		/* configure release */
 		release.gain.setValueAtTime(0.9, ctx.currentTime);
-		release.gain.exponentialRampToValueAtTime(0.00001, ctx.currentTime + Math.max(this.release, this.threshold));
+		release.gain.exponentialRampToValueAtTime(
+			0.00001,
+			ctx.currentTime + Math.max(this.release, this.threshold)
+		);
 
 		window.setTimeout(() => {
 			ctx.close();
@@ -279,15 +292,20 @@ class Synth {
 					.querySelector(`[name=waveform][value=${synthConfig[conf]}`)
 					.setAttribute("checked", "checked");
 			} else {
-				this.controls.querySelector(`#${conf}`).value = synthConfig[conf];
+				this.controls.querySelector(`#${conf}`).value =
+					synthConfig[conf];
 			}
 		});
 	}
 
 	drawWave() {
-		const waveDiagrams = this.headerDiagram.querySelectorAll('[id^="wave"]');
+		const waveDiagrams =
+			this.headerDiagram.querySelectorAll('[id^="wave"]');
 		waveDiagrams.forEach((waveDiagram) => {
-			waveDiagram.toggleAttribute("hidden", waveDiagram.id !== `wave-${this.wave}`);
+			waveDiagram.toggleAttribute(
+				"hidden",
+				waveDiagram.id !== `wave-${this.wave}`
+			);
 		});
 	}
 
@@ -337,6 +355,8 @@ class Synth {
 }
 
 new Synth();
+
+new MidiAdapter();
 
 window.onload = () => {
 	"use strict";
