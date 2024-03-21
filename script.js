@@ -127,19 +127,26 @@ class Synth {
 
 	keyboardControls() {
 		document.addEventListener("keydown", (e) => {
+			const note = Object.keys(this.keys).find(
+				(x) => this.keys[x].key === e.code
+			);
+
 			if (
-				!this.keys[e.code] || // key doesn't have a note
-				this.nodes[this.keys[e.code]] // note is already playing
+				!this.keys[note]?.key ||
+				this.nodes[note] // note is already playing
 			)
 				return;
 
-			this.playNote(this.keys[e.code]);
+			this.playNote(note);
 		});
 
 		document.addEventListener("keyup", (e) => {
-			if (!this.keys[e.code] || !this.nodes[this.keys[e.code]]) return;
+			const note = Object.keys(this.keys).find(
+				(x) => this.keys[x].key === e.code
+			);
+			if (!this.keys[note]?.key || !this.nodes[note]) return;
 
-			this.endNote(this.nodes[this.keys[e.code]]);
+			this.endNote(this.nodes[note]);
 		});
 	}
 
@@ -345,8 +352,8 @@ class Synth {
 		}
 
 		const layoutMap = await navigator.keyboard.getLayoutMap();
-		Object.keys(this.keys).forEach((key) => {
-			const note = this.keys[key];
+		Object.keys(this.keys).forEach((note) => {
+			const key = this.keys[note].key;
 			const keyBtn = document.querySelector(`[data-note=${note}]`);
 			const keyText = layoutMap.get(key);
 			keyBtn.textContent = keyText;
