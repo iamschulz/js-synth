@@ -148,6 +148,35 @@ class Synth {
 
 			this.endNote(this.nodes[note]);
 		});
+
+		document.addEventListener("midikeydown", (e) => {
+			if (!e.detail?.note) {
+				return;
+			}
+			const note = Object.keys(this.keys).find(
+				(x) => this.keys[x].midiIn === e.detail.note
+			);
+
+			if (
+				!this.keys[note]?.key ||
+				this.nodes[note] // note is already playing
+			)
+				return;
+
+			this.playNote(note);
+		});
+
+		document.addEventListener("midikeyup", (e) => {
+			if (!e.detail?.note) {
+				return;
+			}
+			const note = Object.keys(this.keys).find(
+				(x) => this.keys[x].midiIn === e.detail.note
+			);
+			if (!this.keys[note]?.key || !this.nodes[note]) return;
+
+			this.endNote(this.nodes[note]);
+		});
 	}
 
 	buttonControls() {

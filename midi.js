@@ -1,25 +1,26 @@
 export class MidiAdapter {
 	constructor() {
 		this.midi = null;
-		navigator
-			.requestMIDIAccess()
-			.then(this.onMIDISuccess.bind(this), this.onMIDIFailure.bind(this));
+		navigator.requestMIDIAccess().then(this.onMIDISuccess.bind(this));
 	}
 
 	onMIDISuccess(midiAccess) {
-		console.log("MIDI ready!");
 		this.midi = midiAccess;
+		this.startLoggingMIDIInput();
 	}
 
-	onMIDIFailure(msg) {
-		console.error(`Failed to get MIDI access - ${msg}`);
+	startLoggingMIDIInput() {
+		this.midi.inputs.forEach((entry) => {
+			console.log(entry);
+			entry.onmidimessage = (x) => this.onMIDIMessage(x);
+		});
 	}
 
 	parseMidiMessage(message) {
 		return {
 			command: message[0] >> 4,
 			channel: message[0] & 0xf,
-			note: message[1],
+			note: parseInt(message[1]),
 			velocity: message[2] / 127,
 		};
 	}
@@ -41,17 +42,29 @@ export class MidiAdapter {
 		}
 		if (
 			(data.channel === 0 && data.command === 8) ||
-			(data.command === 9 && data.velocity === 0)
+			(data.channel === 0 && data.command === 9 && data.velocity === 0)
 		) {
 			this.releaseNote(data);
 		}
 	}
 
 	pressNote(data) {
-		console.log("press note", data.note, data.velocity);
+		const event = new CustomEvent("midikeydown", {
+			detail: {
+				note: data.note,
+				velocity: data.velocity,
+			},
+		});
+		document.dispatchEvent(event);
 	}
 
 	releaseNote(data) {
-		console.log("release note", data.note);
+		const event = new CustomEvent("midikeyup", {
+			detail: {
+				note: data.note,
+				velocity: data.velocity,
+			},
+		});
+		document.dispatchEvent(event);
 	}
 }
