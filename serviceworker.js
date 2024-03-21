@@ -1,6 +1,13 @@
-const ver = "1.1.2";
+const ver = "1.1.3";
 const cacheName = `js-synth-${ver}`;
-const filesToCache = ["./", "./index.html", "./style.css", "./script.js", "./freqs.js", "./keys.js"];
+const filesToCache = [
+	"./",
+	"./index.html",
+	"./style.css",
+	"./script.js",
+	"./freqs.js",
+	"./keys.js",
+];
 
 /* Start the service worker and cache all of the app's content */
 self.addEventListener("install", function (e) {
