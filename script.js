@@ -294,6 +294,7 @@ class Synth {
 			this.sustain = parseFloat(data.sustain);
 			this.release = parseFloat(data.release) + 0.001;
 			this.pitch = parseInt(data.pitch);
+			this.midiIn = parseInt(data.midiIn) || 0;
 			this.drawWave();
 			this.drawAdsr();
 
@@ -304,6 +305,7 @@ class Synth {
 				sustain: this.sustain,
 				release: this.release,
 				pitch: this.pitch,
+				midiIn: this.midiIn,
 			});
 		};
 

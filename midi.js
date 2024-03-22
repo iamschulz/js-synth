@@ -1,7 +1,9 @@
 export class MidiAdapter {
 	constructor() {
 		this.midi = null;
+		this.inChannel = parseInt(document.querySelector("#midiIn").value);
 		navigator.requestMIDIAccess().then(this.onMIDISuccess.bind(this));
+		this.watchChannels();
 	}
 
 	onMIDISuccess(midiAccess) {
@@ -11,7 +13,6 @@ export class MidiAdapter {
 
 	startLoggingMIDIInput() {
 		this.midi.inputs.forEach((entry) => {
-			console.log(entry);
 			entry.onmidimessage = (x) => this.onMIDIMessage(x);
 		});
 	}
@@ -37,12 +38,18 @@ export class MidiAdapter {
 		const message = str.split(" ");
 		const data = this.parseMidiMessage(message);
 
-		if (data.channel === 0 && data.command === 9 && data.velocity > 0) {
+		if (
+			data.channel === this.inChannel &&
+			data.command === 9 &&
+			data.velocity > 0
+		) {
 			this.pressNote(data);
 		}
 		if (
-			(data.channel === 0 && data.command === 8) ||
-			(data.channel === 0 && data.command === 9 && data.velocity === 0)
+			(data.channel === this.inChannel && data.command === 8) ||
+			(data.channel === this.inChannel &&
+				data.command === 9 &&
+				data.velocity === 0)
 		) {
 			this.releaseNote(data);
 		}
@@ -66,5 +73,11 @@ export class MidiAdapter {
 			},
 		});
 		document.dispatchEvent(event);
+	}
+
+	watchChannels() {
+		document.querySelector("#midiIn").addEventListener("input", (e) => {
+			this.inChannel = parseInt(e.target.value);
+		});
 	}
 }
