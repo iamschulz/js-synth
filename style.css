@@ -47,7 +47,8 @@ a {
   max-width: calc(var(--ui-width) * var(--octaves));
   margin: 0 auto;
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); }
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  margin-bottom: 1rem; }
   .controls-box {
     display: flex;
     flex-direction: column;
@@ -59,7 +60,7 @@ a {
     .controls [type="radio"]:checked + label {
       color: var(--accent); }
   .controls select {
-    width: 7ch;
+    width: 9ch;
     font: inherit;
     border: none;
     color: inherit;
@@ -67,7 +68,7 @@ a {
     padding: 0.4rem; }
   .controls .option label {
     display: inline-block;
-    width: 7ch; }
+    width: 9ch; }
 
 .error {
   position: absolute;

@@ -5,7 +5,7 @@ export class MidiAdapter {
 		this.midi = null;
 		navigator.requestMIDIAccess().then(this.onMIDISuccess.bind(this));
 		this.inChannel = parseInt(document.querySelector("#midiIn").value);
-		this.outChannel = "1";
+		this.inChannel = parseInt(document.querySelector("#midiOut").value);
 		this.watchChannelOptions();
 	}
 
@@ -111,6 +111,10 @@ export class MidiAdapter {
 	watchChannelOptions() {
 		document.querySelector("#midiIn").addEventListener("input", (e) => {
 			this.inChannel = parseInt(e.target.value);
+		});
+
+		document.querySelector("#midiOut").addEventListener("input", (e) => {
+			this.outChannel = parseInt(e.target.value);
 		});
 	}
 }

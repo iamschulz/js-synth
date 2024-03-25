@@ -66,6 +66,7 @@ a {
 	margin: 0 auto;
 	display: grid;
 	grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+	margin-bottom: 1rem;
 
 	&-box {
 		display: flex;
@@ -86,7 +87,7 @@ a {
 	}
 
 	select {
-		width: 7ch;
+		width: 9ch;
 		font: inherit;
 		border: none;
 		color: inherit;
@@ -97,7 +98,7 @@ a {
 	.option {
 		label {
 			display: inline-block;
-			width: 7ch;
+			width: 9ch;
 		}
 	}
 }
