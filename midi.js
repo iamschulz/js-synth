@@ -1,19 +1,37 @@
+import Keys from "./keys.js";
+
 export class MidiAdapter {
 	constructor() {
 		this.midi = null;
-		this.inChannel = parseInt(document.querySelector("#midiIn").value);
 		navigator.requestMIDIAccess().then(this.onMIDISuccess.bind(this));
-		this.watchChannels();
+		this.inChannel = parseInt(document.querySelector("#midiIn").value);
+		this.outChannel = "1";
+		this.watchChannelOptions();
 	}
 
 	onMIDISuccess(midiAccess) {
 		this.midi = midiAccess;
-		this.startLoggingMIDIInput();
+
+		for (const entry of midiAccess.outputs) {
+			const output = entry[1];
+			console.log(
+				`Output port [type:'${output.type}'] id:'${output.id}' manufacturer:'${output.manufacturer}' name:'${output.name}' version:'${output.version}'`
+			);
+		}
+
+		this.watchPlayActions();
+		this.watchMidiInput();
 	}
 
-	startLoggingMIDIInput() {
-		this.midi.inputs.forEach((entry) => {
-			entry.onmidimessage = (x) => this.onMIDIMessage(x);
+	watchPlayActions() {
+		document.addEventListener("playnote", (e) => {
+			this.sendMidiMessage("play", e.detail.note, e.detail.velocity);
+		});
+	}
+
+	watchMidiInput() {
+		this.midi.inputs.forEach((inputDevice) => {
+			inputDevice.onmidimessage = (x) => this.onMIDIMessage(x);
 		});
 	}
 
@@ -37,6 +55,7 @@ export class MidiAdapter {
 		}
 		const message = str.split(" ");
 		const data = this.parseMidiMessage(message);
+		console.log(message, data);
 
 		if (
 			data.channel === this.inChannel &&
@@ -53,6 +72,20 @@ export class MidiAdapter {
 		) {
 			this.releaseNote(data);
 		}
+	}
+
+	sendMidiMessage(command, note, velocity = 0) {
+		if (!this.outChannel || !command) {
+			return;
+		}
+
+		const midiCode = Keys[note].midiIn;
+		const midiCommand = "0x" + ((9 << 4) | this.outChannel).toString(16);
+		const midiVelocity = "0x" + (velocity * 127).toString(16);
+
+		this.midi.outputs.forEach((outputDevice) => {
+			outputDevice.send([midiCommand, midiCode, midiVelocity]);
+		});
 	}
 
 	pressNote(data) {
@@ -75,7 +108,7 @@ export class MidiAdapter {
 		document.dispatchEvent(event);
 	}
 
-	watchChannels() {
+	watchChannelOptions() {
 		document.querySelector("#midiIn").addEventListener("input", (e) => {
 			this.inChannel = parseInt(e.target.value);
 		});

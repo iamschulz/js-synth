@@ -82,6 +82,14 @@ class Synth {
 			osc: osc,
 			release: release,
 		};
+
+		const event = new CustomEvent("playnote", {
+			detail: {
+				note: key,
+				velocity: 1,
+			},
+		});
+		document.dispatchEvent(event);
 	}
 
 	/**
@@ -111,6 +119,14 @@ class Synth {
 					.classList.remove("active");
 
 				delete this.nodes[key];
+
+				const event = new CustomEvent("playnote", {
+					detail: {
+						note: key,
+						velocity: 0,
+					},
+				});
+				document.dispatchEvent(event);
 			}
 		});
 	}
