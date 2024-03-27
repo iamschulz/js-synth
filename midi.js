@@ -3,10 +3,20 @@ import Keys from "./keys.js";
 export class MidiAdapter {
 	constructor() {
 		this.midi = null;
+		this.watchChannelOptions();
+		navigator.permissions.query({ name: "midi", sysex: true }).then(permission => {
+			if (permission.state === "granted" || permission.state === "prompt") {
+				this.init();
+			} else {
+				this.disableMidi();
+			}
+		})
+	}
+	
+	init() {
 		navigator.requestMIDIAccess().then(this.onMIDISuccess.bind(this));
 		this.inChannel = parseInt(document.querySelector("#midiIn").value);
 		this.inChannel = parseInt(document.querySelector("#midiOut").value);
-		this.watchChannelOptions();
 	}
 
 	onMIDISuccess(midiAccess) {
@@ -116,5 +126,10 @@ export class MidiAdapter {
 		document.querySelector("#midiOut").addEventListener("input", (e) => {
 			this.outChannel = parseInt(e.target.value);
 		});
+	}
+
+	disableMidi() {
+		document.querySelector("#midiIn").setAttribute("disabled", "disabled");
+		document.querySelector("#midiOut").setAttribute("disabled", "disabled");
 	}
 }
