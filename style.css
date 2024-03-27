@@ -139,6 +139,7 @@ a {
 		border: 1px solid black;
 		font-size: 0;
 		text-transform: uppercase;
+		user-select: none;
 
 		&.white {
 			flex: 1 0 calc(100% / (12 * var(--octaves)));
