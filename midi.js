@@ -65,7 +65,6 @@ export class MidiAdapter {
 		}
 		const message = str.split(" ");
 		const data = this.parseMidiMessage(message);
-		console.log(message, data);
 
 		if (
 			data.channel === this.inChannel &&
