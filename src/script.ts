@@ -2,10 +2,37 @@ import Freqs from "./freqs.js";
 import Keys from "./keys.js";
 import { MidiAdapter } from "./midi.js";
 
+type AudioNode = {
+	ctx: AudioContext;
+	osc: OscillatorNode;
+	release: GainNode;
+};
+
 class Synth {
+	freqs: { [key: string]: number };
+	keys: {
+		[key: string]: {
+			key: string;
+			midiIn: number;
+		};
+	};
+	wave: "sine" | "square" | "triangle" | "sawtooth";
+	threshold: number;
+	attack: number;
+	decay: number;
+	sustain: number;
+	release: number;
+	pitch: number;
+	nodes: { [key: string]: AudioNode };
+	keyBtns: NodeListOf<HTMLButtonElement>;
+	controls: HTMLFormElement;
+	headerDiagram: SVGElement;
+	midiIn: number;
+	midiOut: number;
+
 	constructor() {
 		if (!window.AudioContext) {
-			document.querySelector("dialog").setAttribute("open", "open");
+			(document.querySelector("dialog") as HTMLDialogElement).setAttribute("open", "open");
 			return;
 		}
 
@@ -20,8 +47,8 @@ class Synth {
 		this.pitch = 0;
 		this.nodes = {};
 		this.keyBtns = document.querySelectorAll(".keyboard button");
-		this.controls = document.querySelector(".controls");
-		this.headerDiagram = document.querySelector("#header-vis");
+		this.controls = document.querySelector(".controls")!;
+		this.headerDiagram = document.querySelector("#header-vis")!;
 
 		this.keyboardControls();
 		this.buttonControls();
@@ -50,24 +77,15 @@ class Synth {
 		/* configure attack */
 		attack.gain.setValueAtTime(0.00001, ctx.currentTime);
 		if (this.attack > this.threshold) {
-			attack.gain.exponentialRampToValueAtTime(
-				0.9,
-				ctx.currentTime + this.threshold + this.attack
-			);
+			attack.gain.exponentialRampToValueAtTime(0.9, ctx.currentTime + this.threshold + this.attack);
 		} else {
-			attack.gain.exponentialRampToValueAtTime(
-				0.9,
-				ctx.currentTime + this.threshold
-			);
+			attack.gain.exponentialRampToValueAtTime(0.9, ctx.currentTime + this.threshold);
 		}
 		attack.connect(decay);
 
 		/* configure decay */
 		decay.gain.setValueAtTime(1, ctx.currentTime + this.attack);
-		decay.gain.exponentialRampToValueAtTime(
-			this.sustain / 100,
-			ctx.currentTime + this.attack + this.decay
-		);
+		decay.gain.exponentialRampToValueAtTime(this.sustain / 100, ctx.currentTime + this.attack + this.decay);
 		decay.connect(release);
 
 		release.connect(ctx.destination);
@@ -97,16 +115,13 @@ class Synth {
 	 *
 	 * @param {Object} node
 	 */
-	endNote(node) {
+	endNote(node: AudioNode) {
 		const ctx = node.ctx;
 		const release = node.release;
 
 		/* configure release */
 		release.gain.setValueAtTime(0.9, ctx.currentTime);
-		release.gain.exponentialRampToValueAtTime(
-			0.00001,
-			ctx.currentTime + Math.max(this.release, this.threshold)
-		);
+		release.gain.exponentialRampToValueAtTime(0.00001, ctx.currentTime + Math.max(this.release, this.threshold));
 
 		window.setTimeout(() => {
 			ctx.close();
@@ -131,7 +146,7 @@ class Synth {
 		});
 	}
 
-	getFreq(key) {
+	getFreq(key: string) {
 		let freq = this.freqs[key] || 440;
 
 		for (let i = 0; i <= this.pitch; i++) {
@@ -143,23 +158,29 @@ class Synth {
 
 	keyboardControls() {
 		document.addEventListener("keydown", (e) => {
-			const note = Object.keys(this.keys).find(
-				(x) => this.keys[x].key === e.code
-			);
+			const note = Object.keys(this.keys).find((x) => this.keys[x].key === e.code);
+
+			if (!note) {
+				return;
+			}
 
 			if (
 				!this.keys[note]?.key ||
 				this.nodes[note] // note is already playing
-			)
+			) {
 				return;
+			}
 
 			this.playNote(note);
 		});
 
 		document.addEventListener("keyup", (e) => {
-			const note = Object.keys(this.keys).find(
-				(x) => this.keys[x].key === e.code
-			);
+			const note = Object.keys(this.keys).find((x) => this.keys[x].key === e.code);
+
+			if (!note) {
+				return;
+			}
+
 			if (!this.keys[note]?.key || !this.nodes[note]) return;
 
 			this.endNote(this.nodes[note]);
@@ -169,9 +190,11 @@ class Synth {
 			if (!e.detail?.note) {
 				return;
 			}
-			const note = Object.keys(this.keys).find(
-				(x) => this.keys[x].midiIn === e.detail.note
-			);
+			const note = Object.keys(this.keys).find((x) => this.keys[x].midiIn === e.detail.note);
+
+			if (!note) {
+				return;
+			}
 
 			if (
 				!this.keys[note]?.key ||
@@ -186,9 +209,13 @@ class Synth {
 			if (!e.detail?.note) {
 				return;
 			}
-			const note = Object.keys(this.keys).find(
-				(x) => this.keys[x].midiIn === e.detail.note
-			);
+
+			const note = Object.keys(this.keys).find((x) => this.keys[x].midiIn === e.detail.note);
+
+			if (!note) {
+				return;
+			}
+
 			if (!this.keys[note]?.key || !this.nodes[note]) return;
 
 			this.endNote(this.nodes[note]);
@@ -236,7 +263,7 @@ class Synth {
 			btn.addEventListener("keydown", (e) => {
 				if (!(e.code === "Space" || e.key === "Enter")) return;
 
-				this.playNote(e.target.dataset.note);
+				this.playNote((e.target as HTMLButtonElement).dataset.note);
 			});
 
 			/* release button */
@@ -303,14 +330,15 @@ class Synth {
 
 	optionControls() {
 		const applyOptions = () => {
-			const data = Object.fromEntries(new FormData(this.controls));
-			this.wave = data.waveform;
-			this.attack = parseFloat(data.attack) + 0.001;
-			this.decay = parseFloat(data.decay) + 0.001;
-			this.sustain = parseFloat(data.sustain);
-			this.release = parseFloat(data.release) + 0.001;
-			this.pitch = parseInt(data.pitch);
+			const data = Object.fromEntries(new FormData(this.controls)) as any;
+			this.wave = data.waveform || "sine";
+			this.attack = parseFloat(data.attack || 0) + 0.001;
+			this.decay = parseFloat(data.decay || 0) + 0.001;
+			this.sustain = parseFloat(data.sustain || 50);
+			this.release = parseFloat(data.release || 0) + 0.001;
+			this.pitch = parseInt(data.pitch || 3);
 			this.midiIn = parseInt(data.midiIn) || 0;
+			this.midiOut = parseInt(data.midiOut) || 0;
 			this.drawWave();
 			this.drawAdsr();
 
@@ -322,6 +350,7 @@ class Synth {
 				release: this.release,
 				pitch: this.pitch,
 				midiIn: this.midiIn,
+				midiOut: this.midiOut,
 			});
 		};
 
@@ -342,33 +371,30 @@ class Synth {
 			this[synthConfig] = synthConfig[conf];
 
 			if (conf === "wave") {
-				this.controls
-					.querySelector(`[name=waveform][value=${synthConfig[conf]}`)
-					.setAttribute("checked", "checked");
+				const waveformEl = this.controls.querySelector(
+					`[name=waveform][value=${synthConfig[conf]}`
+				) as HTMLInputElement;
+				waveformEl.setAttribute("checked", "checked");
 			} else {
-				this.controls.querySelector(`#${conf}`).value =
-					synthConfig[conf];
+				const waveformEl = this.controls.querySelector(`#${conf}`) as HTMLInputElement;
+				waveformEl.value = synthConfig[conf];
 			}
 		});
 	}
 
 	drawWave() {
-		const waveDiagrams =
-			this.headerDiagram.querySelectorAll('[id^="wave"]');
+		const waveDiagrams = this.headerDiagram.querySelectorAll('[id^="wave"]');
 		waveDiagrams.forEach((waveDiagram) => {
-			waveDiagram.toggleAttribute(
-				"hidden",
-				waveDiagram.id !== `wave-${this.wave}`
-			);
+			waveDiagram.toggleAttribute("hidden", waveDiagram.id !== `wave-${this.wave}`);
 		});
 	}
 
 	drawAdsr() {
 		// header diagram is 400 x 200
-		const a = this.headerDiagram.querySelector("#adsr-a");
-		const d = this.headerDiagram.querySelector("#adsr-d");
-		const s = this.headerDiagram.querySelector("#adsr-s");
-		const r = this.headerDiagram.querySelector("#adsr-r");
+		const a = this.headerDiagram.querySelector("#adsr-a")!;
+		const d = this.headerDiagram.querySelector("#adsr-d")!;
+		const s = this.headerDiagram.querySelector("#adsr-s")!;
+		const r = this.headerDiagram.querySelector("#adsr-r")!;
 
 		const ax = this.attack * 50 - 0.05;
 		const dx = (this.decay - 0.001) * 20 + ax;
@@ -376,21 +402,21 @@ class Synth {
 		const rx = 400 - this.release * 10 + 0.01;
 
 		a.toggleAttribute("hidden", ax === 0);
-		a.setAttribute("x2", ax);
+		a.setAttribute("x2", ax.toString());
 
 		d.toggleAttribute("hidden", dx === 0);
-		d.setAttribute("x1", ax);
-		d.setAttribute("x2", dx);
-		d.setAttribute("y2", sy);
+		d.setAttribute("x1", ax.toString());
+		d.setAttribute("x2", dx.toString());
+		d.setAttribute("y2", sy.toString());
 
-		s.setAttribute("x1", dx);
-		s.setAttribute("y1", sy);
-		s.setAttribute("x2", rx);
-		s.setAttribute("y2", sy);
+		s.setAttribute("x1", dx.toString());
+		s.setAttribute("y1", sy.toString());
+		s.setAttribute("x2", rx.toString());
+		s.setAttribute("y2", sy.toString());
 
 		r.toggleAttribute("hidden", rx === 400);
-		r.setAttribute("x1", rx);
-		r.setAttribute("y1", sy);
+		r.setAttribute("x1", rx.toString());
+		r.setAttribute("y1", sy.toString());
 	}
 
 	async updateLegend() {
@@ -401,7 +427,7 @@ class Synth {
 		const layoutMap = await navigator.keyboard.getLayoutMap();
 		Object.keys(this.keys).forEach((note) => {
 			const key = this.keys[note].key;
-			const keyBtn = document.querySelector(`[data-note=${note}]`);
+			const keyBtn = document.querySelector(`[data-note=${note}]`)!;
 			const keyText = layoutMap.get(key);
 			keyBtn.textContent = keyText;
 		});

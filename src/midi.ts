@@ -1,5 +1,12 @@
 import Keys from "./keys.js";
 
+type MidiMessage = {
+	command: number;
+	channel: number;
+	note: number;
+	velocity: number;
+};
+
 export class MidiAdapter {
 	midi: MIDIAccess | null;
 	inSelector: HTMLSelectElement;
@@ -57,12 +64,13 @@ export class MidiAdapter {
 		});
 	}
 
-	parseMidiMessage(message) {
+	parseMidiMessage(message: string): MidiMessage {
+		const arr = message.split(" ");
 		return {
-			command: message[0] >> 4,
-			channel: message[0] & 0xf,
-			note: parseInt(message[1]),
-			velocity: message[2] / 127,
+			command: parseInt(arr[0]) >> 4,
+			channel: parseInt(arr[0]) & 0xf,
+			note: parseInt(arr[1]),
+			velocity: parseInt(arr[2]) / 127,
 		};
 	}
 
@@ -75,8 +83,7 @@ export class MidiAdapter {
 		if (str === "0xfe") {
 			return;
 		}
-		const message = str.split(" ");
-		const data = this.parseMidiMessage(message);
+		const data = this.parseMidiMessage(str);
 
 		if (data.channel === this.inChannel && data.command === 9 && data.velocity > 0) {
 			this.pressNote(data);
@@ -89,7 +96,7 @@ export class MidiAdapter {
 		}
 	}
 
-	sendMidiMessage(command, note, velocity = 0) {
+	sendMidiMessage(command: string, note: string, velocity = 0) {
 		if (!this.outChannel || !command) {
 			return;
 		}
@@ -103,7 +110,7 @@ export class MidiAdapter {
 		});
 	}
 
-	pressNote(data) {
+	pressNote(data: MidiMessage) {
 		const event = new CustomEvent("midikeydown", {
 			detail: {
 				note: data.note,
@@ -113,7 +120,7 @@ export class MidiAdapter {
 		document.dispatchEvent(event);
 	}
 
-	releaseNote(data) {
+	releaseNote(data: MidiMessage) {
 		const event = new CustomEvent("midikeyup", {
 			detail: {
 				note: data.note,
