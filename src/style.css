@@ -135,6 +135,7 @@ a {
 	max-width: calc(var(--ui-width) * var(--octaves));
 	margin: auto;
 	user-select: none;
+	-webkit-user-select: none !important;
 
 	button {
 		display: flex;
@@ -146,6 +147,7 @@ a {
 		font-size: 0;
 		text-transform: uppercase;
 		user-select: none;
+		-webkit-user-select: none !important;
 
 		&.white {
 			flex: 1 0 calc(100% / (12 * var(--octaves)));
