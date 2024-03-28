@@ -415,6 +415,6 @@ new MidiAdapter();
 window.onload = () => {
 	"use strict";
 	if ("serviceWorker" in navigator) {
-		navigator.serviceWorker.register("./serviceworker.js");
+		navigator.serviceWorker.register("./sw.js");
 	}
 };

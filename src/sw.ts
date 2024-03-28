@@ -5,8 +5,6 @@ const filesToCache = [
 	"./index.html",
 	"./style.css",
 	"./script.js",
-	"./freqs.js",
-	"./keys.js",
 ];
 
 /* Start the service worker and cache all of the app's content */
