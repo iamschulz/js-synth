@@ -5,7 +5,7 @@ const watchFlag = process.argv.indexOf("--watch") > -1;
 const minifyFlag = process.argv.indexOf("--minify") > -1;
 
 const opts = {
-	entryPoints: ["src/script.js", "src/sw.ts"],
+	entryPoints: ["src/script.ts", "src/sw.ts"],
 	bundle: true,
 	outdir: "dist",
 	bundle: true,
@@ -31,7 +31,7 @@ if (watchFlag) {
 		const { host, port } = await ctx.serve({
 			servedir: "dist",
 		});
-		console.log(`Serving on ${host}:${port}`);
+		console.log(`Serving on http://${host}:${port}`);
 	});
 } else {
 	esbuild.build(opts);

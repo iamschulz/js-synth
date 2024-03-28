@@ -7,22 +7,33 @@ type MidiMessage = {
 	velocity: number;
 };
 
+type Callback = (note: number, velocity: number) => void;
+
+type MidiConfig = {
+	playCallback: Callback;
+	releaseCallback: Callback;
+};
+
 export class MidiAdapter {
 	midi: MIDIAccess | null;
 	inSelector: HTMLSelectElement;
 	outSelector: HTMLSelectElement;
 	inChannel: number;
 	outChannel: number;
+	playCallback: Callback;
+	releaseCallback: Callback;
 
-	constructor() {
+	constructor(config: MidiConfig) {
 		this.midi = null;
 		this.inSelector = document.querySelector("#midiIn")!;
 		this.outSelector = document.querySelector("#midiOut")!;
 		this.watchChannelOptions();
+
 		const permissionOpts = {
 			name: "midi" as PermissionName,
 			sysex: true,
 		} as PermissionDescriptor;
+
 		navigator.permissions.query(permissionOpts).then((permission) => {
 			if (permission.state === "granted" || permission.state === "prompt") {
 				this.init();
@@ -30,6 +41,9 @@ export class MidiAdapter {
 				this.disableMidi();
 			}
 		});
+
+		this.playCallback = config.playCallback;
+		this.releaseCallback = config.releaseCallback;
 	}
 
 	init() {
@@ -48,14 +62,11 @@ export class MidiAdapter {
 			);
 		}
 
-		this.watchPlayActions();
 		this.watchMidiInput();
 	}
 
-	watchPlayActions() {
-		document.addEventListener("playnote", (e) => {
-			this.sendMidiMessage("play", e.detail.note, e.detail.velocity);
-		});
+	public onPlayNote(key: string, velocity: number) {
+		this.sendMidiMessage("play", key, velocity);
 	}
 
 	watchMidiInput() {
@@ -86,13 +97,13 @@ export class MidiAdapter {
 		const data = this.parseMidiMessage(str);
 
 		if (data.channel === this.inChannel && data.command === 9 && data.velocity > 0) {
-			this.pressNote(data);
+			this.playCallback(data.note, data.velocity);
 		}
 		if (
 			(data.channel === this.inChannel && data.command === 8) ||
 			(data.channel === this.inChannel && data.command === 9 && data.velocity === 0)
 		) {
-			this.releaseNote(data);
+			this.releaseCallback(data.note, data.velocity);
 		}
 	}
 
@@ -106,28 +117,17 @@ export class MidiAdapter {
 		const midiVelocity = "0x" + (velocity * 127).toString(16);
 
 		this.midi!.outputs.forEach((outputDevice) => {
+			console.log("MIDI:", this.outChannel, midiCommand, midiCode, midiVelocity);
 			outputDevice.send([midiCommand, midiCode, midiVelocity]);
 		});
 	}
 
 	pressNote(data: MidiMessage) {
-		const event = new CustomEvent("midikeydown", {
-			detail: {
-				note: data.note,
-				velocity: data.velocity,
-			},
-		});
-		document.dispatchEvent(event);
+		this.playCallback(data.note, data.velocity);
 	}
 
 	releaseNote(data: MidiMessage) {
-		const event = new CustomEvent("midikeyup", {
-			detail: {
-				note: data.note,
-				velocity: data.velocity,
-			},
-		});
-		document.dispatchEvent(event);
+		this.releaseCallback(data.note, data.velocity);
 	}
 
 	watchChannelOptions() {

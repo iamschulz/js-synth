@@ -27,6 +27,7 @@ class Synth {
 	keyBtns: NodeListOf<HTMLButtonElement>;
 	controls: HTMLFormElement;
 	headerDiagram: SVGElement;
+	MidiAdapter: MidiAdapter;
 	midiIn: number;
 	midiOut: number;
 
@@ -54,6 +55,11 @@ class Synth {
 		this.buttonControls();
 		this.optionControls();
 		this.updateLegend();
+
+		this.MidiAdapter = new MidiAdapter({
+			playCallback: this.onMidiPlay,
+			releaseCallback: this.onMidiRelease,
+		});
 	}
 
 	/**
@@ -101,13 +107,7 @@ class Synth {
 			release: release,
 		};
 
-		const event = new CustomEvent("playnote", {
-			detail: {
-				note: key,
-				velocity: 1,
-			},
-		});
-		document.dispatchEvent(event);
+		this.MidiAdapter.onPlayNote(key, 1);
 	}
 
 	/**
@@ -135,13 +135,7 @@ class Synth {
 
 				delete this.nodes[key];
 
-				const event = new CustomEvent("playnote", {
-					detail: {
-						note: key,
-						velocity: 0,
-					},
-				});
-				document.dispatchEvent(event);
+				this.MidiAdapter.onPlayNote(key, 0);
 			}
 		});
 	}
@@ -185,41 +179,34 @@ class Synth {
 
 			this.endNote(this.nodes[note]);
 		});
+	}
 
-		document.addEventListener("midikeydown", (e) => {
-			if (!e.detail?.note) {
-				return;
-			}
-			const note = Object.keys(this.keys).find((x) => this.keys[x].midiIn === e.detail.note);
+	onMidiPlay(midiCode: number) {
+		const note = Object.keys(this.keys).find((x) => this.keys[x].midiIn === midiCode);
 
-			if (!note) {
-				return;
-			}
+		if (!note) {
+			return;
+		}
 
-			if (
-				!this.keys[note]?.key ||
-				this.nodes[note] // note is already playing
-			)
-				return;
+		if (
+			!this.keys[note]?.key ||
+			this.nodes[note] // note is already playing
+		)
+			return;
 
-			this.playNote(note);
-		});
+		this.playNote(note);
+	}
 
-		document.addEventListener("midikeyup", (e) => {
-			if (!e.detail?.note) {
-				return;
-			}
+	onMidiRelease(midiCode: number) {
+		const note = Object.keys(this.keys).find((x) => this.keys[x].midiIn === midiCode);
 
-			const note = Object.keys(this.keys).find((x) => this.keys[x].midiIn === e.detail.note);
+		if (!note) {
+			return;
+		}
 
-			if (!note) {
-				return;
-			}
+		if (!this.keys[note]?.key || !this.nodes[note]) return;
 
-			if (!this.keys[note]?.key || !this.nodes[note]) return;
-
-			this.endNote(this.nodes[note]);
-		});
+		this.endNote(this.nodes[note]);
 	}
 
 	buttonControls() {
@@ -435,8 +422,6 @@ class Synth {
 }
 
 new Synth();
-
-new MidiAdapter();
 
 window.onload = () => {
 	"use strict";
