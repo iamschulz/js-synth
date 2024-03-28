@@ -1,25 +1,37 @@
 import Keys from "./keys.js";
 
 export class MidiAdapter {
+	midi: MIDIAccess | null;
+	inSelector: HTMLSelectElement;
+	outSelector: HTMLSelectElement;
+	inChannel: number;
+	outChannel: number;
+
 	constructor() {
 		this.midi = null;
+		this.inSelector = document.querySelector("#midiIn")!;
+		this.outSelector = document.querySelector("#midiOut")!;
 		this.watchChannelOptions();
-		navigator.permissions.query({ name: "midi", sysex: true }).then(permission => {
+		const permissionOpts = {
+			name: "midi" as PermissionName,
+			sysex: true,
+		} as PermissionDescriptor;
+		navigator.permissions.query(permissionOpts).then((permission) => {
 			if (permission.state === "granted" || permission.state === "prompt") {
 				this.init();
 			} else {
 				this.disableMidi();
 			}
-		})
-	}
-	
-	init() {
-		navigator.requestMIDIAccess().then(this.onMIDISuccess.bind(this));
-		this.inChannel = parseInt(document.querySelector("#midiIn").value);
-		this.inChannel = parseInt(document.querySelector("#midiOut").value);
+		});
 	}
 
-	onMIDISuccess(midiAccess) {
+	init() {
+		navigator.requestMIDIAccess().then(this.onMIDISuccess.bind(this));
+		this.inChannel = parseInt(this.inSelector.value);
+		this.outChannel = parseInt(this.outSelector.value);
+	}
+
+	onMIDISuccess(midiAccess: MIDIAccess) {
 		this.midi = midiAccess;
 
 		for (const entry of midiAccess.outputs) {
@@ -40,7 +52,7 @@ export class MidiAdapter {
 	}
 
 	watchMidiInput() {
-		this.midi.inputs.forEach((inputDevice) => {
+		this.midi!.inputs.forEach((inputDevice) => {
 			inputDevice.onmidimessage = (x) => this.onMIDIMessage(x);
 		});
 	}
@@ -66,18 +78,12 @@ export class MidiAdapter {
 		const message = str.split(" ");
 		const data = this.parseMidiMessage(message);
 
-		if (
-			data.channel === this.inChannel &&
-			data.command === 9 &&
-			data.velocity > 0
-		) {
+		if (data.channel === this.inChannel && data.command === 9 && data.velocity > 0) {
 			this.pressNote(data);
 		}
 		if (
 			(data.channel === this.inChannel && data.command === 8) ||
-			(data.channel === this.inChannel &&
-				data.command === 9 &&
-				data.velocity === 0)
+			(data.channel === this.inChannel && data.command === 9 && data.velocity === 0)
 		) {
 			this.releaseNote(data);
 		}
@@ -92,7 +98,7 @@ export class MidiAdapter {
 		const midiCommand = "0x" + ((9 << 4) | this.outChannel).toString(16);
 		const midiVelocity = "0x" + (velocity * 127).toString(16);
 
-		this.midi.outputs.forEach((outputDevice) => {
+		this.midi!.outputs.forEach((outputDevice) => {
 			outputDevice.send([midiCommand, midiCode, midiVelocity]);
 		});
 	}
@@ -118,17 +124,17 @@ export class MidiAdapter {
 	}
 
 	watchChannelOptions() {
-		document.querySelector("#midiIn").addEventListener("input", (e) => {
-			this.inChannel = parseInt(e.target.value);
+		this.inSelector.addEventListener("input", () => {
+			this.inChannel = parseInt(this.inSelector.value);
 		});
 
-		document.querySelector("#midiOut").addEventListener("input", (e) => {
-			this.outChannel = parseInt(e.target.value);
+		this.outSelector.addEventListener("input", () => {
+			this.outChannel = parseInt(this.outSelector.value);
 		});
 	}
 
 	disableMidi() {
-		document.querySelector("#midiIn").setAttribute("disabled", "disabled");
-		document.querySelector("#midiOut").setAttribute("disabled", "disabled");
+		this.inSelector.setAttribute("disabled", "disabled");
+		this.outSelector.setAttribute("disabled", "disabled");
 	}
 }
