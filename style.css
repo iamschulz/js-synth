@@ -36,11 +36,7 @@ body {
 		right: 0;
 		bottom: 0;
 		background-color: var(--bg);
-		background-image: linear-gradient(
-			160deg,
-			var(--bg) 30%,
-			var(--accent) 200%
-		);
+		background-image: linear-gradient(160deg, var(--bg) 30%, var(--accent) 200%);
 		z-index: -1;
 	}
 }
@@ -129,6 +125,7 @@ a {
 	max-width: calc(var(--ui-width) * var(--octaves));
 	margin: auto;
 	user-select: none;
+	-webkit-user-select: none !important;
 
 	button {
 		display: flex;
@@ -140,6 +137,7 @@ a {
 		font-size: 0;
 		text-transform: uppercase;
 		user-select: none;
+		-webkit-user-select: none !important;
 
 		&.white {
 			flex: 1 0 calc(100% / (12 * var(--octaves)));
@@ -179,11 +177,7 @@ a {
 		}
 
 		&.active {
-			background: linear-gradient(
-				160deg,
-				var(--bg) -150%,
-				var(--accent) 100%
-			);
+			background: linear-gradient(160deg, var(--bg) -150%, var(--accent) 100%);
 			color: var(--bg);
 			outline: none;
 		}
