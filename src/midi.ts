@@ -29,27 +29,27 @@ export class MidiAdapter {
 		this.outSelector = document.querySelector("#midiOut")!;
 		this.watchChannelOptions();
 
-		const permissionOpts = {
-			name: "midi" as PermissionName,
-			sysex: true,
-		} as PermissionDescriptor;
-
-		navigator.permissions.query(permissionOpts).then((permission) => {
-			if (permission.state === "granted" || permission.state === "prompt") {
-				this.init();
-			} else {
-				this.disableMidi();
-			}
-		});
-
 		this.playCallback = config.playCallback;
 		this.releaseCallback = config.releaseCallback;
+
+		this.inChannel = parseInt(this.inSelector.value);
+		this.outChannel = parseInt(this.outSelector.value);
+
+		this.inChannel >= 0 && this.outChannel >= 0 && this.init();
 	}
 
 	init() {
-		navigator.requestMIDIAccess().then(this.onMIDISuccess.bind(this));
-		this.inChannel = parseInt(this.inSelector.value);
-		this.outChannel = parseInt(this.outSelector.value);
+		if (!navigator.requestMIDIAccess) {
+			this.disableMidi();
+			return;
+		}
+
+		navigator
+			.requestMIDIAccess()
+			.then(this.onMIDISuccess.bind(this))
+			.catch(() => {
+				this.disableMidi();
+			});
 	}
 
 	onMIDISuccess(midiAccess: MIDIAccess) {
@@ -131,6 +131,10 @@ export class MidiAdapter {
 	}
 
 	watchChannelOptions() {
+		if (!this.midi) {
+			this.init();
+		}
+
 		this.inSelector.addEventListener("input", () => {
 			this.inChannel = parseInt(this.inSelector.value);
 		});
