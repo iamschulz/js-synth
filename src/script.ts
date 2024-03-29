@@ -67,7 +67,7 @@ class Synth {
 	 *
 	 * @param {String} key
 	 */
-	playNote(key = "a") {
+	playNote(key = "a"): void {
 		const ctx = new window.AudioContext();
 		const osc = ctx.createOscillator();
 		const attack = ctx.createGain();
@@ -115,7 +115,7 @@ class Synth {
 	 *
 	 * @param {Object} node
 	 */
-	endNote(node: AudioNode) {
+	endNote(node: AudioNode): void {
 		const ctx = node.ctx;
 		const release = node.release;
 
@@ -140,7 +140,14 @@ class Synth {
 		});
 	}
 
-	getFreq(key: string) {
+	/**
+	 * Calculates the frequency for a key.
+	 *
+	 * @param key The key, e.g. 'c2'.
+	 *
+	 * @returns The frequency.
+	 */
+	getFreq(key: string): number {
 		let freq = this.freqs[key] || 440;
 
 		for (let i = 0; i <= this.pitch; i++) {
@@ -150,7 +157,10 @@ class Synth {
 		return freq;
 	}
 
-	keyboardControls() {
+	/**
+	 * Listens to keyboard inputs.
+	 */
+	keyboardControls(): void {
 		document.addEventListener("keydown", (e) => {
 			const note = Object.keys(this.keys).find((x) => this.keys[x].key === e.code);
 
@@ -181,7 +191,14 @@ class Synth {
 		});
 	}
 
-	onMidiPlay(midiCode: number) {
+	/**
+	 * Calback for MIDI inputs for key presses.
+	 *
+	 * @param midiCode - Code of the key.
+	 *
+	 * @returns
+	 */
+	onMidiPlay(midiCode: number): void {
 		const note = Object.keys(this.keys).find((x) => this.keys[x].midiIn === midiCode);
 
 		if (!note) {
@@ -197,7 +214,14 @@ class Synth {
 		this.playNote(note);
 	}
 
-	onMidiRelease(midiCode: number) {
+	/**
+	 * Calback for MIDI inputs for key releases.
+	 *
+	 * @param midiCode - Code of the key.
+	 *
+	 * @returns
+	 */
+	onMidiRelease(midiCode: number): void {
 		const note = Object.keys(this.keys).find((x) => this.keys[x].midiIn === midiCode);
 
 		if (!note) {
@@ -209,7 +233,10 @@ class Synth {
 		this.endNote(this.nodes[note]);
 	}
 
-	buttonControls() {
+	/**
+	 * Handles on-screen button inputs.
+	 */
+	buttonControls(): void {
 		this.keyBtns.forEach((btn) => {
 			/*  click button */
 			btn.addEventListener(
@@ -306,7 +333,7 @@ class Synth {
 				this.endNote(this.nodes[key]);
 			});
 
-			btn.addEventListener("blur", (e) => {
+			btn.addEventListener("blur", () => {
 				const key = btn.dataset.note;
 				if (!key || !this.freqs[key] || !this.nodes[key]) return;
 
@@ -315,7 +342,10 @@ class Synth {
 		});
 	}
 
-	optionControls() {
+	/**
+	 * Applies synth option changes.
+	 */
+	optionControls(): void {
 		const applyOptions = () => {
 			const data = Object.fromEntries(new FormData(this.controls)) as any;
 			this.wave = data.waveform || "sine";
@@ -350,7 +380,12 @@ class Synth {
 		applyOptions();
 	}
 
-	restoreConfig() {
+	/**
+	 * Restores synth options from localstorage.
+	 *
+	 * @returns
+	 */
+	restoreConfig(): void {
 		if (!localStorage.synthConfig) return;
 
 		const synthConfig = JSON.parse(localStorage.synthConfig);
@@ -369,14 +404,20 @@ class Synth {
 		});
 	}
 
-	drawWave() {
+	/**
+	 * Draws the waveform.
+	 */
+	drawWave(): void {
 		const waveDiagrams = this.headerDiagram.querySelectorAll('[id^="wave"]');
 		waveDiagrams.forEach((waveDiagram) => {
 			waveDiagram.toggleAttribute("hidden", waveDiagram.id !== `wave-${this.wave}`);
 		});
 	}
 
-	drawAdsr() {
+	/**
+	 * Draws the ADSR diagram.
+	 */
+	drawAdsr(): void {
 		// header diagram is 400 x 200
 		const a = this.headerDiagram.querySelector("#adsr-a")!;
 		const d = this.headerDiagram.querySelector("#adsr-d")!;
@@ -406,7 +447,11 @@ class Synth {
 		r.setAttribute("y1", sy.toString());
 	}
 
-	async updateLegend() {
+	/**
+	 *
+	 * @returns Updates the legend on the on-screen keys according to the users keymap.
+	 */
+	async updateLegend(): Promise<void> {
 		if (!navigator.keyboard?.getLayoutMap) {
 			return;
 		}
@@ -421,8 +466,10 @@ class Synth {
 	}
 }
 
+// start synth
 new Synth();
 
+// register sw
 window.onload = () => {
 	"use strict";
 	if ("serviceWorker" in navigator) {

@@ -35,10 +35,15 @@ export class MidiAdapter {
 		this.inChannel = parseInt(this.inSelector.value);
 		this.outChannel = parseInt(this.outSelector.value);
 
-		this.inChannel >= 0 && this.outChannel >= 0 && this.init();
+		this.inChannel >= 0 && this.outChannel >= 0 && this.checkRequirements();
 	}
 
-	init() {
+	/**
+	 * Checks if browser meets requirements and grants permissions
+	 *
+	 * @returns
+	 */
+	checkRequirements(): void {
 		if (!navigator.requestMIDIAccess) {
 			this.disableMidi();
 			return;
@@ -52,7 +57,12 @@ export class MidiAdapter {
 			});
 	}
 
-	onMIDISuccess(midiAccess: MIDIAccess) {
+	/**
+	 * Initializes the MIDI adapter.
+	 *
+	 * @param midiAccess - The granted MIDI access.
+	 */
+	onMIDISuccess(midiAccess: MIDIAccess): void {
 		this.midi = midiAccess;
 
 		for (const entry of midiAccess.outputs) {
@@ -65,16 +75,31 @@ export class MidiAdapter {
 		this.watchMidiInput();
 	}
 
-	public onPlayNote(key: string, velocity: number) {
+	/**
+	 * Callback for MIDI-out from in-browser inputs.
+	 *
+	 * @param key - The key, e.g. 'c2'.
+	 * @param velocity - The velocity of the key.
+	 */
+	public onPlayNote(key: string, velocity: number): void {
 		this.sendMidiMessage("play", key, velocity);
 	}
 
-	watchMidiInput() {
+	/**
+	 * Handles MIDI-in.
+	 */
+	watchMidiInput(): void {
 		this.midi!.inputs.forEach((inputDevice) => {
 			inputDevice.onmidimessage = (x) => this.onMIDIMessage(x);
 		});
 	}
 
+	/**
+	 * Translates a MIDI-in signal into a readable JSON object.
+	 *
+	 * @param message - The MIDI-in signal
+	 * @returns - The MIDI signal object.
+	 */
 	parseMidiMessage(message: string): MidiMessage {
 		const arr = message.split(" ");
 		return {
@@ -85,7 +110,14 @@ export class MidiAdapter {
 		};
 	}
 
-	onMIDIMessage(event) {
+	/**
+	 * Callback for MIDI input.
+	 *
+	 * @param event - The MIDI event.
+	 * @returns
+	 */
+	onMIDIMessage(event): void {
+		// todo: type event
 		let str = "";
 		for (const character of event.data) {
 			str += `0x${character.toString(16)} `;
@@ -107,7 +139,15 @@ export class MidiAdapter {
 		}
 	}
 
-	sendMidiMessage(command: string, note: string, velocity = 0) {
+	/**
+	 * Sends out a MIDI message.
+	 *
+	 * @param command - The MIDI command.
+	 * @param note - The MIDI note.
+	 * @param velocity - The velocity.
+	 * @returns
+	 */
+	sendMidiMessage(command: string, note: string, velocity = 0): void {
 		if (!this.outChannel || !command) {
 			return;
 		}
@@ -122,17 +162,12 @@ export class MidiAdapter {
 		});
 	}
 
-	pressNote(data: MidiMessage) {
-		this.playCallback(data.note, data.velocity);
-	}
-
-	releaseNote(data: MidiMessage) {
-		this.releaseCallback(data.note, data.velocity);
-	}
-
-	watchChannelOptions() {
+	/**
+	 * Handles MIDI option changes.
+	 */
+	watchChannelOptions(): void {
 		if (!this.midi) {
-			this.init();
+			this.checkRequirements();
 		}
 
 		this.inSelector.addEventListener("input", () => {
@@ -144,7 +179,10 @@ export class MidiAdapter {
 		});
 	}
 
-	disableMidi() {
+	/**
+	 * Disables MIDI option UI.
+	 */
+	disableMidi(): void {
 		this.inSelector.setAttribute("disabled", "disabled");
 		this.outSelector.setAttribute("disabled", "disabled");
 	}
