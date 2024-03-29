@@ -5,7 +5,8 @@
 	"main": "script.js",
 	"scripts": {
 		"build": "node ./esbuild.js --minify",
-		"watch": "node ./esbuild.js --watch"
+		"watch": "node ./esbuild.js --watch",
+		"deploy": "npm run build && gh-pages -d dist"
 	},
 	"author": "",
 	"license": "AGPL-3.0-or-later",
@@ -13,6 +14,7 @@
 		"@types/serviceworker": "^0.0.84",
 		"esbuild": "^0.20.2",
 		"esbuild-plugin-copy": "^2.1.1",
+		"gh-pages": "^6.1.1",
 		"typescript": "^5.4.3"
 	},
 	"dependencies": {
