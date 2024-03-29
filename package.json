@@ -14,5 +14,8 @@
 		"esbuild": "^0.20.2",
 		"esbuild-plugin-copy": "^2.1.1",
 		"typescript": "^5.4.3"
+	},
+	"dependencies": {
+		"@fontsource/press-start-2p": "^5.0.19"
 	}
 }

@@ -11,16 +11,17 @@ const opts = {
 	bundle: true,
 	minify: minifyFlag,
 	sourcemap: minifyFlag ? false : "both",
-	loader: {
-		".woff": "file",
-		".woff2": "file",
-	},
 	plugins: [
 		copyPlugin.copy({
 			assets: [
-				{ from: ["./src/index.html"], to: ["./index.html"] },
-				{ from: ["./src/style.css"], to: ["./style.css"] },
+				{ from: ["./src/index.html"], to: ["./"] },
+				{ from: ["./src/style.css"], to: ["./"] },
+				{ from: ["./src/manifest.json"], to: ["./"] },
 				{ from: ["./src/icons/*"], to: ["./icons"] },
+				{
+					from: ["./node_modules/@fontsource/press-start-2p/files/press-start-2p-latin-400-normal.woff2"],
+					to: ["./"],
+				},
 			],
 		}),
 	],
