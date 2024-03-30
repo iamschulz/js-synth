@@ -6,11 +6,14 @@
 	"scripts": {
 		"build": "node ./esbuild.js --minify",
 		"watch": "node ./esbuild.js --watch",
+		"test": "playwright test",
 		"deploy": "npm run build && gh-pages -d dist"
 	},
 	"author": "",
 	"license": "AGPL-3.0-or-later",
 	"devDependencies": {
+		"@playwright/test": "^1.42.1",
+		"@types/node": "^20.12.2",
 		"@types/serviceworker": "^0.0.84",
 		"esbuild": "^0.20.2",
 		"esbuild-plugin-copy": "^2.1.1",
