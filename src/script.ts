@@ -467,7 +467,7 @@ class Synth {
 }
 
 // start synth
-new Synth();
+window.Synth = new Synth();
 
 // register sw
 window.onload = () => {
