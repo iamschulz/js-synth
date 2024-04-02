@@ -1,31 +1,16 @@
 import { test, expect } from "@playwright/test";
-import { sleep } from "../helpers";
+import { getNodes, sleep } from "../helpers";
 
-test("virtual-keyboard", async ({ page, browserName }) => {
-	if (browserName === "firefox") {
-		return; // todo: fix handles for firefox
-	}
-
-	const logs: string[] = [];
-	page.on("console", (msg) => {
-		const text = msg.text();
-		text.startsWith("test:") && logs.push(text);
-	});
-
+test("virtual-keyboard", async ({ page }) => {
 	await page.goto("/");
-	await sleep(1000);
+	await sleep(100);
 
 	await page.getByRole("button", { name: "z" }).dispatchEvent("mousedown");
-	await page.evaluate(() => console.log("test:", window.Synth.nodes));
-	await expect(logs[0]).toContain("f2: ");
+	await expect(await getNodes(page)).toStrictEqual(["f2"]);
 
 	await page.getByRole("button", { name: "u" }).dispatchEvent("mousedown");
-	await page.evaluate(() => console.log("test:", window.Synth.nodes));
-	await expect(logs[1]).toContain("f2: ");
-	await expect(logs[1]).toContain("fs2: ");
+	await expect(await getNodes(page)).toStrictEqual(["f2", "fs2"]);
 
 	await page.getByRole("button", { name: "z" }).dispatchEvent("mouseup");
-	await page.evaluate(() => console.log("test:", window.Synth.nodes));
-	await expect(logs[2]).toContain("fs2: ");
-	await expect(logs[2]).not.toContain("f2: ");
+	await expect(await getNodes(page)).toStrictEqual(["fs2"]);
 });
