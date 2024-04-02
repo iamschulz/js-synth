@@ -57,8 +57,8 @@ class Synth {
 		this.updateLegend();
 
 		this.MidiAdapter = new MidiAdapter({
-			playCallback: this.onMidiPlay,
-			releaseCallback: this.onMidiRelease,
+			playCallback: this.onMidiPlay.bind(this),
+			releaseCallback: this.onMidiRelease.bind(this),
 		});
 	}
 

@@ -148,7 +148,7 @@ export class MidiAdapter {
 	 * @returns
 	 */
 	sendMidiMessage(command: string, note: string, velocity = 0): void {
-		if (!this.outChannel || !command) {
+		if (this.outChannel < 0 || !command || !this.midi) {
 			return;
 		}
 
@@ -157,7 +157,6 @@ export class MidiAdapter {
 		const midiVelocity = "0x" + (velocity * 127).toString(16);
 
 		this.midi!.outputs.forEach((outputDevice) => {
-			console.log("MIDI:", this.outChannel, midiCommand, midiCode, midiVelocity);
 			outputDevice.send([midiCommand, midiCode, midiVelocity]);
 		});
 	}
