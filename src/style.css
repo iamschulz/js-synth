@@ -38,7 +38,7 @@ body {
 	font-family: "Press Start 2P", monospace;
 	line-height: 1.3em;
 
-	&:before {
+	&::before {
 		content: "";
 		position: fixed;
 		top: 0;
@@ -74,13 +74,13 @@ a {
 	grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
 	margin-bottom: 1rem;
 
-	.controls-box {
+	> .controls-box {
 		display: flex;
 		flex-direction: column;
 		margin-bottom: var(--gap-y);
 	}
 
-	[type="radio"] {
+	& [type="radio"] {
 		display: none;
 
 		+ label {
@@ -92,7 +92,7 @@ a {
 		}
 	}
 
-	select {
+	& select {
 		width: 9ch;
 		font: inherit;
 		border: none;
@@ -101,8 +101,8 @@ a {
 		padding: 0.4rem;
 	}
 
-	.option {
-		label {
+	& .option {
+		> label {
 			display: inline-block;
 			width: 9ch;
 		}
@@ -137,7 +137,7 @@ a {
 	user-select: none;
 	-webkit-user-select: none !important;
 
-	button {
+	> button {
 		display: flex;
 		justify-content: center;
 		align-items: flex-end;
