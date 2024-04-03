@@ -3,7 +3,7 @@ import { getNodes, sleep } from "../helpers";
 
 test("key controls", async ({ page }) => {
 	await page.goto("/");
-	await sleep(100);
+	await sleep(500);
 
 	await page.keyboard.down("KeyQ");
 	await expect(await getNodes(page)).toStrictEqual(["c2"]);
