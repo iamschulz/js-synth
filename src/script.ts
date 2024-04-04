@@ -70,6 +70,10 @@ class Synth {
 	 * @param {String} key
 	 */
 	playNote(key = "a"): void {
+		if (Object.keys(this.nodes).includes(key)) {
+			return;
+		}
+
 		const ctx = new window.AudioContext();
 		const osc = ctx.createOscillator();
 		const attack = ctx.createGain();
@@ -479,7 +483,7 @@ class Synth {
 		}
 
 		window.setTimeout(() => {
-			window.requestIdleCallback(() => {
+			window.requestAnimationFrame(() => {
 				this.killDeadNodes();
 			});
 		}, 100);
