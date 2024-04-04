@@ -22,6 +22,8 @@ export class MidiAdapter {
 	outChannel: number;
 	playCallback: Callback;
 	releaseCallback: Callback;
+	disabled: boolean;
+	activeNotes: number;
 
 	constructor(config: MidiConfig) {
 		this.midi = null;
@@ -36,6 +38,9 @@ export class MidiAdapter {
 		this.outChannel = parseInt(this.outSelector.value);
 
 		this.inChannel >= 0 && this.outChannel >= 0 && this.checkRequirements();
+
+		this.disabled = false;
+		this.activeNotes = 0;
 	}
 
 	/**
@@ -83,6 +88,12 @@ export class MidiAdapter {
 	 */
 	public onPlayNote(key: string, velocity: number): void {
 		this.sendMidiMessage("play", key, velocity);
+
+		if (velocity === 0) {
+			this.activeNotes--;
+		} else {
+			this.activeNotes++;
+		}
 	}
 
 	/**
@@ -184,5 +195,6 @@ export class MidiAdapter {
 	disableMidi(): void {
 		this.inSelector.setAttribute("disabled", "disabled");
 		this.outSelector.setAttribute("disabled", "disabled");
+		this.disabled = true;
 	}
 }

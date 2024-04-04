@@ -60,6 +60,8 @@ class Synth {
 			playCallback: this.onMidiPlay.bind(this),
 			releaseCallback: this.onMidiRelease.bind(this),
 		});
+
+		this.killDeadNodes();
 	}
 
 	/**
@@ -463,6 +465,24 @@ class Synth {
 			const keyText = layoutMap.get(key);
 			keyBtn.textContent = keyText;
 		});
+	}
+
+	killDeadNodes(): void {
+		if (
+			this.MidiAdapter.disabled ||
+			this.MidiAdapter.activeNotes === 0 ||
+			!document.querySelector("button.active")
+		) {
+			Object.keys(this.nodes).forEach((note) => {
+				this.endNote(this.nodes[note]);
+			});
+		}
+
+		window.setTimeout(() => {
+			window.requestIdleCallback(() => {
+				this.killDeadNodes();
+			});
+		}, 100);
 	}
 }
 
