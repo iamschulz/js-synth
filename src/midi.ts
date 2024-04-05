@@ -49,15 +49,24 @@ export class MidiAdapter {
 	 * @returns
 	 */
 	checkRequirements(): void {
+		console.log("foo check", this.inChannel, this.outChannel);
 		if (!navigator.requestMIDIAccess) {
 			this.disableMidi();
 			return;
 		}
 
+		if (
+			(this.inChannel < 0 || this.inChannel === undefined) &&
+			(this.outChannel < 0 || this.outChannel === undefined)
+		) {
+			return;
+		}
+
 		navigator
-			.requestMIDIAccess()
+			.requestMIDIAccess({ sysex: true })
 			.then(this.onMIDISuccess.bind(this))
-			.catch(() => {
+			.catch((e) => {
+				console.log("foo", e);
 				this.disableMidi();
 			});
 	}
@@ -182,10 +191,16 @@ export class MidiAdapter {
 
 		this.inSelector.addEventListener("input", () => {
 			this.inChannel = parseInt(this.inSelector.value);
+			if (!this.midi) {
+				this.checkRequirements();
+			}
 		});
 
 		this.outSelector.addEventListener("input", () => {
 			this.outChannel = parseInt(this.outSelector.value);
+			if (!this.midi) {
+				this.checkRequirements();
+			}
 		});
 	}
 
