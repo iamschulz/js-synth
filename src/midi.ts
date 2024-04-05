@@ -49,7 +49,6 @@ export class MidiAdapter {
 	 * @returns
 	 */
 	checkRequirements(): void {
-		console.log("foo check", this.inChannel, this.outChannel);
 		if (!navigator.requestMIDIAccess) {
 			this.disableMidi();
 			return;
@@ -66,7 +65,6 @@ export class MidiAdapter {
 			.requestMIDIAccess({ sysex: true })
 			.then(this.onMIDISuccess.bind(this))
 			.catch((e) => {
-				console.log("foo", e);
 				this.disableMidi();
 			});
 	}
