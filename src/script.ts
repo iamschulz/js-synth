@@ -201,10 +201,11 @@ class Synth {
 	 * Calback for MIDI inputs for key presses.
 	 *
 	 * @param midiCode - Code of the key.
+	 * @param velocity - Velocity of the key.
 	 *
 	 * @returns
 	 */
-	onMidiPlay(midiCode: number): void {
+	onMidiPlay(midiCode: number, velocity: number): void {
 		const note = Object.keys(this.keys).find((x) => this.keys[x].midiIn === midiCode);
 
 		if (!note) {

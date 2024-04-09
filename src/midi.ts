@@ -7,7 +7,7 @@ type MidiMessage = {
 	velocity: number;
 };
 
-type Callback = (note: number, velocity: number) => void;
+type Callback = (note: number, velocity?: number) => void;
 
 type MidiConfig = {
 	playCallback: Callback;
@@ -62,7 +62,7 @@ export class MidiAdapter {
 		}
 
 		navigator
-			.requestMIDIAccess({ sysex: true })
+			.requestMIDIAccess()
 			.then(this.onMIDISuccess.bind(this))
 			.catch((e) => {
 				this.disableMidi();
@@ -146,14 +146,25 @@ export class MidiAdapter {
 		}
 		const data = this.parseMidiMessage(str);
 
-		if (data.channel === this.inChannel && data.command === 9 && data.velocity > 0) {
+		if (
+			data.channel === this.inChannel &&
+			data.command === 9 &&
+			data.velocity > 0
+		) {
 			this.playCallback(data.note, data.velocity);
 		}
+
 		if (
 			(data.channel === this.inChannel && data.command === 8) ||
-			(data.channel === this.inChannel && data.command === 9 && data.velocity === 0)
+			(data.channel === this.inChannel &&
+				data.command === 9 &&
+				data.velocity === 0)
 		) {
-			this.releaseCallback(data.note, data.velocity);
+			this.releaseCallback(data.note);
+		}
+
+		if (data.channel === this.inChannel && data.command === 8) {
+			this.releaseCallback(data.note);
 		}
 	}
 
@@ -166,7 +177,7 @@ export class MidiAdapter {
 	 * @returns
 	 */
 	sendMidiMessage(command: string, note: string, velocity = 0): void {
-		if (this.outChannel < 0 || !command || !this.midi) {
+		if (this.outChannel < 0 || command !== "play" || !this.midi) {
 			return;
 		}
 
