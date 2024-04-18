@@ -58,6 +58,11 @@
 					stroke="white"
 					hidden
 				/>
+				<path
+					id="wave-noise"
+					stroke="white"
+					d="m0,100c0,0 0,-100 100,-100c100,0 100,100 100,100c0,0 0,100 100,100c100,0 100,-100 100,-100"
+				/>
 
 				<line id="adsr-a" x1="0" y1="200" x2="100" y2="0" />
 				<line id="adsr-d" x1="100" y1="0" x2="200" y2="100" />
@@ -104,6 +109,14 @@
 					value="sawtooth"
 				/>
 				<label for="waveform-sawtooth">Sawtooth</label>
+
+				<input
+					type="radio"
+					id="waveform-noise"
+					name="waveform"
+					value="noise"
+				/>
+				<label for="waveform-noise">Noise</label>
 			</div>
 
 			<div class="controls-box">

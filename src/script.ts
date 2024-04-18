@@ -4,7 +4,7 @@ import { MidiAdapter } from "./midi.js";
 
 type AudioNode = {
 	ctx: AudioContext;
-	osc: OscillatorNode;
+	node: OscillatorNode | AudioBufferSourceNode;
 	release: GainNode;
 };
 
@@ -16,7 +16,7 @@ class Synth {
 			midiIn: number;
 		};
 	};
-	wave: "sine" | "square" | "triangle" | "sawtooth";
+	wave: "sine" | "square" | "triangle" | "sawtooth" | "noise";
 	threshold: number;
 	attack: number;
 	decay: number;
@@ -75,16 +75,48 @@ class Synth {
 		}
 
 		const ctx = new window.AudioContext();
-		const osc = ctx.createOscillator();
-		const attack = ctx.createGain();
-		const decay = ctx.createGain();
 		const release = ctx.createGain();
 		const freq = this.getFreq(key);
+		const attack = ctx.createGain();
+		const decay = ctx.createGain();
+		let node: AudioBufferSourceNode | OscillatorNode;
 
-		/* configure oscillator */
-		osc.type = this.wave;
-		osc.connect(attack);
-		osc.frequency.value = freq;
+		if (["sine", "triangle", "square", "sawtooth"].includes(this.wave)) {
+			// todo: own function
+			const osc = ctx.createOscillator();
+			osc.type = this.wave as OscillatorType;
+			osc.connect(attack);
+			osc.frequency.value = freq;
+
+			node = osc;
+		} else if (this.wave === "noise") {
+			// todo: own function
+			const bufSize = ctx.sampleRate * 10;
+			const buf = new AudioBuffer({
+				length: bufSize,
+				sampleRate: ctx.sampleRate,
+			});
+
+			const data = buf.getChannelData(0);
+			for (let i = 0; i < bufSize; i++) {
+				data[i] = Math.random() * 2 - 1;
+			}
+
+			const noise = new AudioBufferSourceNode(ctx, {
+				buffer: buf,
+			});
+
+			const bandpass = new BiquadFilterNode(ctx, {
+				type: "bandpass",
+				frequency: freq,
+			});
+
+			noise.connect(bandpass).connect(attack);
+			
+			node = noise;
+		} else {
+			return;
+		}
 
 		/* configure attack */
 		attack.gain.setValueAtTime(0.00001, ctx.currentTime);
@@ -97,11 +129,11 @@ class Synth {
 
 		/* configure decay */
 		decay.gain.setValueAtTime(1, ctx.currentTime + this.attack);
-		decay.gain.exponentialRampToValueAtTime(this.sustain / 100, ctx.currentTime + this.attack + this.decay);
+		decay.gain.exponentialRampToValueAtTime(Math.max(this.sustain / 100, 0.000001), ctx.currentTime + this.attack + this.decay);
 		decay.connect(release);
 
 		release.connect(ctx.destination);
-		osc.start(0);
+		node.start(0);
 
 		Array.from(this.keyBtns)
 			.filter((btn) => btn.dataset.note === key)[0]
@@ -109,7 +141,7 @@ class Synth {
 
 		this.nodes[key] = {
 			ctx: ctx,
-			osc: osc,
+			node: node,
 			release: release,
 		};
 
