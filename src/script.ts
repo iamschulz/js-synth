@@ -3,12 +3,12 @@ import Keys from "./keys.js";
 import { MidiAdapter } from "./midi.js";
 
 type AudioNode = {
-	ctx: AudioContext;
 	node: OscillatorNode | AudioBufferSourceNode;
 	release: GainNode;
 };
 
 class Synth {
+	ctx: AudioContext;
 	freqs: { [key: string]: number };
 	keys: {
 		[key: string]: {
@@ -36,6 +36,8 @@ class Synth {
 			(document.querySelector("dialog") as HTMLDialogElement).setAttribute("open", "open");
 			return;
 		}
+
+		this.ctx = new window.AudioContext();
 
 		this.freqs = Freqs;
 		this.keys = Keys;
@@ -74,16 +76,16 @@ class Synth {
 			return;
 		}
 
-		const ctx = new window.AudioContext();
-		const release = ctx.createGain();
+		//const ctx = new window.AudioContext();
+		const release = this.ctx.createGain();
 		const freq = this.getFreq(key);
-		const attack = ctx.createGain();
-		const decay = ctx.createGain();
+		const attack = this.ctx.createGain();
+		const decay = this.ctx.createGain();
 		let node: AudioBufferSourceNode | OscillatorNode;
 
 		if (["sine", "triangle", "square", "sawtooth"].includes(this.wave)) {
 			// todo: own function
-			const osc = ctx.createOscillator();
+			const osc = this.ctx.createOscillator();
 			osc.type = this.wave as OscillatorType;
 			osc.connect(attack);
 			osc.frequency.value = freq;
@@ -91,10 +93,10 @@ class Synth {
 			node = osc;
 		} else if (this.wave === "noise") {
 			// todo: own function
-			const bufSize = ctx.sampleRate * 10;
+			const bufSize = this.ctx.sampleRate * 10;
 			const buf = new AudioBuffer({
 				length: bufSize,
-				sampleRate: ctx.sampleRate,
+				sampleRate: this.ctx.sampleRate,
 			});
 
 			const data = buf.getChannelData(0);
@@ -102,37 +104,40 @@ class Synth {
 				data[i] = Math.random() * 2 - 1;
 			}
 
-			const noise = new AudioBufferSourceNode(ctx, {
+			const noise = new AudioBufferSourceNode(this.ctx, {
 				buffer: buf,
 			});
 
-			const bandpass = new BiquadFilterNode(ctx, {
+			const bandpass = new BiquadFilterNode(this.ctx, {
 				type: "bandpass",
 				frequency: freq,
 			});
 
 			noise.connect(bandpass).connect(attack);
-			
+
 			node = noise;
 		} else {
 			return;
 		}
 
 		/* configure attack */
-		attack.gain.setValueAtTime(0.00001, ctx.currentTime);
+		attack.gain.setValueAtTime(0.00001, this.ctx.currentTime);
 		if (this.attack > this.threshold) {
-			attack.gain.exponentialRampToValueAtTime(0.9, ctx.currentTime + this.threshold + this.attack);
+			attack.gain.exponentialRampToValueAtTime(0.9, this.ctx.currentTime + this.threshold + this.attack);
 		} else {
-			attack.gain.exponentialRampToValueAtTime(0.9, ctx.currentTime + this.threshold);
+			attack.gain.exponentialRampToValueAtTime(0.9, this.ctx.currentTime + this.threshold);
 		}
 		attack.connect(decay);
 
 		/* configure decay */
-		decay.gain.setValueAtTime(1, ctx.currentTime + this.attack);
-		decay.gain.exponentialRampToValueAtTime(Math.max(this.sustain / 100, 0.000001), ctx.currentTime + this.attack + this.decay);
+		decay.gain.setValueAtTime(1, this.ctx.currentTime + this.attack);
+		decay.gain.exponentialRampToValueAtTime(
+			Math.max(this.sustain / 100, 0.000001),
+			this.ctx.currentTime + this.attack + this.decay
+		);
 		decay.connect(release);
 
-		release.connect(ctx.destination);
+		release.connect(this.ctx.destination);
 		node.start(0);
 
 		Array.from(this.keyBtns)
@@ -140,7 +145,6 @@ class Synth {
 			.classList.add("active");
 
 		this.nodes[key] = {
-			ctx: ctx,
 			node: node,
 			release: release,
 		};
@@ -154,16 +158,14 @@ class Synth {
 	 * @param {Object} node
 	 */
 	endNote(node: AudioNode): void {
-		const ctx = node.ctx;
 		const release = node.release;
 
 		/* configure release */
-		release.gain.setValueAtTime(0.9, ctx.currentTime);
-		release.gain.exponentialRampToValueAtTime(0.00001, ctx.currentTime + Math.max(this.release, this.threshold));
-
-		window.setTimeout(() => {
-			ctx.close();
-		}, 1000 * Math.max(this.release, this.threshold));
+		release.gain.setValueAtTime(0.9, this.ctx.currentTime);
+		release.gain.exponentialRampToValueAtTime(
+			0.00001,
+			this.ctx.currentTime + Math.max(this.release, this.threshold)
+		);
 
 		Object.keys(this.nodes).forEach((key) => {
 			if (this.nodes[key] === node) {
