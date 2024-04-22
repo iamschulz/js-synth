@@ -1,6 +1,8 @@
-import Freqs from "./freqs.js";
-import Keys from "./keys.js";
-import { MidiAdapter } from "./midi.js";
+import Freqs from "./freqs.ts";
+import Keys from "./keys.ts";
+import { Waveform } from "./waveform.ts";
+import { MidiAdapter } from "./midi.ts";
+import { SignalRecorder } from "./signalRecorder.ts";
 
 type AudioNode = {
 	node: OscillatorNode | AudioBufferSourceNode;
@@ -16,7 +18,7 @@ class Synth {
 			midiIn: number;
 		};
 	};
-	wave: "sine" | "square" | "triangle" | "sawtooth" | "noise";
+	wave: Waveform;
 	threshold: number;
 	attack: number;
 	decay: number;
@@ -30,6 +32,7 @@ class Synth {
 	MidiAdapter: MidiAdapter;
 	midiIn: number;
 	midiOut: number;
+	SignalRecorder: SignalRecorder;
 
 	constructor() {
 		if (!window.AudioContext) {
@@ -64,6 +67,8 @@ class Synth {
 		});
 
 		this.killDeadNodes();
+
+		this.SignalRecorder = new SignalRecorder();
 	}
 
 	/**
@@ -136,8 +141,8 @@ class Synth {
 			this.ctx.currentTime + this.attack + this.decay
 		);
 		decay.connect(release);
-
 		release.connect(this.ctx.destination);
+
 		node.start(0);
 
 		Array.from(this.keyBtns)
@@ -150,6 +155,17 @@ class Synth {
 		};
 
 		this.MidiAdapter.onPlayNote(key, 1);
+		this.SignalRecorder.recordStartNote({
+			key: key,
+			velocity: 1,
+			waveform: this.wave,
+			attack: this.attack,
+			sustain: this.sustain,
+			decay: this.decay,
+			release: this.release,
+			start: performance.now(),
+			stop: performance.now(),
+		});
 	}
 
 	/**
@@ -176,8 +192,10 @@ class Synth {
 				delete this.nodes[key];
 
 				this.MidiAdapter.onPlayNote(key, 0);
+				this.SignalRecorder.recordStopNote(key);
 			}
 		});
+
 	}
 
 	/**
