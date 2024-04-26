@@ -1,15 +1,15 @@
+import { AudioRecorder } from "./audioRecorder";
 import Freqs from "./freqs.ts";
 import Keys from "./keys.ts";
 import { Waveform } from "./waveform.ts";
 import { MidiAdapter } from "./midi.ts";
-import { SignalRecorder } from "./signalRecorder.ts";
 
 type AudioNode = {
 	node: OscillatorNode | AudioBufferSourceNode;
 	release: GainNode;
 };
 
-class Synth {
+class Main {
 	ctx: AudioContext;
 	freqs: { [key: string]: number };
 	keys: {
@@ -32,7 +32,7 @@ class Synth {
 	MidiAdapter: MidiAdapter;
 	midiIn: number;
 	midiOut: number;
-	SignalRecorder: SignalRecorder;
+	AudioRecorder: AudioRecorder;
 
 	constructor() {
 		if (!window.AudioContext) {
@@ -68,7 +68,7 @@ class Synth {
 
 		this.killDeadNodes();
 
-		this.SignalRecorder = new SignalRecorder();
+		this.AudioRecorder = new AudioRecorder(this.ctx);
 	}
 
 	/**
@@ -142,6 +142,9 @@ class Synth {
 		);
 		decay.connect(release);
 		release.connect(this.ctx.destination);
+		if (this.AudioRecorder.recordingStream) {
+			release.connect(this.AudioRecorder.recordingStream);
+		}
 
 		node.start(0);
 
@@ -155,17 +158,6 @@ class Synth {
 		};
 
 		this.MidiAdapter.onPlayNote(key, 1);
-		this.SignalRecorder.recordStartNote({
-			key: key,
-			velocity: 1,
-			waveform: this.wave,
-			attack: this.attack,
-			sustain: this.sustain,
-			decay: this.decay,
-			release: this.release,
-			start: performance.now(),
-			stop: performance.now(),
-		});
 	}
 
 	/**
@@ -192,10 +184,8 @@ class Synth {
 				delete this.nodes[key];
 
 				this.MidiAdapter.onPlayNote(key, 0);
-				this.SignalRecorder.recordStopNote(key);
 			}
 		});
-
 	}
 
 	/**
@@ -544,7 +534,7 @@ class Synth {
 }
 
 // start synth
-window.Synth = new Synth();
+window.Main = new Main();
 
 // register sw
 window.onload = () => {

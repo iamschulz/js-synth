@@ -6,7 +6,7 @@ export function sleep(time: number): Promise<void> {
 
 export async function getNodes(page: Page): Promise<Object> {
 	const windowHandle = await page.evaluateHandle(() => window);
-	const resultHandle = await page.evaluateHandle((window) => window.Synth.nodes, windowHandle);
+	const resultHandle = await page.evaluateHandle((window) => window.Main.nodes, windowHandle);
 	const result = await resultHandle.jsonValue();
 	await resultHandle.dispose();
 	return Object.keys(result);

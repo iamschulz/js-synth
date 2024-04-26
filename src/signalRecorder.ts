@@ -1,6 +1,7 @@
+import { Playback } from "./Playback";
 import { Waveform } from "./waveform";
 
-type RecNote = {
+export type RecNote = {
 	key: string;
 	velocity: number;
 	waveform: Waveform;
@@ -12,10 +13,10 @@ type RecNote = {
 	stop: number;
 };
 
-type Recording = {
+export type Recording = {
 	start: number;
 	stop: number;
-	notes: RecNote[];
+	playback: Playback;
 };
 
 export class SignalRecorder {
@@ -24,6 +25,7 @@ export class SignalRecorder {
 	recordings: Recording[];
 	startBtn: HTMLButtonElement;
 	stopBtn: HTMLButtonElement;
+	playBtn: HTMLButtonElement;
 
 	constructor() {
 		this.isRecording = 0;
@@ -31,12 +33,16 @@ export class SignalRecorder {
 		this.recordings = [];
 		this.startBtn = document.querySelector("#startRec") as HTMLButtonElement;
 		this.stopBtn = document.querySelector("#stopRec") as HTMLButtonElement;
+		this.playBtn = document.querySelector("#playRec") as HTMLButtonElement;
 
 		this.startBtn.addEventListener("click", () => {
 			this.startRecording();
 		});
 		this.stopBtn.addEventListener("click", () => {
 			this.stopRecording();
+		});
+		this.playBtn.addEventListener("click", () => {
+			this.playRecording(0);
 		});
 	}
 
@@ -68,7 +74,7 @@ export class SignalRecorder {
 		this.recordings.push({
 			start: this.isRecording,
 			stop: performance.now(),
-			notes: this.notes,
+			playback: new Playback(this.notes),
 		});
 
 		this.isRecording = 0;
@@ -77,8 +83,10 @@ export class SignalRecorder {
 		this.startBtn.removeAttribute("disabled");
 		this.stopBtn.setAttribute("disabled", "disabled");
 
-		console.log(this.recordings);
-
 		// todo: persist notes
+	}
+
+	playRecording(i: number) {
+		this.recordings[i].playback.play();
 	}
 }

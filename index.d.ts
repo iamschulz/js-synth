@@ -2,7 +2,7 @@ export {};
 
 declare global {
 	interface Window {
-		Synth: {
+		Main: {
 			nodes: Object;
 		};
 	}
