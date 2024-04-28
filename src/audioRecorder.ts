@@ -7,30 +7,49 @@ export class AudioRecorder {
 	recordingsList: HTMLUListElement;
 	recordings: AudioTrack[];
 	recordingTemplate: HTMLTemplateElement;
-	startBtn: HTMLButtonElement;
-	stopBtn: HTMLButtonElement;
+	recBtn: HTMLButtonElement;
+	playBtn: HTMLButtonElement;
 
 	constructor(ctx: AudioContext) {
 		this.ctx = ctx;
 
 		this.recordingTemplate = document.querySelector("#recordingTemplate") as HTMLTemplateElement;
 		this.recordingsList = document.querySelector("#recordingsList") as HTMLUListElement;
-		this.startBtn = document.querySelector("#startRec") as HTMLButtonElement;
-		this.stopBtn = document.querySelector("#stopRec") as HTMLButtonElement;
+		this.recBtn = document.querySelector("#rec") as HTMLButtonElement;
+		this.playBtn = document.querySelector("#play") as HTMLButtonElement;
 
 		this.recordings = [];
 		this.recorder = null;
 		this.recordingStream = null;
 
-		this.startBtn.addEventListener("click", () => {
-			this.startRecording();
+		this.recBtn.addEventListener("click", () => {
+			const active = this.recBtn.ariaPressed === "true";
+			if (active) {
+				this.stopRecording();
+			} else {
+				this.startRecording();
+			}
+			this.recBtn.ariaPressed = (!active).toString();
 		});
-		this.stopBtn.addEventListener("click", () => {
-			this.stopRecording();
+
+		this.playBtn.addEventListener("click", () => {
+			const playing = this.recordings.every((rec) => rec.audioEl.paused === false);
+
+			this.recordings.forEach((rec) => {
+				if (playing) {
+					rec.audioEl.pause();
+					rec.audioEl.currentTime = 0;
+				} else {
+					rec.audioEl.currentTime = 0;
+					rec.audioEl.play();
+				}
+			});
+
+			this.playBtn.ariaPressed = (!playing).toString();
 		});
 	}
 
-	public startRecording() {
+	startRecording() {
 		const audioTrack = new AudioTrack(this.recordings.length);
 		this.recordings.push(audioTrack);
 
@@ -40,12 +59,12 @@ export class AudioRecorder {
 		this.recorder.start();
 	}
 
-	public stopRecording() {
-		this.recorder!.addEventListener("dataavailable", (e) => {
+	stopRecording() {
+		this.recorder?.addEventListener("dataavailable", (e) => {
 			this.recordings.at(-1)?.addSrc(URL.createObjectURL(e.data));
 			this.recorder = null;
 			this.recordingStream = null;
 		});
-		this.recorder!.stop();
+		this.recorder?.stop();
 	}
 }

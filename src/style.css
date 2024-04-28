@@ -162,7 +162,7 @@ a {
 				margin-left: -1px;
 			}
 
-			&:focus:not(.active) {
+			&:focus-visible:not(.active) {
 				background: orchid;
 				outline: none;
 			}
@@ -192,6 +192,69 @@ a {
 			color: var(--bg);
 			outline: none;
 		}
+	}
+}
+
+button:not(:is(.black, .white)) {
+	appearance: none;
+	background: white;
+	font-family: "Press Start 2P", monospace;
+	border: 2px solid currentColor;
+	padding: 0.3rem;
+	cursor: pointer;
+
+	&[aria-pressed="true"] {
+		background: green;
+		color: white;
+		box-shadow: 0 0 1rem 0 green;
+	}
+}
+
+.recordingControls {
+	display: flex;
+	align-items: center;
+	gap: 1rem;
+	margin: var(--gap-y) auto 0.5rem;
+	max-width: calc(var(--ui-width) * var(--octaves));
+}
+
+#rec {
+	&[aria-pressed="true"] {
+		background: red;
+		color: white;
+		box-shadow: 0 0 1rem 0 red;
+	}
+}
+
+#recordingsList {
+	list-style: none;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+	max-width: calc(var(--ui-width) * var(--octaves));
+	margin: auto;
+}
+
+.audioTrack {
+	display: flex;
+	width: 100%;
+	align-items: center;
+	gap: 1rem;
+
+	audio {
+		flex: 1 0 auto;
+		height: 1.8rem;
+	}
+
+	label {
+		display: flex;
+		align-items: center;
+	}
+
+	input[type="number"] {
+		width: 6ch;
+		font-family: "Press Start 2P", monospace;
 	}
 }
 
