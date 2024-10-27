@@ -216,9 +216,14 @@ button:not(:is(.black, .white)) {
 	gap: 1rem;
 	margin: var(--gap-y) auto 0.5rem;
 	max-width: calc(var(--ui-width) * var(--octaves));
+
+	&:not(:has(+ #recordingsList li + li)) #play {
+		display: none;
+	}
 }
 
 #rec {
+	border-color: black;
 	&[aria-pressed="true"] {
 		background: red;
 		color: white;
@@ -234,13 +239,31 @@ button:not(:is(.black, .white)) {
 	gap: 0.5rem;
 	max-width: calc(var(--ui-width) * var(--octaves));
 	margin: auto;
+
+	button {
+		min-width: 3rem;
+		min-height: 3rem;
+		font-size: 1.5rem;
+	}
 }
 
 .audioTrack {
-	display: flex;
-	width: 100%;
-	align-items: center;
+	display: grid;
+	grid-template-columns: 6rem 3rem auto 3rem 3rem;
+	grid-template-rows: 1fr 1fr;
+	grid-template-areas:
+		"in play out loop del"
+		"audio audio audio audio audio";
+
 	gap: 1rem;
+	align-items: center;
+	width: 100%;
+
+	@media (min-width: 60rem) {
+		grid-template-columns: 6rem 3rem auto 6rem 3rem 3rem;
+		grid-template-rows: auto;
+		grid-template-areas: "in play audio out loop del";
+	}
 
 	audio {
 		flex: 1 0 auto;
@@ -255,6 +278,52 @@ button:not(:is(.black, .white)) {
 	input[type="number"] {
 		width: 6ch;
 		font-family: "Press Start 2P", monospace;
+	}
+
+	.vis,
+	.indicator {
+		width: 100%;
+		height: 4rem;
+		position: absolute;
+		inset: 0;
+		pointer-events: none;
+	}
+
+	.indicator {
+		--col-out: rgb(from var(--bg) r g b / 0.8);
+		--col-out: coral;
+		background: linear-gradient(
+				90deg,
+				transparent var(--in-pos, 0%),
+				var(--accent) var(--in-pos, 0%),
+				var(--accent) var(--play-pos),
+				transparent var(--play-pos)
+			),
+			linear-gradient(90deg, var(--col-out) var(--in-pos, 0%), transparent var(--in-pos, 0%)),
+			linear-gradient(90deg, transparent var(--out-pos, 100%), var(--col-out) var(--out-pos, 100%));
+		mix-blend-mode: darken;
+	}
+
+	.audioPlayer {
+		grid-area: audio;
+		position: relative;
+		flex: 1 1 100%;
+
+		.audioScrub {
+			width: 100%;
+			height: 4rem;
+			opacity: 0;
+		}
+
+		.currentTime {
+			position: absolute;
+			inset: 0.2rem;
+			display: grid;
+			place-items: center;
+			text-shadow: -1px -1px 0 var(--bg), 1px -1px 0 var(--bg), -1px 1px 0 var(--bg), 1px 1px 0 var(--bg);
+			pointer-events: none;
+			z-index: 1;
+		}
 	}
 }
 

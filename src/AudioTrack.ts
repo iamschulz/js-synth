@@ -5,6 +5,11 @@ export class AudioTrack {
 	template: HTMLTemplateElement;
 	element: HTMLElement;
 	audioEl: HTMLAudioElement;
+	playButton: HTMLButtonElement;
+	scrubInput: HTMLInputElement;
+	currentTimeDisplay: HTMLSpanElement;
+	vis: HTMLCanvasElement;
+	indicator: HTMLDivElement;
 	loopBtn: HTMLButtonElement;
 	inCtrl: HTMLInputElement;
 	outCtrl: HTMLInputElement;
@@ -59,20 +64,39 @@ export class AudioTrack {
 		this.inCtrl = recordNode.querySelector('[data-audio-ctrl="in"]') as HTMLInputElement;
 		this.outCtrl = recordNode.querySelector('[data-audio-ctrl="out"]') as HTMLInputElement;
 		this.delBtn = recordNode.querySelector('[data-audio-ctrl="del"]') as HTMLButtonElement;
+		this.playButton = recordNode.querySelector(".audioPlay") as HTMLButtonElement;
+		this.scrubInput = recordNode.querySelector(".audioScrub") as HTMLInputElement;
+		this.currentTimeDisplay = recordNode.querySelector(".currentTime") as HTMLSpanElement;
+		this.vis = recordNode.querySelector("canvas") as HTMLCanvasElement;
+		this.indicator = recordNode.querySelector(".indicator") as HTMLDivElement;
+
+		this.audioEl.loop = true;
+		this.audioEl.preload = "auto";
 	}
 
 	handleTimingControls() {
-		this.inCtrl.addEventListener("change", () => {
+		this.inCtrl.addEventListener("input", () => {
 			this.in = parseFloat(this.inCtrl.value);
+			const cssPerc = `${(parseFloat(this.inCtrl.value) / this.audioEl.duration) * 100}%`;
+			this.indicator.style.setProperty("--in-pos", cssPerc);
 		});
 
-		this.outCtrl.addEventListener("change", () => {
+		this.outCtrl.addEventListener("input", () => {
 			this.out = parseFloat(this.outCtrl.value);
+			const cssPerc = `${(parseFloat(this.outCtrl.value) / this.audioEl.duration) * 100}%`;
+			this.indicator.style.setProperty("--out-pos", cssPerc);
 		});
 
 		this.loopBtn.addEventListener("click", () => {
 			this.audioEl.loop = !this.audioEl.loop;
 			this.loopBtn.ariaPressed = this.audioEl.loop.toString();
+		});
+
+		// Event listeners
+		this.playButton.addEventListener("click", () => this.togglePlay());
+		this.scrubInput.addEventListener("input", () => this.scrubAudio());
+		this.audioEl.addEventListener("play", () => {
+			this.updateCurrentTime();
 		});
 	}
 
@@ -93,6 +117,89 @@ export class AudioTrack {
 		window.requestAnimationFrame(() => {
 			this.loop();
 		});
+	}
+
+	private togglePlay(): void {
+		if (this.audioEl.paused) {
+			this.audioEl.play();
+			this.playButton.textContent = "⏸";
+		} else {
+			this.audioEl.pause();
+			this.playButton.textContent = "⏵";
+		}
+	}
+
+	private scrubAudio(): void {
+		const scrubTime = (parseFloat(this.scrubInput.value) / 10000) * this.audioEl.duration;
+		this.audioEl.currentTime = scrubTime;
+		this.updateCurrentTime();
+	}
+
+	private updateCurrentTime(): void {
+		this.currentTimeDisplay.textContent = this.formatTime(this.audioEl.currentTime);
+		this.scrubInput.value = String((this.audioEl.currentTime / this.audioEl.duration) * 10000);
+		const cssPerc = `${parseFloat(this.scrubInput.value) / 100}%`;
+		this.indicator.style.setProperty("--play-pos", cssPerc);
+
+		window.requestAnimationFrame(() => {
+			if (!this.audioEl.paused) {
+				this.updateCurrentTime();
+			}
+		});
+	}
+
+	private formatTime(seconds: number): string {
+		const minutes = Math.floor(seconds / 60);
+		const secs = Math.floor(seconds % 60);
+		const millis = Math.floor((seconds % 1) * 1000);
+		return `${minutes < 10 ? "0" : ""}${minutes}:${secs < 10 ? "0" : ""}${secs}:${
+			millis < 10 ? "00" : millis < 100 ? "0" : ""
+		}${millis}`;
+	}
+
+	async drawWaveform(): Promise<void> {
+		const audioContext = new window.AudioContext();
+		const canvasContext = this.vis.getContext("2d");
+
+		if (!canvasContext) {
+			console.error("Failed to get canvas context.");
+			return;
+		}
+
+		const response = await fetch(this.audioEl.src);
+		const arrayBuffer = await response.arrayBuffer();
+		const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+
+		const channelData = audioBuffer.getChannelData(0); // Use the first channel (mono)
+		const canvasWidth = this.vis.width;
+		const canvasHeight = this.vis.height;
+
+		// Calculate the step size to match the canvas width
+		const step = Math.floor(channelData.length / canvasWidth);
+		const amplitude = canvasHeight / 2;
+
+		// Clear the canvas before drawing
+		canvasContext.clearRect(0, 0, canvasWidth, canvasHeight);
+		canvasContext.fillStyle = "rgba(0,0,0,0)"; // Background color
+		canvasContext.fillRect(0, 0, canvasWidth, canvasHeight);
+
+		canvasContext.strokeStyle = "#ffffff"; // Waveform color
+		canvasContext.beginPath();
+		canvasContext.moveTo(0, amplitude);
+
+		for (let i = 0; i < canvasWidth; i++) {
+			const slice = channelData.slice(i * step, (i + 1) * step);
+			const min = Math.min(...slice);
+			const max = Math.max(...slice);
+
+			const yMin = amplitude + min * amplitude;
+			const yMax = amplitude + max * amplitude;
+
+			canvasContext.lineTo(i, yMin);
+			canvasContext.lineTo(i, yMax);
+		}
+
+		canvasContext.stroke();
 	}
 
 	delete() {

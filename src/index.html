@@ -365,17 +365,24 @@
 
 		<section class="recordingControls">
 			<button id="rec" aria-pressed="false">Rec</button>
-			<button id="play" aria-pressed="false">Play</button>
+			<button id="play" aria-pressed="false">Play All</button>
 		</section>
 
 		<ul id="recordingsList">
 			<template id="recordingTemplate">
 				<li class="audioTrack">
 					<label aria-label="in point">{<input data-audio-ctrl="in" type="number" value="0.00" min="0.00" step="0.01"></label>
-					<audio controls loop preload="auto"></audio>
+					<button class="audioPlay">⏵</button>
+					<div class="audioPlayer">
+						<audio loop preload="auto"></audio>
+						<input class="audioScrub" type="range" name="time" min="0" max="10000" step="1">
+						<span class="currentTime"></span>
+						<canvas class="vis" width="2000" height="300"></canvas>
+						<div class="indicator"></div>
+					  </div>
 					<label aria-label="out point"><input data-audio-ctrl="out" type="number" value="0.00" min="0.00" step="0.01">}</label>
-					<button data-audio-ctrl="loop" aria-pressed="true">Loop</button>
-					<button data-audio-ctrl="del">Del</button>
+					<button data-audio-ctrl="loop" aria-pressed="true">🔁</button>
+					<button data-audio-ctrl="del">⏏</button>
 				</li>
 			</template>
 		</ul>

@@ -2,6 +2,7 @@ import { AudioTrack } from "./AudioTrack";
 
 export class AudioRecorder {
 	ctx: AudioContext;
+	analyser: AnalyserNode;
 	recorder: MediaRecorder | null;
 	recordingStream: MediaStreamAudioDestinationNode | null;
 	recordingsList: HTMLUListElement;
@@ -12,6 +13,7 @@ export class AudioRecorder {
 
 	constructor(ctx: AudioContext) {
 		this.ctx = ctx;
+		this.analyser = this.ctx.createAnalyser();
 
 		this.recordingTemplate = document.querySelector("#recordingTemplate") as HTMLTemplateElement;
 		this.recordingsList = document.querySelector("#recordingsList") as HTMLUListElement;
@@ -66,5 +68,9 @@ export class AudioRecorder {
 			this.recordingStream = null;
 		});
 		this.recorder?.stop();
+
+		window.setTimeout(() => {
+			this.recordings.at(-1)?.drawWaveform();
+		}, 1000);
 	}
 }
