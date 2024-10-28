@@ -249,13 +249,12 @@ button:not(:is(.black, .white)) {
 
 .audioTrack {
 	display: grid;
-	grid-template-columns: 6rem 3rem auto 3rem 3rem;
+	grid-template-columns: 6rem auto 3rem 3rem;
 	grid-template-rows: 1fr 1fr;
 	grid-template-areas:
-		"in play out loop del"
-		"audio audio audio audio audio";
-
-	gap: 1rem;
+		"in out loop del"
+		"play audio audio audio ";
+	gap: 0 1rem;
 	align-items: center;
 	width: 100%;
 
@@ -263,6 +262,7 @@ button:not(:is(.black, .white)) {
 		grid-template-columns: 6rem 3rem auto 6rem 3rem 3rem;
 		grid-template-rows: auto;
 		grid-template-areas: "in play audio out loop del";
+		gap: 1rem;
 	}
 
 	audio {
@@ -278,6 +278,10 @@ button:not(:is(.black, .white)) {
 	input[type="number"] {
 		width: 6ch;
 		font-family: "Press Start 2P", monospace;
+	}
+
+	.audioPlay {
+		grid-area: play;
 	}
 
 	.vis,

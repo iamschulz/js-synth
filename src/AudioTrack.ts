@@ -98,6 +98,15 @@ export class AudioTrack {
 		this.audioEl.addEventListener("play", () => {
 			this.updateCurrentTime();
 		});
+		this.audioEl.addEventListener("seeking", () => {
+			if (this.audioEl.currentTime > this.out) {
+				this.audioEl.currentTime = this.out;
+			}
+			if (this.audioEl.currentTime < this.in) {
+				this.audioEl.currentTime = this.in;
+			}
+		});
+		this.updateCurrentTime();
 	}
 
 	loop() {
@@ -138,8 +147,11 @@ export class AudioTrack {
 	private updateCurrentTime(): void {
 		this.currentTimeDisplay.textContent = this.formatTime(this.audioEl.currentTime);
 		this.scrubInput.value = String((this.audioEl.currentTime / this.audioEl.duration) * 10000);
-		const cssPerc = `${parseFloat(this.scrubInput.value) / 100}%`;
-		this.indicator.style.setProperty("--play-pos", cssPerc);
+
+		const inPerc = (this.in / this.audioEl.duration) * 10000;
+		const outPerc = (this.out / this.audioEl.duration) * 10000;
+		const value = Math.min(Math.max(parseFloat(this.scrubInput.value), inPerc), outPerc) / 100;
+		this.indicator.style.setProperty("--play-pos", `${value}%`);
 
 		window.requestAnimationFrame(() => {
 			if (!this.audioEl.paused) {
