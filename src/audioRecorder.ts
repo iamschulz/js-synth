@@ -40,10 +40,11 @@ export class AudioRecorder {
 			this.recordings.forEach((rec) => {
 				if (playing) {
 					rec.audioEl.pause();
+					rec.togglePlay(false);
 					rec.audioEl.currentTime = 0;
 				} else {
 					rec.audioEl.currentTime = 0;
-					rec.audioEl.play();
+					rec.togglePlay(true);
 				}
 			});
 

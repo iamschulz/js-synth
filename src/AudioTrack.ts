@@ -135,9 +135,6 @@ export class AudioTrack {
 	}
 
 	loop() {
-		//if (!this.audioEl.paused) {
-		//	const perc = ((this.audioEl.currentTime / this.duration) * 100).toString();
-		//}
 		if (this.audioEl.currentTime <= this.in) {
 			this.audioEl.currentTime = this.in;
 		}
@@ -153,14 +150,27 @@ export class AudioTrack {
 		});
 	}
 
-	private togglePlay(): void {
-		if (this.audioEl.paused) {
+	togglePlay(force?: boolean): void {
+		const play = () => {
 			this.audioEl.play();
-			console.log("play");
+			this.playButton.ariaPressed = "true";
 			this.playButton.textContent = "⏸";
-		} else {
+		};
+
+		const pause = () => {
 			this.audioEl.pause();
+			this.playButton.ariaPressed = "false";
 			this.playButton.textContent = "⏵";
+		};
+
+		if (force === true) {
+			play();
+		} else if (force === false) {
+			pause();
+		} else if (this.audioEl.paused) {
+			play();
+		} else {
+			pause();
 		}
 	}
 

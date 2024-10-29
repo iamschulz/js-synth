@@ -217,7 +217,7 @@ button:not(:is(.black, .white)) {
 	margin: var(--gap-y) auto 0.5rem;
 	max-width: calc(var(--ui-width) * var(--octaves));
 
-	&:not(:has(+ #recordingsList li + li)) #play {
+	&:not(:has(+ #recordingsList li[data-ready="true"] + li[data-ready="true"])) #play {
 		display: none;
 	}
 }
