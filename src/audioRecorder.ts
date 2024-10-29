@@ -68,9 +68,5 @@ export class AudioRecorder {
 			this.recordingStream = null;
 		});
 		this.recorder?.stop();
-
-		window.setTimeout(() => {
-			this.recordings.at(-1)?.drawWaveform();
-		}, 1000);
 	}
 }

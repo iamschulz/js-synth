@@ -249,7 +249,7 @@ button:not(:is(.black, .white)) {
 
 .audioTrack {
 	display: grid;
-	grid-template-columns: 6rem auto 3rem 3rem;
+	grid-template-columns: 7ch auto 7ch 3rem;
 	grid-template-rows: 1fr 1fr;
 	grid-template-areas:
 		"in out loop del"
@@ -257,9 +257,17 @@ button:not(:is(.black, .white)) {
 	gap: 0 1rem;
 	align-items: center;
 	width: 100%;
+	opacity: 0;
+	transform: translateY(-1rem);
+	transition: opacity 0.2s ease-out, transform 0.2s ease-out;
+
+	&[data-ready="true"] {
+		opacity: 1;
+		transform: translateY(0);
+	}
 
 	@media (min-width: 60rem) {
-		grid-template-columns: 6rem 3rem auto 6rem 3rem 3rem;
+		grid-template-columns: 7ch 3rem auto 7ch 3rem 3rem;
 		grid-template-rows: auto;
 		grid-template-areas: "in play audio out loop del";
 		gap: 1rem;
@@ -276,8 +284,13 @@ button:not(:is(.black, .white)) {
 	}
 
 	input[type="number"] {
-		width: 6ch;
+		width: 7ch;
+		height: 3rem;
 		font-family: "Press Start 2P", monospace;
+
+		&[data-audio-ctrl="out"] {
+			text-align: right;
+		}
 	}
 
 	.audioPlay {
@@ -300,8 +313,8 @@ button:not(:is(.black, .white)) {
 				90deg,
 				transparent var(--in-pos, 0%),
 				var(--accent) var(--in-pos, 0%),
-				var(--accent) var(--play-pos),
-				transparent var(--play-pos)
+				var(--accent) var(--play-pos, 0%),
+				transparent var(--play-pos, 0%)
 			),
 			linear-gradient(90deg, var(--col-out) var(--in-pos, 0%), transparent var(--in-pos, 0%)),
 			linear-gradient(90deg, transparent var(--out-pos, 100%), var(--col-out) var(--out-pos, 100%));

@@ -1,10 +1,12 @@
 export class AudioTrack {
 	id: number;
 	src: string | null;
+	ready: boolean;
 	recordingsList: HTMLUListElement;
 	template: HTMLTemplateElement;
 	element: HTMLElement;
 	audioEl: HTMLAudioElement;
+	duration: number;
 	playButton: HTMLButtonElement;
 	scrubInput: HTMLInputElement;
 	currentTimeDisplay: HTMLSpanElement;
@@ -41,12 +43,34 @@ export class AudioTrack {
 	addSrc(src: string) {
 		this.audioEl.src = src;
 		this.audioEl.load();
-		this.audioEl.addEventListener("durationchange", () => {
-			const duration = this.audioEl.duration.toFixed(2);
-			this.outCtrl.value = duration;
-			this.out = parseFloat(duration);
-			this.outCtrl.max = duration;
+		this.getDuration(this.audioEl.src, (d: number) => {
+			this.duration = parseFloat(d.toFixed(3));
+			this.outCtrl.value = this.duration.toString();
+			this.out = this.duration;
+			this.outCtrl.max = this.duration.toString();
+			this.drawWaveform();
+			this.element.setAttribute("data-ready", "true");
 		});
+	}
+
+	getDuration(src: string, next: (duration) => void) {
+		var player = new Audio(src);
+		player.addEventListener(
+			"durationchange",
+			function () {
+				if (this.duration != Infinity) {
+					var duration = this.duration;
+					player.remove();
+					next(duration);
+				}
+			},
+			false
+		);
+		player.load();
+		player.currentTime = 24 * 60 * 60; //fake big time
+		player.volume = 0;
+		player.play();
+		//waiting...
 	}
 
 	createNewAudioElement() {
@@ -77,13 +101,14 @@ export class AudioTrack {
 	handleTimingControls() {
 		this.inCtrl.addEventListener("input", () => {
 			this.in = parseFloat(this.inCtrl.value);
-			const cssPerc = `${(parseFloat(this.inCtrl.value) / this.audioEl.duration) * 100}%`;
+			const cssPerc = `${(parseFloat(this.inCtrl.value) / this.duration) * 100}%`;
+			console.log("in", cssPerc);
 			this.indicator.style.setProperty("--in-pos", cssPerc);
 		});
 
 		this.outCtrl.addEventListener("input", () => {
 			this.out = parseFloat(this.outCtrl.value);
-			const cssPerc = `${(parseFloat(this.outCtrl.value) / this.audioEl.duration) * 100}%`;
+			const cssPerc = `${(parseFloat(this.outCtrl.value) / this.duration) * 100}%`;
 			this.indicator.style.setProperty("--out-pos", cssPerc);
 		});
 
@@ -110,9 +135,9 @@ export class AudioTrack {
 	}
 
 	loop() {
-		if (!this.audioEl.paused) {
-			const perc = ((this.audioEl.currentTime / this.audioEl.duration) * 100).toString();
-		}
+		//if (!this.audioEl.paused) {
+		//	const perc = ((this.audioEl.currentTime / this.duration) * 100).toString();
+		//}
 		if (this.audioEl.currentTime <= this.in) {
 			this.audioEl.currentTime = this.in;
 		}
@@ -131,6 +156,7 @@ export class AudioTrack {
 	private togglePlay(): void {
 		if (this.audioEl.paused) {
 			this.audioEl.play();
+			console.log("play");
 			this.playButton.textContent = "⏸";
 		} else {
 			this.audioEl.pause();
@@ -139,19 +165,19 @@ export class AudioTrack {
 	}
 
 	private scrubAudio(): void {
-		const scrubTime = (parseFloat(this.scrubInput.value) / 10000) * this.audioEl.duration;
+		const scrubTime = (parseFloat(this.scrubInput.value) / 10000) * this.duration;
 		this.audioEl.currentTime = scrubTime;
 		this.updateCurrentTime();
 	}
 
 	private updateCurrentTime(): void {
 		this.currentTimeDisplay.textContent = this.formatTime(this.audioEl.currentTime);
-		this.scrubInput.value = String((this.audioEl.currentTime / this.audioEl.duration) * 10000);
+		this.scrubInput.value = String((this.audioEl.currentTime / this.duration) * 10000);
 
-		const inPerc = (this.in / this.audioEl.duration) * 10000;
-		const outPerc = (this.out / this.audioEl.duration) * 10000;
+		const inPerc = (this.in / this.duration) * 10000;
+		const outPerc = (this.out / this.duration) * 10000;
 		const value = Math.min(Math.max(parseFloat(this.scrubInput.value), inPerc), outPerc) / 100;
-		this.indicator.style.setProperty("--play-pos", `${value}%`);
+		this.indicator.style.setProperty("--play-pos", `${value || 0}%`);
 
 		window.requestAnimationFrame(() => {
 			if (!this.audioEl.paused) {
