@@ -102,7 +102,6 @@ export class AudioTrack {
 		this.inCtrl.addEventListener("input", () => {
 			this.in = parseFloat(this.inCtrl.value);
 			const cssPerc = `${(parseFloat(this.inCtrl.value) / this.duration) * 100}%`;
-			console.log("in", cssPerc);
 			this.indicator.style.setProperty("--in-pos", cssPerc);
 		});
 
@@ -145,9 +144,9 @@ export class AudioTrack {
 			}
 		}
 
-		window.requestAnimationFrame(() => {
+		window.setTimeout(() => {
 			this.loop();
-		});
+		}, 0);
 	}
 
 	togglePlay(force?: boolean): void {
