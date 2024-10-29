@@ -258,12 +258,10 @@ button:not(:is(.black, .white)) {
 	align-items: center;
 	width: 100%;
 	opacity: 0;
-	transform: translateY(-1rem);
-	transition: opacity 0.2s ease-out, transform 0.2s ease-out;
+	transition: opacity 0.2s ease-out;
 
 	&[data-ready="true"] {
 		opacity: 1;
-		transform: translateY(0);
 	}
 
 	@media (min-width: 60rem) {
