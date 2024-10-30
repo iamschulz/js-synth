@@ -19,6 +19,7 @@ export class AudioTrack {
 	in: number;
 	out: number;
 	delBtn: HTMLButtonElement;
+	saveBtn: HTMLButtonElement;
 
 	constructor(id: number) {
 		this.template = document.querySelector("#recordingTemplate") as HTMLTemplateElement;
@@ -37,6 +38,10 @@ export class AudioTrack {
 
 		this.delBtn.addEventListener("click", () => {
 			this.delete();
+		});
+
+		this.saveBtn.addEventListener("click", () => {
+			this.save();
 		});
 	}
 
@@ -88,6 +93,7 @@ export class AudioTrack {
 		this.inCtrl = recordNode.querySelector('[data-audio-ctrl="in"]') as HTMLInputElement;
 		this.outCtrl = recordNode.querySelector('[data-audio-ctrl="out"]') as HTMLInputElement;
 		this.delBtn = recordNode.querySelector('[data-audio-ctrl="del"]') as HTMLButtonElement;
+		this.saveBtn = recordNode.querySelector('[data-audio-ctrl="save"]') as HTMLButtonElement;
 		this.playButton = recordNode.querySelector(".audioPlay") as HTMLButtonElement;
 		this.scrubInput = recordNode.querySelector(".audioScrub") as HTMLInputElement;
 		this.currentTimeDisplay = recordNode.querySelector(".currentTime") as HTMLSpanElement;
@@ -153,13 +159,11 @@ export class AudioTrack {
 		const play = () => {
 			this.audioEl.play();
 			this.playButton.ariaPressed = "true";
-			this.playButton.textContent = "⏸";
 		};
 
 		const pause = () => {
 			this.audioEl.pause();
 			this.playButton.ariaPressed = "false";
-			this.playButton.textContent = "⏵";
 		};
 
 		if (force === true) {
@@ -229,7 +233,6 @@ export class AudioTrack {
 		canvasContext.clearRect(0, 0, canvasWidth, canvasHeight);
 		canvasContext.fillStyle = "rgba(0,0,0,0)"; // Background color
 		canvasContext.fillRect(0, 0, canvasWidth, canvasHeight);
-
 		canvasContext.strokeStyle = "#ffffff"; // Waveform color
 		canvasContext.beginPath();
 		canvasContext.moveTo(0, amplitude);
@@ -251,5 +254,81 @@ export class AudioTrack {
 
 	delete() {
 		this.element.remove();
+	}
+
+	async trimAudio(): Promise<Blob> {
+		// Fetch the blob from the audio URL
+		const response = await fetch(this.audioEl.src);
+		const audioBlob = await response.blob();
+
+		// Create an audio context
+		const audioContext = new AudioContext();
+		const arrayBuffer = await audioBlob.arrayBuffer();
+
+		// Decode the audio data
+		const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+
+		// Calculate start and end points in seconds
+		const startTime = this.in;
+		const endTime = this.out;
+
+		// Create a new audio buffer with the trimmed duration
+		const trimmedDuration = endTime - startTime;
+		const trimmedAudioBuffer = audioContext.createBuffer(
+			audioBuffer.numberOfChannels,
+			audioContext.sampleRate * trimmedDuration,
+			audioContext.sampleRate
+		);
+
+		// Copy the audio data from the original buffer to the trimmed buffer
+		for (let i = 0; i < audioBuffer.numberOfChannels; i++) {
+			const channelData = audioBuffer.getChannelData(i);
+			const trimmedChannelData = trimmedAudioBuffer.getChannelData(i);
+			trimmedChannelData.set(
+				channelData.subarray(
+					Math.floor(startTime * audioContext.sampleRate),
+					Math.floor(endTime * audioContext.sampleRate)
+				)
+			);
+		}
+
+		// Create a MediaRecorder to encode the trimmed buffer to a Blob
+		const destination = audioContext.createMediaStreamDestination();
+		const source = audioContext.createBufferSource();
+		source.buffer = trimmedAudioBuffer;
+		source.connect(destination);
+		source.start();
+
+		return new Promise<Blob>((resolve) => {
+			const recorder = new MediaRecorder(destination.stream);
+			const chunks: BlobPart[] = [];
+
+			recorder.ondataavailable = (event) => chunks.push(event.data);
+			recorder.onstop = () => resolve(new Blob(chunks, { type: "audio/webm" }));
+
+			recorder.start();
+			source.onended = () => recorder.stop();
+		});
+	}
+
+	async save() {
+		this.saveBtn.setAttribute("aria-busy", "true");
+		const blob = await this.trimAudio();
+		// Create a URL for the blob
+		const url = URL.createObjectURL(blob);
+
+		// Create an anchor element to trigger the download
+		const a = document.createElement("a");
+		a.href = url;
+		a.download = `JSSynth_Track_${this.id + 1}.webm`;
+		document.body.appendChild(a);
+		a.click();
+
+		// Clean up by revoking the URL and removing the anchor element
+		setTimeout(() => {
+			document.body.removeChild(a);
+			URL.revokeObjectURL(url);
+			this.saveBtn.removeAttribute("aria-busy");
+		}, 100);
 	}
 }

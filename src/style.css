@@ -52,6 +52,17 @@ body {
 	}
 }
 
+.sr-only {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	padding: 0;
+	margin: -1px;
+	overflow: hidden;
+	clip: rect(0, 0, 0, 0);
+	border: 0;
+}
+
 [hidden] {
 	display: none;
 }
@@ -216,9 +227,11 @@ button:not(:is(.black, .white)) {
 	gap: 1rem;
 	margin: var(--gap-y) auto 0.5rem;
 	max-width: calc(var(--ui-width) * var(--octaves));
+	transition: opacity 0.2s ease-out;
 
-	&:not(:has(+ #recordingsList li[data-ready="true"] + li[data-ready="true"])) #play {
+	&:not(:has(+ #recordingsList li[data-ready="true"] + li[data-ready="true"])) :where(#play, #save) {
 		display: none;
+		opacity: 0;
 	}
 }
 
@@ -244,16 +257,24 @@ button:not(:is(.black, .white)) {
 		min-width: 3rem;
 		min-height: 3rem;
 		font-size: 1.5rem;
+
+		&:has(svg) {
+			line-height: 0rem;
+		}
+
+		svg {
+			height: 1rem;
+		}
 	}
 }
 
 .audioTrack {
 	display: grid;
-	grid-template-columns: 7ch auto 7ch 3rem;
+	grid-template-columns: 7ch auto 7ch 3rem 3rem;
 	grid-template-rows: 1fr 1fr;
 	grid-template-areas:
-		"in out loop del"
-		"play audio audio audio ";
+		"in out loop del down"
+		"play audio audio audio audio";
 	gap: 0 1rem;
 	align-items: center;
 	width: 100%;
@@ -264,10 +285,10 @@ button:not(:is(.black, .white)) {
 		opacity: 1;
 	}
 
-	@media (min-width: 60rem) {
-		grid-template-columns: 7ch 3rem auto 7ch 3rem 3rem;
+	@media (min-width: 86rem) {
+		grid-template-columns: 7ch 3rem auto 7ch 3rem 3rem 3rem;
 		grid-template-rows: auto;
-		grid-template-areas: "in play audio out loop del";
+		grid-template-areas: "in play audio out loop del down";
 		gap: 1rem;
 	}
 
@@ -338,6 +359,12 @@ button:not(:is(.black, .white)) {
 			text-shadow: -1px -1px 0 var(--bg), 1px -1px 0 var(--bg), -1px 1px 0 var(--bg), 1px 1px 0 var(--bg);
 			pointer-events: none;
 			z-index: 1;
+		}
+	}
+
+	[data-audio-ctrl="save"] {
+		&[data-loading="true"] {
+			opacity: 0.5;
 		}
 	}
 }

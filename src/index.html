@@ -372,7 +372,13 @@
 			<template id="recordingTemplate">
 				<li class="audioTrack" data-ready="false">
 					<label aria-label="in point">{<input data-audio-ctrl="in" type="number" value="0.000" min="0.000" step="0.001"></label>
-					<button class="audioPlay">⏵</button>
+					<button class="audioPlay">
+						<svg xmlns="http://www.w3.org/2000/svg" xml:space="preserve" fill-rule="evenodd" stroke-linejoin="round" stroke-miterlimit="2" clip-rule="evenodd" viewBox="0 0 200 200" fill="currentColor">
+							<path fill-rule="nonzero" d="M80 200V0h40v40h40v40h40v40h-40v40h-40v40H80Z"/>
+							<path d="M0 0h40v200H0z"/>
+						  </svg>
+						<span class="sr-only">Play/Pause</span>
+					</button>
 					<div class="audioPlayer">
 						<audio loop preload="auto"></audio>
 						<input class="audioScrub" type="range" name="time" min="0" max="10000" step="1">
@@ -381,8 +387,28 @@
 						<div class="indicator"></div>
 					  </div>
 					<label aria-label="out point"><input data-audio-ctrl="out" type="number" value="0.000" min="0.000" step="0.001">}</label>
-					<button data-audio-ctrl="loop" aria-pressed="true">🔁</button>
-					<button data-audio-ctrl="del">⏏</button>
+					<button data-audio-ctrl="loop" aria-pressed="true">
+						<svg xmlns="http://www.w3.org/2000/svg" xml:space="preserve" fill-rule="evenodd" stroke-linejoin="round" stroke-miterlimit="2" clip-rule="evenodd" viewBox="0 0 200 200" fill="currentColor">
+							<path d="M0 40 40 0h120l40 40v50l-30 30-30-30V60H60v30L30 60 0 90V40Z"/>
+							<path d="m200 160-40 40H40L0 160v-50l30-30 30 30v30h80v-30l30 30 30-30v50Z"/>
+						</svg>						  
+						<span class="sr-only">Loop</span>
+					</button>
+					<button data-audio-ctrl="del">
+						<svg xmlns="http://www.w3.org/2000/svg" xml:space="preserve" fill-rule="evenodd" stroke-linejoin="round"
+							stroke-miterlimit="2" clip-rule="evenodd" viewBox="0 0 200 200" fill="currentColor">
+							<path fill-rule="nonzero" d="M200 120H0V80h40V40h40V0h40v40h40v40h40v40Z" />
+							<path d="M0 200v-40h200v40z" />
+						</svg>  
+						<span class="sr-only">Delete</span>
+					</button>
+					<button data-audio-ctrl="save">
+						<svg xmlns="http://www.w3.org/2000/svg" xml:space="preserve" fill-rule="evenodd" stroke-linejoin="round" stroke-miterlimit="2" clip-rule="evenodd" viewBox="0 0 200 200" fill="currentColor">
+							<path d="M0 0v200h200V40L160 0h-20v80H20V0H0Z"/>
+							<path d="M40 0h80v60H40z"/>
+						</svg>
+						<span class="sr-only">Save</span>
+					</button>
 				</li>
 			</template>
 		</ul>
