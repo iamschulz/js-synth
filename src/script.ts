@@ -210,20 +210,36 @@ class Main {
 	 */
 	keyboardControls(): void {
 		document.addEventListener("keydown", (e) => {
-			const note = Object.keys(this.keys).find((x) => this.keys[x].key === e.code);
+			const recordingsList = document.querySelector("#recordingsList") as HTMLElement;
+			if (recordingsList.contains(document.activeElement)) {
+				if (e.code === "KeyI") {
+					const time = this.AudioRecorder.recordings[0].audioEl.currentTime;
+					this.AudioRecorder.recordings[0].setInpoint(time);
+				}
+				if (e.code === "KeyO") {
+					const time = this.AudioRecorder.recordings[0].audioEl.currentTime;
+					this.AudioRecorder.recordings[0].setOutpoint(time);
+				}
+				if (e.code === "Space" && (e.target as HTMLElement).classList.contains("audioScrub")) {
+					e.preventDefault();
+					this.AudioRecorder.recordings[0].togglePlay();
+				}
+			} else {
+				const note = Object.keys(this.keys).find((x) => this.keys[x].key === e.code);
 
-			if (!note) {
-				return;
+				if (!note) {
+					return;
+				}
+
+				if (
+					!this.keys[note]?.key ||
+					this.nodes[note] // note is already playing
+				) {
+					return;
+				}
+
+				this.playNote(note);
 			}
-
-			if (
-				!this.keys[note]?.key ||
-				this.nodes[note] // note is already playing
-			) {
-				return;
-			}
-
-			this.playNote(note);
 		});
 
 		document.addEventListener("keyup", (e) => {

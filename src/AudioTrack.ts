@@ -106,15 +106,11 @@ export class AudioTrack {
 
 	handleTimingControls() {
 		this.inCtrl.addEventListener("input", () => {
-			this.in = parseFloat(this.inCtrl.value);
-			const cssPerc = `${(parseFloat(this.inCtrl.value) / this.duration) * 100}%`;
-			this.indicator.style.setProperty("--in-pos", cssPerc);
+			this.setInpoint(parseFloat(this.inCtrl.value));
 		});
 
 		this.outCtrl.addEventListener("input", () => {
-			this.out = parseFloat(this.outCtrl.value);
-			const cssPerc = `${(parseFloat(this.outCtrl.value) / this.duration) * 100}%`;
-			this.indicator.style.setProperty("--out-pos", cssPerc);
+			this.setOutpoint(parseFloat(this.outCtrl.value));
 		});
 
 		this.loopBtn.addEventListener("click", () => {
@@ -129,6 +125,9 @@ export class AudioTrack {
 			this.updateCurrentTime();
 		});
 		this.audioEl.addEventListener("seeking", () => {
+			if (this.audioEl.paused) {
+				return;
+			}
 			if (this.audioEl.currentTime > this.out) {
 				this.audioEl.currentTime = this.out;
 			}
@@ -139,14 +138,34 @@ export class AudioTrack {
 		this.updateCurrentTime();
 	}
 
-	loop() {
-		if (this.audioEl.currentTime <= this.in) {
-			this.audioEl.currentTime = this.in;
+	setInpoint(time: number) {
+		this.in = time;
+		const cssPerc = `${(time / this.duration) * 100}%`;
+		this.indicator.style.setProperty("--in-pos", cssPerc);
+		if (this.inCtrl.value !== this.in.toFixed(3)) {
+			this.inCtrl.value = this.in.toFixed(3);
 		}
-		if (this.audioEl.currentTime >= this.out) {
-			this.audioEl.currentTime = this.in;
-			if (!this.audioEl.loop) {
-				this.audioEl.pause();
+	}
+
+	setOutpoint(time: number) {
+		this.out = time;
+		const cssPerc = `${(time / this.duration) * 100}%`;
+		this.indicator.style.setProperty("--out-pos", cssPerc);
+		if (this.outCtrl.value !== this.out.toFixed(3)) {
+			this.outCtrl.value = this.out.toFixed(3);
+		}
+	}
+
+	loop() {
+		if (!this.audioEl.paused) {
+			if (this.audioEl.currentTime <= this.in) {
+				this.audioEl.currentTime = this.in;
+			}
+			if (this.audioEl.currentTime >= this.out) {
+				this.audioEl.currentTime = this.in;
+				if (!this.audioEl.loop) {
+					this.audioEl.pause();
+				}
 			}
 		}
 
@@ -184,18 +203,16 @@ export class AudioTrack {
 	}
 
 	private updateCurrentTime(): void {
-		this.currentTimeDisplay.textContent = this.formatTime(this.audioEl.currentTime);
 		this.scrubInput.value = String((this.audioEl.currentTime / this.duration) * 10000);
 
 		const inPerc = (this.in / this.duration) * 10000;
 		const outPerc = (this.out / this.duration) * 10000;
 		const value = Math.min(Math.max(parseFloat(this.scrubInput.value), inPerc), outPerc) / 100;
 		this.indicator.style.setProperty("--play-pos", `${value || 0}%`);
+		this.currentTimeDisplay.textContent = this.formatTime(this.audioEl.currentTime);
 
 		window.requestAnimationFrame(() => {
-			if (!this.audioEl.paused) {
-				this.updateCurrentTime();
-			}
+			this.updateCurrentTime();
 		});
 	}
 
