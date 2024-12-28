@@ -4,6 +4,7 @@ export class AudioRecorder {
 	ctx: AudioContext;
 	analyser: AnalyserNode;
 	recorder: MediaRecorder | null;
+	singleMode: boolean;
 	recordingStream: MediaStreamAudioDestinationNode | null;
 	recordingsList: HTMLUListElement;
 	recordings: AudioTrack[];
@@ -12,6 +13,8 @@ export class AudioRecorder {
 	playBtn: HTMLButtonElement;
 
 	constructor(ctx: AudioContext) {
+		this.singleMode = true;
+
 		this.ctx = ctx;
 		this.analyser = this.ctx.createAnalyser();
 
@@ -29,6 +32,11 @@ export class AudioRecorder {
 			if (active) {
 				this.stopRecording();
 			} else {
+				if (this.singleMode) {
+					this.recordings.forEach((rec) => rec.audioEl.pause());
+					this.recordings = [];
+					this.recordingsList.querySelectorAll(".audioTrack").forEach((el) => el.remove());
+				}
 				this.startRecording();
 			}
 			this.recBtn.ariaPressed = (!active).toString();
