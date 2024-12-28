@@ -387,25 +387,18 @@
 						<div class="indicator"></div>
 					</div>
 					<label aria-label="out point"><input data-audio-ctrl="out" type="number" value="0.000" min="0.000" step="0.001">}</label>
-					<details data-audio-ctrl="mute" aria-pressed="false">
-						<summary>
-							m
-							<svg width="100%" height="100%" viewBox="0 0 220 200" version="1.1" xmlns="http://www.w3.org/2000/svg"
-								xmlns:xlink="http://www.w3.org/1999/xlink" xml:space="preserve" xmlns:serif="http://www.serif.com/"
-								style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
-								<g>
-									<path
-										d="M120,0l-0,200l-40,-0l-0,-28.571l-40,-0l-0,-28.572l-40,0l-0,-85.714l40,-0l-0,-28.572l40,0l-0,-28.571l40,0Z"
-										style="fill-rule:nonzero;" />
-									<path
-										d="M160,0l0,40l20,0l0,40l20,0l0,40l-20,0l0,40l-20,0l0,40l20,0l0,-20l20,0l0,-40l20,0l0,-80l-20,0l0,-40l-20,0l0,-20l-20,0Z" />
-									<path d="M140,60l20,0l0,80l-20,0l0,-80" />
-								</g>
-							</svg>
-							<span class="sr-only">Mute</span>
-						</summary>
-						<input type="range"></range>
-					</details>
+					<button data-audio-ctrl="enabled" aria-pressed="true">
+						<svg width="100%" height="100%" viewBox="0 0 220 200" version="1.1" xmlns="http://www.w3.org/2000/svg" fill="currentColor"
+							xmlns:xlink="http://www.w3.org/1999/xlink" xml:space="preserve" xmlns:serif="http://www.serif.com/"
+							style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
+								<path
+									d="M120,0l-0,200l-40,-0l-0,-28.571l-40,-0l-0,-28.572l-40,0l-0,-85.714l40,-0l-0,-28.572l40,0l-0,-28.571l40,0Z"
+									style="fill-rule:nonzero;" />
+								<path
+									d="M160,0l0,40l20,0l0,40l20,0l0,40l-20,0l0,40l-20,0l0,40l20,0l0,-20l20,0l0,-40l20,0l0,-80l-20,0l0,-40l-20,0l0,-20l-20,0Z" />
+								<path d="M140,60l20,0l0,80l-20,0l0,-80" />
+						</svg>
+					</button>
 					<button data-audio-ctrl="loop" aria-pressed="true">
 						<svg xmlns="http://www.w3.org/2000/svg" xml:space="preserve" fill-rule="evenodd" stroke-linejoin="round" stroke-miterlimit="2" clip-rule="evenodd" viewBox="0 0 200 200" fill="currentColor">
 							<path d="M0 40h20V20h20V0h120v20h20v20h20v40l-30 30-30-30V60H60v30L30 60 0 90V40Z"/>

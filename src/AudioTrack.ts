@@ -7,11 +7,13 @@ export class AudioTrack {
 	element: HTMLElement;
 	audioEl: HTMLAudioElement;
 	duration: number;
+	mute: boolean;
 	playButton: HTMLButtonElement;
 	scrubInput: HTMLInputElement;
 	currentTimeDisplay: HTMLSpanElement;
 	vis: HTMLCanvasElement;
 	indicator: HTMLDivElement;
+	enableBtn: HTMLButtonElement;
 	loopBtn: HTMLButtonElement;
 	inCtrl: HTMLInputElement;
 	outCtrl: HTMLInputElement;
@@ -30,6 +32,7 @@ export class AudioTrack {
 		this.wait = 0;
 		this.in = 0;
 		this.out = 0;
+		this.mute = false;
 
 		this.createNewAudioElement();
 		this.handleTimingControls();
@@ -89,6 +92,7 @@ export class AudioTrack {
 		audioEl.id = `recording${this.id}`;
 		this.audioEl = audioEl;
 
+		this.enableBtn = recordNode.querySelector('[data-audio-ctrl="enabled"]') as HTMLButtonElement;
 		this.loopBtn = recordNode.querySelector('[data-audio-ctrl="loop"]') as HTMLButtonElement;
 		this.inCtrl = recordNode.querySelector('[data-audio-ctrl="in"]') as HTMLInputElement;
 		this.outCtrl = recordNode.querySelector('[data-audio-ctrl="out"]') as HTMLInputElement;
@@ -111,6 +115,11 @@ export class AudioTrack {
 
 		this.outCtrl.addEventListener("input", () => {
 			this.setOutpoint(parseFloat(this.outCtrl.value));
+		});
+
+		this.enableBtn.addEventListener("click", () => {
+			this.audioEl.muted = !this.audioEl.muted;
+			this.enableBtn.ariaPressed = (!this.audioEl.muted).toString();
 		});
 
 		this.loopBtn.addEventListener("click", () => {

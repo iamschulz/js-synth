@@ -270,7 +270,7 @@ button:not(:is(.black, .white)) {
 
 .audioTrack {
 	display: grid;
-	grid-template-columns: 7ch auto 7ch 3rem 3rem 3rem;
+	grid-template-columns: 7ch auto 3rem 3rem 3rem 3rem;
 	grid-template-rows: 1fr 1fr;
 	grid-template-areas:
 		"in out mute loop del down"
