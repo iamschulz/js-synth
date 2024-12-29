@@ -18,6 +18,7 @@ class Main {
 			midiIn: number;
 		};
 	};
+	volume: number;
 	wave: Waveform;
 	threshold: number;
 	attack: number;
@@ -44,6 +45,7 @@ class Main {
 
 		this.freqs = Freqs;
 		this.keys = Keys;
+		this.volume = 100;
 		this.wave = "sine";
 		this.threshold = 0.001;
 		this.attack = 0;
@@ -82,6 +84,7 @@ class Main {
 		}
 
 		//const ctx = new window.AudioContext();
+		const volume = this.ctx.createGain();
 		const release = this.ctx.createGain();
 		const freq = this.getFreq(key);
 		const attack = this.ctx.createGain();
@@ -141,9 +144,15 @@ class Main {
 			this.ctx.currentTime + this.attack + this.decay
 		);
 		decay.connect(release);
-		release.connect(this.ctx.destination);
+
+		/* applay master volume */
+		volume.gain.value = volume.gain.value * (this.volume / 100);
+		release.connect(volume);
+
+		/* configure release */
+		volume.connect(this.ctx.destination);
 		if (this.AudioRecorder.recordingStream) {
-			release.connect(this.AudioRecorder.recordingStream);
+			volume.connect(this.AudioRecorder.recordingStream);
 		}
 
 		node.start(0);
@@ -414,6 +423,7 @@ class Main {
 		const applyOptions = () => {
 			const data = Object.fromEntries(new FormData(this.controls)) as any;
 			this.wave = data.waveform || "sine";
+			this.volume = parseFloat(data.volume || 99);
 			this.attack = parseFloat(data.attack || 0) + 0.001;
 			this.decay = parseFloat(data.decay || 0) + 0.001;
 			this.sustain = parseFloat(data.sustain || 50);
@@ -426,6 +436,7 @@ class Main {
 
 			localStorage.synthConfig = JSON.stringify({
 				wave: this.wave,
+				volume: this.volume,
 				attack: this.attack,
 				decay: this.decay,
 				sustain: this.sustain,
