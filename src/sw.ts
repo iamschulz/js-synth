@@ -1,4 +1,4 @@
-const ver = "1.1.8";
+const ver = "1.2.0";
 const cacheName = `js-synth-${ver}`;
 const filesToCache = [
 	"./",
