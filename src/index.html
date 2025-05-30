@@ -1,456 +1,347 @@
 <!DOCTYPE html>
 <html lang="en">
-	<head>
-		<meta charset="UTF-8" />
-		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>JSSynth</title>
-		<link rel="preload" href="./style.css" as="style" />
-		<link rel="preload" href="./press-start-2p-latin-400-normal.woff2" as="font" crossorigin />
-		<link rel="preload" href="./script.js" as="script" crossorigin />
-		<link rel="stylesheet" href="./style.css" type="text/css" />
-		<link rel="manifest" href="./manifest.json" />
-		<link rel="icon" href="./icons/icon.svg" type="image/svg" />
-		<link rel="apple-touch-icon" href="./icons/icon-192.png" />
-		<meta name="theme-color" content="DarkSlateGrey" />
-		<meta name="apple-mobile-web-app-capable" content="yes" />
-		<meta name="apple-mobile-web-app-status-bar-style" content="black" />
-		<meta name="apple-mobile-web-app-title" content="JSSynth" />
-		<meta name="msapplication-TileImage" content="icons/icon-144.png" />
-		<meta name="msapplication-TileImage" content="icons/icon-144.png" />
-		<meta name="msapplication-TileColor" content="DarkSlateGrey" />
-		<meta name="description" content="A Javascript Synthesizer" />
-	</head>
 
-	<body>
-		<header>
-			<h1>JSSynth</h1>
-			<svg
-				id="header-vis"
-				xmlns="http://www.w3.org/2000/svg"
-				width="100"
-				height="50"
-				viewbox="-10 -10 420 220"
-				stroke="SpringGreen"
-				stroke-width="10"
-				stroke-linecap="round"
-				fill="none"
-			>
-				<path
-					id="wave-sine"
-					stroke="white"
-					d="m0,100c0,0 0,-100 100,-100c100,0 100,100 100,100c0,0 0,100 100,100c100,0 100,-100 100,-100"
-				/>
-				<polyline
-					id="wave-square"
-					points="0,160 100,160 100,40, 300,40 300,160 400,160"
-					stroke="white"
-					hidden
-				/>
-				<polyline
-					id="wave-triangle"
-					points="0,40 133,160 266,40 400,160"
-					stroke="white"
-					hidden
-				/>
-				<polyline
-					id="wave-sawtooth"
-					points="0,160 100,160 100,40, 300,160 400,160"
-					stroke="white"
-					hidden
-				/>
-				<rect 
-					id="wave-noise"
-					stroke="none"
-					x="0"
-					y="50"
-					width="400"
-					height="100"
-					fill="white"
-				/>
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>JSSynth</title>
+	<link rel="preload" href="./style.css" as="style" />
+	<link rel="preload" href="./press-start-2p-latin-400-normal.woff2" as="font" crossorigin />
+	<link rel="preload" href="./script.js" as="script" crossorigin />
+	<link rel="stylesheet" href="./style.css" type="text/css" />
+	<link rel="manifest" href="./manifest.json" />
+	<link rel="icon" href="./icons/icon.svg" type="image/svg" />
+	<link rel="apple-touch-icon" href="./icons/icon-192.png" />
+	<meta name="theme-color" content="DarkSlateGrey" />
+	<meta name="apple-mobile-web-app-capable" content="yes" />
+	<meta name="apple-mobile-web-app-status-bar-style" content="black" />
+	<meta name="apple-mobile-web-app-title" content="JSSynth" />
+	<meta name="msapplication-TileImage" content="icons/icon-144.png" />
+	<meta name="msapplication-TileImage" content="icons/icon-144.png" />
+	<meta name="msapplication-TileColor" content="DarkSlateGrey" />
+	<meta name="description" content="A Javascript Synthesizer" />
+</head>
 
-				<line id="adsr-a" x1="0" y1="200" x2="100" y2="0" />
-				<line id="adsr-d" x1="100" y1="0" x2="200" y2="100" />
-				<line id="adsr-s" x1="200" y1="100" x2="300" y2="100" />
-				<line id="adsr-r" x1="300" y1="100" x2="400" y2="200" />
-			</svg>
-		</header>
-		<dialog class="error">
-			Sorry.<br />
-			Your Browser can't play sounds with this synth.<br />
-			Maybe try Chrome or Firefox?
-		</dialog>
-		<form class="controls">
-			<div class="controls-box">
-				<input
-					type="radio"
-					id="waveform-sine"
-					name="waveform"
-					value="sine"
-					checked
-				/>
-				<label for="waveform-sine">Sine</label>
+<body>
+	<header>
+		<h1>JSSynth</h1>
+		<svg id="header-vis" xmlns="http://www.w3.org/2000/svg" width="100" height="50" viewbox="-10 -10 420 220"
+			stroke="SpringGreen" stroke-width="10" stroke-linecap="round" fill="none">
+			<path id="wave-sine" stroke="white"
+				d="m0,100c0,0 0,-100 100,-100c100,0 100,100 100,100c0,0 0,100 100,100c100,0 100,-100 100,-100" />
+			<polyline id="wave-square" points="0,160 100,160 100,40, 300,40 300,160 400,160" stroke="white" hidden />
+			<polyline id="wave-triangle" points="0,40 133,160 266,40 400,160" stroke="white" hidden />
+			<polyline id="wave-sawtooth" points="0,160 100,160 100,40, 300,160 400,160" stroke="white" hidden />
+			<rect id="wave-noise" stroke="none" x="0" y="50" width="400" height="100" fill="white" />
 
-				<input
-					type="radio"
-					id="waveform-square"
-					name="waveform"
-					value="square"
-				/>
-				<label for="waveform-square">Square</label>
+			<line id="adsr-a" x1="0" y1="200" x2="100" y2="0" />
+			<line id="adsr-d" x1="100" y1="0" x2="200" y2="100" />
+			<line id="adsr-s" x1="200" y1="100" x2="300" y2="100" />
+			<line id="adsr-r" x1="300" y1="100" x2="400" y2="200" />
+		</svg>
+	</header>
+	<dialog class="error">
+		Sorry.<br />
+		Your Browser can't play sounds with this synth.<br />
+		Maybe try Chrome or Firefox?
+	</dialog>
+	<form class="controls">
+		<div class="controls-box">
+			<input type="radio" id="waveform-sine" name="waveform" value="sine" checked />
+			<label for="waveform-sine">Sine</label>
 
-				<input
-					type="radio"
-					id="waveform-triangle"
-					name="waveform"
-					value="triangle"
-				/>
-				<label for="waveform-triangle">Triangle</label>
+			<input type="radio" id="waveform-square" name="waveform" value="square" />
+			<label for="waveform-square">Square</label>
 
-				<input
-					type="radio"
-					id="waveform-sawtooth"
-					name="waveform"
-					value="sawtooth"
-				/>
-				<label for="waveform-sawtooth">Sawtooth</label>
+			<input type="radio" id="waveform-triangle" name="waveform" value="triangle" />
+			<label for="waveform-triangle">Triangle</label>
 
-				<input
-					type="radio"
-					id="waveform-noise"
-					name="waveform"
-					value="noise"
-				/>
-				<label for="waveform-noise">Noise</label>
+			<input type="radio" id="waveform-sawtooth" name="waveform" value="sawtooth" />
+			<label for="waveform-sawtooth">Sawtooth</label>
+
+			<input type="radio" id="waveform-noise" name="waveform" value="noise" />
+			<label for="waveform-noise">Noise</label>
+		</div>
+
+		<div class="controls-box">
+			<div class="option">
+				<label for="volume">Volume</label>
+				<input name="volume" id="volume" type="range" data-control-name="pitch" min="0" max="99" value="99" />
 			</div>
 
-			<div class="controls-box">
-				<div class="option">
-					<label for="volume">Volume</label>
-					<input
-						name="volume"
-						id="volume"
-						type="range"
-						data-control-name="pitch"
-						min="0"
-						max="99"
-						value="99"
-					/>
-				</div>
-
-				<div class="option">
-					<label for="pitch">Pitch</label>
-					<input
-						name="pitch"
-						id="pitch"
-						type="range"
-						data-control-name="pitch"
-						min="-1"
-						max="8"
-						value="3"
-					/>
-				</div>
-
-				<div class="option">
-					<label for="attack">Attack</label>
-					<input
-						name="attack"
-						id="attack"
-						type="range"
-						data-control-name="attack"
-						min="0"
-						max="2"
-						step="0.05"
-						value="0"
-					/>
-				</div>
-
-				<div class="option">
-					<label for="decay">Decay</label>
-					<input
-						name="decay"
-						id="decay"
-						type="range"
-						data-control-name="decay"
-						min="0"
-						max="5"
-						step="0.1"
-						value="0"
-					/>
-				</div>
-
-				<div class="option">
-					<label for="sustain">Sustain</label>
-					<input
-						name="sustain"
-						id="sustain"
-						type="range"
-						data-control-name="sustain"
-						min="0"
-						max="100"
-						value="50"
-					/>
-				</div>
-
-				<div class="option">
-					<label for="release">Release</label>
-					<input
-						name="release"
-						id="release"
-						type="range"
-						data-control-name="release"
-						min="0"
-						max="10"
-						step="0.1"
-						value="0"
-					/>
-				</div>
+			<div class="option">
+				<label for="pitch">Pitch</label>
+				<input name="pitch" id="pitch" type="range" data-control-name="pitch" min="-1" max="8" value="3" />
 			</div>
 
-			<div class="controls-box">
-				<div class="option">
-					<label for="midiIn">MIDI In</label>
-					<select
-						id="midiIn"
-						name="midiIn"
-						data-control-name="midiIn"
-					>
-						<option value="-1">off</option>
-						<option value="0">Ch 0</option>
-						<option value="1">Ch 1</option>
-						<option value="2">Ch 2</option>
-						<option value="3">Ch 3</option>
-						<option value="4">Ch 4</option>
-						<option value="5">Ch 5</option>
-						<option value="6">Ch 6</option>
-						<option value="7">Ch 7</option>
-						<option value="8">Ch 8</option>
-						<option value="9">Ch 9</option>
-						<option value="10">Ch 10</option>
-						<option value="11">Ch 11</option>
-						<option value="12">Ch 12</option>
-						<option value="13">Ch 13</option>
-						<option value="14">Ch 14</option>
-						<option value="15">Ch 15</option>
-					</select>
-				</div>
-
-                <div class="option">
-                    <label for="midiOut">MIDI Out</label>
-                    <select
-                        id="midiOut"
-                        name="midiOut"
-                        data-control-name="midiOut"
-                    >
-                        <option value="-1">off</option>
-                        <option value="0">Ch 0</option>
-                        <option value="1">Ch 1</option>
-                        <option value="2">Ch 2</option>
-                        <option value="3">Ch 3</option>
-                        <option value="4">Ch 4</option>
-                        <option value="5">Ch 5</option>
-                        <option value="6">Ch 6</option>
-                        <option value="7">Ch 7</option>
-                        <option value="8">Ch 8</option>
-                        <option value="9">Ch 9</option>
-                        <option value="10">Ch 10</option>
-                        <option value="11">Ch 11</option>
-                        <option value="12">Ch 12</option>
-                        <option value="13">Ch 13</option>
-                        <option value="14">Ch 14</option>
-                        <option value="15">Ch 15</option>
-                    </select>
-                </div>
+			<div class="option">
+				<label for="attack">Attack</label>
+				<input name="attack" id="attack" type="range" data-control-name="attack" min="0" max="2" step="0.05"
+					value="0" />
 			</div>
-        </div>
-		</form>
-		<section class="keyboard">
-			<button class="white md" data-note="c1" label="C">
-				<key>A</key>
-			</button>
-			<button class="black md" data-note="cs1" label="C sharp">
-				<key>S</key>
-			</button>
-			<button class="white md" data-note="d1" label="D">
-				<key>D</key>
-			</button>
-			<button class="black md" data-note="eb1" label="E sharp">
-				<key>F</key>
-			</button>
-			<button class="white md" data-note="e1" label="E">
-				<key>G</key>
-			</button>
-			<button class="white md" data-note="f1" label="F">
-				<key>H</key>
-			</button>
-			<button class="black md" data-note="fs1" label="F sharp">
-				<key>J</key>
-			</button>
-			<button class="white md" data-note="g1" label="G">
-				<key>K</key>
-			</button>
-			<button class="black md" data-note="gs1" label="G sharp">
-				<key>L</key>
-			</button>
-			<button class="white md" data-note="a1" label="A">
-				<key>;</key>
-			</button>
-			<button class="black md" data-note="bb1" label="A sharp">
-				<key>'</key>
-			</button>
-			<button class="white md" data-note="b1" label="B">
-				<key>\</key>
-			</button>
 
-			<button class="white" data-note="c2" label="C">
-				<key>Q</key>
-			</button>
-			<button class="black" data-note="cs2" label="C sharp">
-				<key>W</key>
-			</button>
-			<button class="white" data-note="d2" label="D">
-				<key>E</key>
-			</button>
-			<button class="black" data-note="eb2" label="E sharp">
-				<key>R</key>
-			</button>
-			<button class="white" data-note="e2" label="E">
-				<key>T</key>
-			</button>
-			<button class="white" data-note="f2" label="F">
-				<key>Z</key>
-			</button>
-			<button class="black" data-note="fs2" label="F sharp">
-				<key>U</key>
-			</button>
-			<button class="white" data-note="g2" label="G">
-				<key>I</key>
-			</button>
-			<button class="black" data-note="gs2" label="G sharp">
-				<key>O</key>
-			</button>
-			<button class="white" data-note="a2" label="A">
-				<key>P</key>
-			</button>
-			<button class="black" data-note="bb2" label="A sharp">
-				<key>[</key>
-			</button>
-			<button class="white" data-note="b2" label="B">
-				<key>]</key>
-			</button>
+			<div class="option">
+				<label for="decay">Decay</label>
+				<input name="decay" id="decay" type="range" data-control-name="decay" min="0" max="5" step="0.1"
+					value="0" />
+			</div>
 
-			<button class="white lg" data-note="c3" label="C3">
-				<key>1</key>
-			</button>
-			<button class="black lg" data-note="cs3" label="C sharp">
-				<key>2</key>
-			</button>
-			<button class="white lg" data-note="d3" label="D">
-				<key>3</key>
-			</button>
-			<button class="black lg" data-note="eb3" label="E sharp">
-				<key>4</key>
-			</button>
-			<button class="white lg" data-note="e3" label="E">
-				<key>5</key>
-			</button>
-			<button class="white lg" data-note="f3" label="F">
-				<key>6</key>
-			</button>
-			<button class="black lg" data-note="fs3" label="F sharp">
-				<key>7</key>
-			</button>
-			<button class="white lg" data-note="g3" label="G">
-				<key>8</key>
-			</button>
-			<button class="black lg" data-note="gs3" label="G sharp">
-				<key>9</key>
-			</button>
-			<button class="white lg" data-note="a3" label="A">
-				<key>0</key>
-			</button>
-			<button class="black lg" data-note="bb3" label="A sharp">
-				<key>-</key>
-			</button>
-			<button class="white lg" data-note="b3" label="B">
-				<key>=</key>
-			</button>
-		</section>
+			<div class="option">
+				<label for="sustain">Sustain</label>
+				<input name="sustain" id="sustain" type="range" data-control-name="sustain" min="0" max="100"
+					value="50" />
+			</div>
 
-		<section class="recordingControls">
-			<button id="rec" aria-pressed="false">Rec</button>
-			<button id="play" aria-pressed="false">Play All</button>
-		</section>
+			<div class="option">
+				<label for="release">Release</label>
+				<input name="release" id="release" type="range" data-control-name="release" min="0" max="10" step="0.1"
+					value="0" />
+			</div>
+		</div>
 
-		<ul id="recordingsList">
-			<template id="recordingTemplate">
-				<li class="audioTrack" data-ready="false">
-					<label aria-label="in point">{<input data-audio-ctrl="in" type="number" value="0.000" min="0.000" step="0.001"></label>
-					<button class="audioPlay">
-						<svg xmlns="http://www.w3.org/2000/svg" xml:space="preserve" fill-rule="evenodd" stroke-linejoin="round" stroke-miterlimit="2" clip-rule="evenodd" viewBox="0 0 200 200" fill="currentColor">
-							<path fill-rule="nonzero" d="M80 200V0h40v40h40v40h40v40h-40v40h-40v40H80Z"/>
-							<path d="M0 0h40v200H0z"/>
-						</svg>
-						<span class="sr-only">Play/Pause</span>
-					</button>
-					<div class="audioPlayer">
-						<audio loop preload="auto"></audio>
-						<input class="audioScrub" type="range" name="time" min="0" max="10000" step="1">
-						<span class="currentTime"></span>
-						<canvas class="vis" width="2000" height="300"></canvas>
-						<div class="indicator"></div>
-					</div>
-					<label aria-label="out point"><input data-audio-ctrl="out" type="number" value="0.000" min="0.000" step="0.001">}</label>
-					<button data-audio-ctrl="enabled" aria-pressed="true">
-						<svg width="100%" height="100%" viewBox="0 0 220 200" version="1.1" xmlns="http://www.w3.org/2000/svg" fill="currentColor"
-							xmlns:xlink="http://www.w3.org/1999/xlink" xml:space="preserve" xmlns:serif="http://www.serif.com/"
-							style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
-								<path
-									d="M120,0l-0,200l-40,-0l-0,-28.571l-40,-0l-0,-28.572l-40,0l-0,-85.714l40,-0l-0,-28.572l40,0l-0,-28.571l40,0Z"
-									style="fill-rule:nonzero;" />
-								<path
-									d="M160,0l0,40l20,0l0,40l20,0l0,40l-20,0l0,40l-20,0l0,40l20,0l0,-20l20,0l0,-40l20,0l0,-80l-20,0l0,-40l-20,0l0,-20l-20,0Z" />
-								<path d="M140,60l20,0l0,80l-20,0l0,-80" />
-						</svg>
-					</button>
-					<button data-audio-ctrl="loop" aria-pressed="true">
-						<svg xmlns="http://www.w3.org/2000/svg" xml:space="preserve" fill-rule="evenodd" stroke-linejoin="round" stroke-miterlimit="2" clip-rule="evenodd" viewBox="0 0 200 200" fill="currentColor">
-							<path d="M0 40h20V20h20V0h120v20h20v20h20v40l-30 30-30-30V60H60v30L30 60 0 90V40Z"/>
-							<path d="M200 160h-20v20h-20v20H40v-20H20v-20H0v-40l30-30 30 30v20h80v-30l30 30 30-30v50Z"/>
-						  </svg>						  
-						<span class="sr-only">Loop</span>
-					</button>
-					<button data-audio-ctrl="del">
-						<svg xmlns="http://www.w3.org/2000/svg" xml:space="preserve" fill-rule="evenodd" stroke-linejoin="round"
-							stroke-miterlimit="2" clip-rule="evenodd" viewBox="0 0 200 200" fill="currentColor">
-							<path fill-rule="nonzero" d="M200 120H0V80h40V40h40V0h40v40h40v40h40v40Z" />
-							<path d="M0 200v-40h200v40z" />
-						</svg>  
-						<span class="sr-only">Delete</span>
-					</button>
-					<button data-audio-ctrl="save">
-						<svg xmlns="http://www.w3.org/2000/svg" xml:space="preserve" fill-rule="evenodd" stroke-linejoin="round" stroke-miterlimit="2" clip-rule="evenodd" viewBox="0 0 200 200" fill="currentColor">
-							<path d="M0 0v200h200V20h-20V0h-40v80H30V0H0Z"/>
-							<path d="M50 0h70v60H50z"/>
-						  </svg>						  
-						<span class="sr-only">Save</span>
-					</button>
-				</li>
-			</template>
-		</ul>
+		<div class="controls-box">
+			<div class="option">
+				<label for="midiIn">MIDI In</label>
+				<select id="midiIn" name="midiIn" data-control-name="midiIn">
+					<option value="-1">off</option>
+					<option value="0">Ch 0</option>
+					<option value="1">Ch 1</option>
+					<option value="2">Ch 2</option>
+					<option value="3">Ch 3</option>
+					<option value="4">Ch 4</option>
+					<option value="5">Ch 5</option>
+					<option value="6">Ch 6</option>
+					<option value="7">Ch 7</option>
+					<option value="8">Ch 8</option>
+					<option value="9">Ch 9</option>
+					<option value="10">Ch 10</option>
+					<option value="11">Ch 11</option>
+					<option value="12">Ch 12</option>
+					<option value="13">Ch 13</option>
+					<option value="14">Ch 14</option>
+					<option value="15">Ch 15</option>
+				</select>
+			</div>
 
-		<footer>
-			made with &lt;3<br />
-			<a href="https://iamschulz.com/" target="_blank" rel="noopener">
-				Daniel Schulz</a
-			><br />
-			(<a
-				href="https://github.com/iamschulz/js-synth"
-				target="_blank"
-				rel="noopener"
-				>Code</a
-			>)
-		</footer>
+			<div class="option">
+				<label for="midiOut">MIDI Out</label>
+				<select id="midiOut" name="midiOut" data-control-name="midiOut">
+					<option value="-1">off</option>
+					<option value="0">Ch 0</option>
+					<option value="1">Ch 1</option>
+					<option value="2">Ch 2</option>
+					<option value="3">Ch 3</option>
+					<option value="4">Ch 4</option>
+					<option value="5">Ch 5</option>
+					<option value="6">Ch 6</option>
+					<option value="7">Ch 7</option>
+					<option value="8">Ch 8</option>
+					<option value="9">Ch 9</option>
+					<option value="10">Ch 10</option>
+					<option value="11">Ch 11</option>
+					<option value="12">Ch 12</option>
+					<option value="13">Ch 13</option>
+					<option value="14">Ch 14</option>
+					<option value="15">Ch 15</option>
+				</select>
+			</div>
+		</div>
+		</div>
+	</form>
+	<section class="keyboard">
+		<button class="white md" data-note="c0" label="C">
+			<key>A</key>
+		</button>
+		<button class="black md" data-note="cs0" label="C sharp">
+			<key>S</key>
+		</button>
+		<button class="white md" data-note="d0" label="D">
+			<key>D</key>
+		</button>
+		<button class="black md" data-note="eb0" label="E sharp">
+			<key>F</key>
+		</button>
+		<button class="white md" data-note="e0" label="E">
+			<key>G</key>
+		</button>
+		<button class="white md" data-note="f0" label="F">
+			<key>H</key>
+		</button>
+		<button class="black md" data-note="fs0" label="F sharp">
+			<key>J</key>
+		</button>
+		<button class="white md" data-note="g0" label="G">
+			<key>K</key>
+		</button>
+		<button class="black md" data-note="gs0" label="G sharp">
+			<key>L</key>
+		</button>
+		<button class="white md" data-note="a0" label="A">
+			<key>;</key>
+		</button>
+		<button class="black md" data-note="bb0" label="A sharp">
+			<key>'</key>
+		</button>
+		<button class="white md" data-note="b0" label="B">
+			<key>\</key>
+		</button>
 
-		<script src="./script.js" type="module" defer></script>
-	</body>
+		<button class="white" data-note="c1" label="C">
+			<key>Q</key>
+		</button>
+		<button class="black" data-note="cs1" label="C sharp">
+			<key>W</key>
+		</button>
+		<button class="white" data-note="d1" label="D">
+			<key>E</key>
+		</button>
+		<button class="black" data-note="eb1" label="E sharp">
+			<key>R</key>
+		</button>
+		<button class="white" data-note="e1" label="E">
+			<key>T</key>
+		</button>
+		<button class="white" data-note="f1" label="F">
+			<key>Z</key>
+		</button>
+		<button class="black" data-note="fs1" label="F sharp">
+			<key>U</key>
+		</button>
+		<button class="white" data-note="g1" label="G">
+			<key>I</key>
+		</button>
+		<button class="black" data-note="gs1" label="G sharp">
+			<key>O</key>
+		</button>
+		<button class="white" data-note="a1" label="A">
+			<key>P</key>
+		</button>
+		<button class="black" data-note="bb1" label="A sharp">
+			<key>[</key>
+		</button>
+		<button class="white" data-note="b1" label="B">
+			<key>]</key>
+		</button>
+
+		<button class="white lg" data-note="c2" label="C3">
+			<key>1</key>
+		</button>
+		<button class="black lg" data-note="cs2" label="C sharp">
+			<key>2</key>
+		</button>
+		<button class="white lg" data-note="d2" label="D">
+			<key>3</key>
+		</button>
+		<button class="black lg" data-note="eb2" label="E sharp">
+			<key>4</key>
+		</button>
+		<button class="white lg" data-note="e2" label="E">
+			<key>5</key>
+		</button>
+		<button class="white lg" data-note="f2" label="F">
+			<key>6</key>
+		</button>
+		<button class="black lg" data-note="fs2" label="F sharp">
+			<key>7</key>
+		</button>
+		<button class="white lg" data-note="g2" label="G">
+			<key>8</key>
+		</button>
+		<button class="black lg" data-note="gs2" label="G sharp">
+			<key>9</key>
+		</button>
+		<button class="white lg" data-note="a2" label="A">
+			<key>0</key>
+		</button>
+		<button class="black lg" data-note="bb2" label="A sharp">
+			<key>-</key>
+		</button>
+		<button class="white lg" data-note="b2" label="B">
+			<key>=</key>
+		</button>
+	</section>
+
+	<section class="recordingControls">
+		<button id="rec" aria-pressed="false">Rec</button>
+		<button id="play" aria-pressed="false">Play All</button>
+	</section>
+
+	<ul id="recordingsList">
+		<template id="recordingTemplate">
+			<li class="audioTrack" data-ready="false">
+				<label aria-label="in point">{<input data-audio-ctrl="in" type="number" value="0.000" min="0.000"
+						step="0.001"></label>
+				<button class="audioPlay">
+					<svg xmlns="http://www.w3.org/2000/svg" xml:space="preserve" fill-rule="evenodd"
+						stroke-linejoin="round" stroke-miterlimit="2" clip-rule="evenodd" viewBox="0 0 200 200"
+						fill="currentColor">
+						<path fill-rule="nonzero" d="M80 200V0h40v40h40v40h40v40h-40v40h-40v40H80Z" />
+						<path d="M0 0h40v200H0z" />
+					</svg>
+					<span class="sr-only">Play/Pause</span>
+				</button>
+				<div class="audioPlayer">
+					<audio loop preload="auto"></audio>
+					<input class="audioScrub" type="range" name="time" min="0" max="10000" step="1">
+					<span class="currentTime"></span>
+					<canvas class="vis" width="2000" height="300"></canvas>
+					<div class="indicator"></div>
+				</div>
+				<label aria-label="out point"><input data-audio-ctrl="out" type="number" value="0.000" min="0.000"
+						step="0.001">}</label>
+				<button data-audio-ctrl="enabled" aria-pressed="true">
+					<svg width="100%" height="100%" viewBox="0 0 220 200" version="1.1"
+						xmlns="http://www.w3.org/2000/svg" fill="currentColor"
+						xmlns:xlink="http://www.w3.org/1999/xlink" xml:space="preserve"
+						xmlns:serif="http://www.serif.com/"
+						style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
+						<path
+							d="M120,0l-0,200l-40,-0l-0,-28.571l-40,-0l-0,-28.572l-40,0l-0,-85.714l40,-0l-0,-28.572l40,0l-0,-28.571l40,0Z"
+							style="fill-rule:nonzero;" />
+						<path
+							d="M160,0l0,40l20,0l0,40l20,0l0,40l-20,0l0,40l-20,0l0,40l20,0l0,-20l20,0l0,-40l20,0l0,-80l-20,0l0,-40l-20,0l0,-20l-20,0Z" />
+						<path d="M140,60l20,0l0,80l-20,0l0,-80" />
+					</svg>
+				</button>
+				<button data-audio-ctrl="loop" aria-pressed="true">
+					<svg xmlns="http://www.w3.org/2000/svg" xml:space="preserve" fill-rule="evenodd"
+						stroke-linejoin="round" stroke-miterlimit="2" clip-rule="evenodd" viewBox="0 0 200 200"
+						fill="currentColor">
+						<path d="M0 40h20V20h20V0h120v20h20v20h20v40l-30 30-30-30V60H60v30L30 60 0 90V40Z" />
+						<path d="M200 160h-20v20h-20v20H40v-20H20v-20H0v-40l30-30 30 30v20h80v-30l30 30 30-30v50Z" />
+					</svg>
+					<span class="sr-only">Loop</span>
+				</button>
+				<button data-audio-ctrl="del">
+					<svg xmlns="http://www.w3.org/2000/svg" xml:space="preserve" fill-rule="evenodd"
+						stroke-linejoin="round" stroke-miterlimit="2" clip-rule="evenodd" viewBox="0 0 200 200"
+						fill="currentColor">
+						<path fill-rule="nonzero" d="M200 120H0V80h40V40h40V0h40v40h40v40h40v40Z" />
+						<path d="M0 200v-40h200v40z" />
+					</svg>
+					<span class="sr-only">Delete</span>
+				</button>
+				<button data-audio-ctrl="save">
+					<svg xmlns="http://www.w3.org/2000/svg" xml:space="preserve" fill-rule="evenodd"
+						stroke-linejoin="round" stroke-miterlimit="2" clip-rule="evenodd" viewBox="0 0 200 200"
+						fill="currentColor">
+						<path d="M0 0v200h200V20h-20V0h-40v80H30V0H0Z" />
+						<path d="M50 0h70v60H50z" />
+					</svg>
+					<span class="sr-only">Save</span>
+				</button>
+			</li>
+		</template>
+	</ul>
+
+	<footer>
+		made with &lt;3<br />
+		<a href="https://iamschulz.com/" target="_blank" rel="noopener">
+			Daniel Schulz</a><br />
+		(<a href="https://github.com/iamschulz/js-synth" target="_blank" rel="noopener">Code</a>)
+	</footer>
+
+	<script src="./script.js" type="module" defer></script>
+</body>
+
 </html>

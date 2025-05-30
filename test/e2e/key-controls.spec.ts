@@ -6,11 +6,11 @@ test("key controls", async ({ page }) => {
 	await sleep(500);
 
 	await page.keyboard.down("KeyQ");
-	await expect(await getNodes(page)).toStrictEqual(["c2"]);
+	await expect(await getNodes(page)).toStrictEqual(["c1"]);
 
 	await page.keyboard.down("KeyE");
-	await expect(await getNodes(page)).toStrictEqual(["c2", "d2"]);
+	await expect(await getNodes(page)).toStrictEqual(["c1", "d1"]);
 
 	await page.keyboard.up("KeyQ");
-	await expect(await getNodes(page)).toStrictEqual(["d2"]);
+	await expect(await getNodes(page)).toStrictEqual(["d1"]);
 });

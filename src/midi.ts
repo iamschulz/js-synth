@@ -1,4 +1,4 @@
-import Keys from "./keys.js";
+import { getMidiCode } from "./keys.ts";
 
 type MidiMessage = {
 	command: number;
@@ -146,19 +146,13 @@ export class MidiAdapter {
 		}
 		const data = this.parseMidiMessage(str);
 
-		if (
-			data.channel === this.inChannel &&
-			data.command === 9 &&
-			data.velocity > 0
-		) {
+		if (data.channel === this.inChannel && data.command === 9 && data.velocity > 0) {
 			this.playCallback(data.note, data.velocity);
 		}
 
 		if (
 			(data.channel === this.inChannel && data.command === 8) ||
-			(data.channel === this.inChannel &&
-				data.command === 9 &&
-				data.velocity === 0)
+			(data.channel === this.inChannel && data.command === 9 && data.velocity === 0)
 		) {
 			this.releaseCallback(data.note);
 		}
@@ -181,7 +175,7 @@ export class MidiAdapter {
 			return;
 		}
 
-		const midiCode = Keys[note].midiIn;
+		const midiCode = getMidiCode(note) as any; // todo: fix typing
 		const midiCommand = "0x" + ((9 << 4) | this.outChannel).toString(16);
 		const midiVelocity = "0x" + (velocity * 127).toString(16);
 

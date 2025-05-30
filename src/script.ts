@@ -1,8 +1,7 @@
 import { AudioRecorder } from "./audioRecorder";
-import Freqs from "./freqs.ts";
-import Keys from "./keys.ts";
 import { Waveform } from "./waveform.ts";
 import { MidiAdapter } from "./midi.ts";
+import { getKeyName, getNote } from "./keys.ts";
 
 type AudioNode = {
 	node: OscillatorNode | AudioBufferSourceNode;
@@ -11,7 +10,6 @@ type AudioNode = {
 
 class Main {
 	ctx: AudioContext;
-	freqs: { [key: string]: number };
 	keys: {
 		[key: string]: {
 			key: string;
@@ -43,8 +41,6 @@ class Main {
 
 		this.ctx = new window.AudioContext();
 
-		this.freqs = Freqs;
-		this.keys = Keys;
 		this.volume = 100;
 		this.wave = "sine";
 		this.threshold = 0.001;
@@ -79,14 +75,10 @@ class Main {
 	 * @param {String} key
 	 */
 	playNote(key = "a"): void {
-		if (Object.keys(this.nodes).includes(key)) {
-			return;
-		}
-
 		//const ctx = new window.AudioContext();
 		const volume = this.ctx.createGain();
 		const release = this.ctx.createGain();
-		const freq = this.getFreq(key);
+		const freq = this.getFrequency(key);
 		const attack = this.ctx.createGain();
 		const decay = this.ctx.createGain();
 		let node: AudioBufferSourceNode | OscillatorNode;
@@ -159,7 +151,7 @@ class Main {
 
 		Array.from(this.keyBtns)
 			.filter((btn) => btn.dataset.note === key)[0]
-			.classList.add("active");
+			?.classList.add("active");
 
 		this.nodes[key] = {
 			node: node,
@@ -188,7 +180,7 @@ class Main {
 			if (this.nodes[key] === node) {
 				Array.from(this.keyBtns)
 					.filter((btn) => btn.dataset.note === key)[0]
-					.classList.remove("active");
+					?.classList.remove("active");
 
 				delete this.nodes[key];
 
@@ -197,15 +189,40 @@ class Main {
 		});
 	}
 
-	/**
-	 * Calculates the frequency for a key.
-	 *
-	 * @param key The key, e.g. 'c2'.
-	 *
-	 * @returns The frequency.
-	 */
-	getFreq(key: string): number {
-		let freq = this.freqs[key] || 440;
+	getFrequency(note: string): number {
+		const semitoneMap: Record<string, number> = {
+			c: 0,
+			cs: 1,
+			db: 1,
+			d: 2,
+			ds: 3,
+			eb: 3,
+			e: 4,
+			f: 5,
+			fs: 6,
+			gb: 6,
+			g: 7,
+			gs: 8,
+			ab: 8,
+			a: 9,
+			as: 10,
+			bb: 10,
+			b: 11,
+		};
+
+		const match = note.toLowerCase().match(/^([a-g]{1}s?|[a-g]{1}b?)(\d?)$/);
+
+		if (!match) {
+			throw new Error("Ungültiger Notenname: " + note);
+		}
+
+		const [, baseNote, octaveStr] = match;
+		const semitone = semitoneMap[baseNote];
+		const octave = octaveStr === "" ? 4 : parseInt(octaveStr);
+
+		const semitonesFromA4 = semitone + (octave - 4) * 12 - 9;
+
+		let freq = +(440 * Math.pow(2, semitonesFromA4 / 12)).toFixed(2);
 
 		for (let i = 0; i <= this.pitch; i++) {
 			freq = freq * 2;
@@ -234,14 +251,13 @@ class Main {
 					this.AudioRecorder.recordings[0].togglePlay();
 				}
 			} else {
-				const note = Object.keys(this.keys).find((x) => this.keys[x].key === e.code);
+				const note = getNote(e.code);
 
 				if (!note) {
 					return;
 				}
 
 				if (
-					!this.keys[note]?.key ||
 					this.nodes[note] // note is already playing
 				) {
 					return;
@@ -252,13 +268,13 @@ class Main {
 		});
 
 		document.addEventListener("keyup", (e) => {
-			const note = Object.keys(this.keys).find((x) => this.keys[x].key === e.code);
+			const note = getNote(e.code);
 
 			if (!note) {
 				return;
 			}
 
-			if (!this.keys[note]?.key || !this.nodes[note]) return;
+			if (!this.nodes[note]) return;
 
 			this.endNote(this.nodes[note]);
 		});
@@ -273,14 +289,13 @@ class Main {
 	 * @returns
 	 */
 	onMidiPlay(midiCode: number, velocity: number): void {
-		const note = Object.keys(this.keys).find((x) => this.keys[x].midiIn === midiCode);
+		const note = getNote(midiCode);
 
 		if (!note) {
 			return;
 		}
 
 		if (
-			!this.keys[note]?.key ||
 			this.nodes[note] // note is already playing
 		)
 			return;
@@ -296,13 +311,13 @@ class Main {
 	 * @returns
 	 */
 	onMidiRelease(midiCode: number): void {
-		const note = Object.keys(this.keys).find((x) => this.keys[x].midiIn === midiCode);
+		const note = getNote(midiCode);
 
 		if (!note) {
 			return;
 		}
 
-		if (!this.keys[note]?.key || !this.nodes[note]) return;
+		if (!this.nodes[note]) return;
 
 		this.endNote(this.nodes[note]);
 	}
@@ -317,7 +332,7 @@ class Main {
 				"mousedown",
 				(e) => {
 					const key = btn.dataset.note;
-					if (!key || !this.freqs[key]) return;
+					if (!key) return;
 
 					this.playNote(key);
 				},
@@ -328,7 +343,7 @@ class Main {
 				"touchstart",
 				(e) => {
 					const key = btn.dataset.note;
-					if (!key || !this.freqs[key]) return;
+					if (!key) return;
 
 					this.playNote(key);
 				},
@@ -340,7 +355,7 @@ class Main {
 				"mouseenter",
 				(e) => {
 					const key = btn.dataset.note;
-					if (!e.buttons || !key || !this.freqs[key]) return;
+					if (!e.buttons || !key) return;
 
 					this.playNote(key);
 				},
@@ -359,7 +374,7 @@ class Main {
 				"mouseup",
 				(e) => {
 					const key = btn.dataset.note;
-					if (!key || !this.freqs[key] || !this.nodes[key]) return;
+					if (!key || !this.nodes[key]) return;
 
 					this.endNote(this.nodes[key]);
 				},
@@ -370,7 +385,7 @@ class Main {
 				"mouseout",
 				(e) => {
 					const key = btn.dataset.note;
-					if (!key || !this.freqs[key] || !this.nodes[key]) return;
+					if (!key || !this.nodes[key]) return;
 
 					this.endNote(this.nodes[key]);
 				},
@@ -381,7 +396,7 @@ class Main {
 				"touchend",
 				(e) => {
 					const key = btn.dataset.note;
-					if (!key || !this.freqs[key] || !this.nodes[key]) return;
+					if (!key || !this.nodes[key]) return;
 
 					this.endNote(this.nodes[key]);
 				},
@@ -392,7 +407,7 @@ class Main {
 				"touchcancel",
 				(e) => {
 					const key = btn.dataset.note;
-					if (!key || !this.freqs[key] || !this.nodes[key]) return;
+					if (!key || !this.nodes[key]) return;
 
 					this.endNote(this.nodes[key]);
 				},
@@ -402,14 +417,14 @@ class Main {
 			btn.addEventListener("keyup", (e) => {
 				const key = btn.dataset.note;
 				if (!(e.code === "Space" || e.key === "Enter")) return;
-				if (!key || !this.freqs[key] || !this.nodes[key]) return;
+				if (!key || !this.nodes[key]) return;
 
 				this.endNote(this.nodes[key]);
 			});
 
 			btn.addEventListener("blur", () => {
 				const key = btn.dataset.note;
-				if (!key || !this.freqs[key] || !this.nodes[key]) return;
+				if (!key || !this.nodes[key]) return;
 
 				this.endNote(this.nodes[key]);
 			});
@@ -533,11 +548,11 @@ class Main {
 		}
 
 		const layoutMap = await navigator.keyboard.getLayoutMap();
-		Object.keys(this.keys).forEach((note) => {
-			const key = this.keys[note].key;
-			const keyBtn = document.querySelector(`[data-note=${note}]`)!;
-			const keyText = layoutMap.get(key);
-			keyBtn.textContent = keyText;
+		this.keyBtns.forEach((btn) => {
+			const noteName = btn.dataset.note;
+			const keyName = getKeyName(noteName!);
+			if (!keyName) return;
+			btn.textContent = layoutMap.get(keyName) || keyName;
 		});
 	}
 
