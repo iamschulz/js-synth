@@ -39,7 +39,7 @@ export const keyBindings = [
 	"Equal",
 ];
 
-export const getNote = (input: string | number) => {
+export const getNote = (input: string | number): string | undefined => {
 	if (typeof input === "number") {
 		const octave = Math.floor(input / 12);
 		const note = baseNotes[input % 12];
@@ -50,7 +50,7 @@ export const getNote = (input: string | number) => {
 		// input is keyCode
 		const index = keyBindings.indexOf(input);
 		if (index === -1) {
-			return null;
+			return undefined;
 		}
 		const octave = Math.floor(index / 12);
 		const note = baseNotes[index % 12];

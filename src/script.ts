@@ -210,10 +210,10 @@ class Main {
 			b: 11,
 		};
 
-		const match = note.toLowerCase().match(/^([a-g]{1}s?|[a-g]{1}b?)(\d?)$/);
+		const match = note.toLowerCase().match(/^([a-g]{1}s?|[a-g]{1}b?)([-]?\d?)$/);
 
 		if (!match) {
-			throw new Error("Ungültiger Notenname: " + note);
+			throw new Error("Invalid note name: " + note);
 		}
 
 		const [, baseNote, octaveStr] = match;
@@ -280,6 +280,12 @@ class Main {
 		});
 	}
 
+	transpose(keyName: string, offset: number): string {
+		const octave = parseInt(keyName.slice(-1));
+		const note = keyName.slice(0, -1);
+		return `${note}${octave + offset}`;
+	}
+
 	/**
 	 * Calback for MIDI inputs for key presses.
 	 *
@@ -289,11 +295,13 @@ class Main {
 	 * @returns
 	 */
 	onMidiPlay(midiCode: number, velocity: number): void {
-		const note = getNote(midiCode);
+		let note = getNote(midiCode);
 
 		if (!note) {
 			return;
 		}
+
+		note = this.transpose(note, -4);
 
 		if (
 			this.nodes[note] // note is already playing
@@ -311,11 +319,13 @@ class Main {
 	 * @returns
 	 */
 	onMidiRelease(midiCode: number): void {
-		const note = getNote(midiCode);
+		let note = getNote(midiCode);
 
 		if (!note) {
 			return;
 		}
+
+		note = this.transpose(note, -4);
 
 		if (!this.nodes[note]) return;
 
