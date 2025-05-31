@@ -74,8 +74,9 @@ class Main {
 	 *
 	 * @param {String} key
 	 */
-	playNote(key = "a"): void {
+	playNote(key = "a", velocity = 1): void {
 		//const ctx = new window.AudioContext();
+		const vel = this.ctx.createGain();
 		const volume = this.ctx.createGain();
 		const release = this.ctx.createGain();
 		const freq = this.getFrequency(key);
@@ -135,7 +136,11 @@ class Main {
 			Math.max(this.sustain / 100, 0.000001),
 			this.ctx.currentTime + this.attack + this.decay
 		);
-		decay.connect(release);
+		decay.connect(vel);
+
+		/* apply key velocity */
+		vel.gain.value = vel.gain.value * velocity;
+		vel.connect(release);
 
 		/* applay master volume */
 		volume.gain.value = volume.gain.value * (this.volume / 100);
@@ -158,7 +163,7 @@ class Main {
 			release: release,
 		};
 
-		this.MidiAdapter.onPlayNote(key, 1);
+		this.MidiAdapter.onPlayNote(key, velocity);
 	}
 
 	/**
@@ -308,7 +313,7 @@ class Main {
 		)
 			return;
 
-		this.playNote(note);
+		this.playNote(note, velocity);
 	}
 
 	/**
