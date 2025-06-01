@@ -29,10 +29,10 @@ const opts = {
 
 if (watchFlag) {
 	esbuild.context(opts).then(async (ctx) => {
-		const { host, port } = await ctx.serve({
+		const { port } = await ctx.serve({
 			servedir: "dist",
 		});
-		console.log(`Serving on http://${host}:${port}`);
+		console.log(`Serving on http://127.0.0.1:${port}`);
 	});
 } else {
 	esbuild.build(opts);

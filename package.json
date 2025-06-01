@@ -15,7 +15,7 @@
 		"@playwright/test": "^1.42.1",
 		"@types/node": "^20.12.2",
 		"@types/serviceworker": "^0.0.84",
-		"esbuild": "^0.20.2",
+		"esbuild": "^0.25.5",
 		"esbuild-plugin-copy": "^2.1.1",
 		"gh-pages": "^6.1.1",
 		"typescript": "^5.4.3"
