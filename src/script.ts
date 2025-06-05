@@ -572,11 +572,7 @@ class Main {
 	}
 
 	killDeadNodes(): void {
-		if (
-			this.MidiAdapter.disabled ||
-			this.MidiAdapter.activeNotes === 0 ||
-			!document.querySelector("button.active")
-		) {
+		if (this.MidiAdapter.activeNotes === 0 && !document.querySelector("button.active")) {
 			Object.keys(this.nodes).forEach((note) => {
 				this.endNote(this.nodes[note]);
 			});
