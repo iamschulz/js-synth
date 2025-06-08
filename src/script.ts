@@ -24,6 +24,7 @@ class Main {
 	sustain: number;
 	release: number;
 	pitch: number;
+	pitchBend: number;
 	nodes: { [key: string]: AudioNode };
 	keyBtns: NodeListOf<HTMLButtonElement>;
 	controls: HTMLFormElement;
@@ -49,6 +50,7 @@ class Main {
 		this.sustain = 50;
 		this.release = 0;
 		this.pitch = 0;
+		this.pitchBend = 0.5;
 		this.nodes = {};
 		this.keyBtns = document.querySelectorAll(".keyboard button");
 		this.controls = document.querySelector(".controls")!;
@@ -62,6 +64,7 @@ class Main {
 		this.MidiAdapter = new MidiAdapter({
 			playCallback: this.onMidiPlay.bind(this),
 			releaseCallback: this.onMidiRelease.bind(this),
+			pitchCallback: this.onMidiPitchBend.bind(this),
 		});
 
 		this.killDeadNodes();
@@ -150,6 +153,11 @@ class Main {
 		volume.connect(this.ctx.destination);
 		if (this.AudioRecorder.recordingStream) {
 			volume.connect(this.AudioRecorder.recordingStream);
+		}
+
+		/* apply pitch bend */
+		if (node instanceof OscillatorNode) {
+			node.frequency.setValueAtTime(freq * (0.5 + this.pitchBend), this.ctx.currentTime);
 		}
 
 		node.start(0);
@@ -335,6 +343,30 @@ class Main {
 		if (!this.nodes[note]) return;
 
 		this.endNote(this.nodes[note]);
+	}
+
+	/**
+	 * Callback for MIDI pitch bend inputs.
+	 *
+	 * @param offset - Pitch offset, between 0 and 1, 0.5 is no offset.
+	 */
+	onMidiPitchBend(offset: number): void {
+		this.pitchBend = offset;
+		Object.keys(this.nodes).forEach((note) => {
+			if (this.nodes[note].node instanceof AudioBufferSourceNode) {
+				// cannot change frequency of AudioBufferSourceNode
+				return;
+			}
+			const node = this.nodes[note].node as OscillatorNode;
+
+			if (offset < 0 || offset > 1) {
+				throw new Error("Pitch offset must be between 0 and 1");
+			}
+
+			const baseFreq = this.getFrequency(note);
+
+			node.frequency.setValueAtTime(baseFreq * (0.5 + offset), this.ctx.currentTime);
+		});
 	}
 
 	/**
