@@ -23,6 +23,8 @@ class Main {
 	decay: number;
 	sustain: number;
 	release: number;
+	distort: number;
+	overdrive: number;
 	pitch: number;
 	pitchBend: number;
 	nodes: { [key: string]: AudioNode };
@@ -49,6 +51,8 @@ class Main {
 		this.decay = 0;
 		this.sustain = 50;
 		this.release = 0;
+		this.distort = 0;
+		this.overdrive = 0;
 		this.pitch = 0;
 		this.pitchBend = 0.5;
 		this.nodes = {};
@@ -72,6 +76,33 @@ class Main {
 		this.AudioRecorder = new AudioRecorder(this.ctx);
 	}
 
+	makeDistortionCurve() {
+		const k = typeof this.distort === "number" ? this.distort : 50;
+		const n_samples = 44100;
+		const curve = new Float32Array(n_samples);
+		const deg = Math.PI / 180;
+
+		for (let i = 0; i < n_samples; i++) {
+			const x = (i * 2) / n_samples - 1;
+			curve[i] = ((3 + k) * x * 20 * deg) / (Math.PI + k * Math.abs(x));
+		}
+		return curve;
+	}
+
+	makeOverdriveCurve() {
+		const k = typeof this.overdrive === "number" ? this.overdrive : 3;
+		const n_samples = 44100;
+		const curve = new Float32Array(n_samples);
+
+		for (let i = 0; i < n_samples; i++) {
+			const x = (i * 2) / n_samples - 1;
+			// Soft clipping using tanh-like curve
+			curve[i] = Math.tanh(k * x);
+		}
+
+		return curve;
+	}
+
 	/**
 	 * Called when a note starts playing
 	 *
@@ -86,6 +117,8 @@ class Main {
 		const attack = this.ctx.createGain();
 		const decay = this.ctx.createGain();
 		let node: AudioBufferSourceNode | OscillatorNode;
+		let distortion: WaveShaperNode | undefined;
+		let overdriveAmp: WaveShaperNode | undefined;
 
 		if (["sine", "triangle", "square", "sawtooth"].includes(this.wave)) {
 			// todo: own function
@@ -131,7 +164,6 @@ class Main {
 		} else {
 			attack.gain.exponentialRampToValueAtTime(0.9, this.ctx.currentTime + this.threshold);
 		}
-		attack.connect(decay);
 
 		/* configure decay */
 		decay.gain.setValueAtTime(1, this.ctx.currentTime + this.attack);
@@ -139,18 +171,35 @@ class Main {
 			Math.max(this.sustain / 100, 0.000001),
 			this.ctx.currentTime + this.attack + this.decay
 		);
-		decay.connect(vel);
+
+		/* apply distortion */
+		if (this.distort > 0) {
+			distortion = this.ctx.createWaveShaper();
+			distortion.curve = this.makeDistortionCurve();
+			distortion.oversample = "2x";
+		}
+
+		if (this.overdrive > 0) {
+			overdriveAmp = this.ctx.createWaveShaper();
+			overdriveAmp.curve = this.makeOverdriveCurve();
+			overdriveAmp.oversample = "2x";
+		}
 
 		/* apply key velocity */
 		vel.gain.value = vel.gain.value * velocity;
-		vel.connect(release);
 
 		/* applay master volume */
 		volume.gain.value = volume.gain.value * (this.volume / 100);
-		release.connect(volume);
 
 		/* configure release */
+		attack.connect(decay);
+		decay.connect(vel);
+		vel.connect(distortion || overdriveAmp || release);
+		distortion?.connect(overdriveAmp || release);
+		overdriveAmp?.connect(release);
+		release.connect(volume);
 		volume.connect(this.ctx.destination);
+
 		if (this.AudioRecorder.recordingStream) {
 			volume.connect(this.AudioRecorder.recordingStream);
 		}
@@ -490,6 +539,8 @@ class Main {
 			this.decay = parseFloat(data.decay || 0) + 0.001;
 			this.sustain = parseFloat(data.sustain || 50);
 			this.release = parseFloat(data.release || 0) + 0.001;
+			this.distort = parseFloat(data.distort || 0);
+			this.overdrive = parseFloat(data.overdrive || 0);
 			this.pitch = parseInt(data.pitch || 3);
 			this.midiIn = parseInt(data.midiIn) || 0;
 			this.midiOut = parseInt(data.midiOut) || 0;
@@ -503,6 +554,8 @@ class Main {
 				decay: this.decay,
 				sustain: this.sustain,
 				release: this.release,
+				distort: this.distort,
+				overdrive: this.overdrive,
 				pitch: this.pitch,
 				midiIn: this.midiIn,
 				midiOut: this.midiOut,
