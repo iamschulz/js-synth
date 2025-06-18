@@ -45,7 +45,7 @@
 		Your Browser can't play sounds with this synth.<br />
 		Maybe try Chrome or Firefox?
 	</dialog>
-	<form class="controls">
+	<form class="controls" id="header-controls">
 		<div class="controls-box">
 			<input type="radio" id="waveform-sine" name="waveform" value="sine" checked />
 			<label for="waveform-sine">Sine</label>
@@ -109,55 +109,6 @@
 				<input name="overdrive" id="overdrive" type="range" data-control-name="overdrive" min="0" max="11"
 					step="1" value="0" />
 			</div>
-		</div>
-
-		<div class="controls-box">
-			<div class="option">
-				<label for="midiIn">MIDI In</label>
-				<select id="midiIn" name="midiIn" data-control-name="midiIn">
-					<option value="-1">off</option>
-					<option value="0">Ch 0</option>
-					<option value="1">Ch 1</option>
-					<option value="2">Ch 2</option>
-					<option value="3">Ch 3</option>
-					<option value="4">Ch 4</option>
-					<option value="5">Ch 5</option>
-					<option value="6">Ch 6</option>
-					<option value="7">Ch 7</option>
-					<option value="8">Ch 8</option>
-					<option value="9">Ch 9</option>
-					<option value="10">Ch 10</option>
-					<option value="11">Ch 11</option>
-					<option value="12">Ch 12</option>
-					<option value="13">Ch 13</option>
-					<option value="14">Ch 14</option>
-					<option value="15">Ch 15</option>
-				</select>
-			</div>
-
-			<div class="option">
-				<label for="midiOut">MIDI Out</label>
-				<select id="midiOut" name="midiOut" data-control-name="midiOut">
-					<option value="-1">off</option>
-					<option value="0">Ch 0</option>
-					<option value="1">Ch 1</option>
-					<option value="2">Ch 2</option>
-					<option value="3">Ch 3</option>
-					<option value="4">Ch 4</option>
-					<option value="5">Ch 5</option>
-					<option value="6">Ch 6</option>
-					<option value="7">Ch 7</option>
-					<option value="8">Ch 8</option>
-					<option value="9">Ch 9</option>
-					<option value="10">Ch 10</option>
-					<option value="11">Ch 11</option>
-					<option value="12">Ch 12</option>
-					<option value="13">Ch 13</option>
-					<option value="14">Ch 14</option>
-					<option value="15">Ch 15</option>
-				</select>
-			</div>
-		</div>
 		</div>
 	</form>
 	<section class="keyboard">
@@ -347,10 +298,61 @@
 	</ul>
 
 	<footer>
-		made with &lt;3<br />
-		<a href="https://iamschulz.com/" target="_blank" rel="noopener">
-			Daniel Schulz</a><br />
-		(<a href="https://github.com/iamschulz/js-synth" target="_blank" rel="noopener">Code</a>)
+		<form class="controls" id="footer-controls">
+			<div class="controls-box">
+				<div class="option">
+					<label for="midiIn">MIDI In</label>
+					<select id="midiIn" name="midiIn" data-control-name="midiIn">
+						<option value="-1">off</option>
+						<option value="0">Ch 0</option>
+						<option value="1">Ch 1</option>
+						<option value="2">Ch 2</option>
+						<option value="3">Ch 3</option>
+						<option value="4">Ch 4</option>
+						<option value="5">Ch 5</option>
+						<option value="6">Ch 6</option>
+						<option value="7">Ch 7</option>
+						<option value="8">Ch 8</option>
+						<option value="9">Ch 9</option>
+						<option value="10">Ch 10</option>
+						<option value="11">Ch 11</option>
+						<option value="12">Ch 12</option>
+						<option value="13">Ch 13</option>
+						<option value="14">Ch 14</option>
+						<option value="15">Ch 15</option>
+					</select>
+				</div>
+
+				<div class="option">
+					<label for="midiOut">MIDI Out</label>
+					<select id="midiOut" name="midiOut" data-control-name="midiOut">
+						<option value="-1">off</option>
+						<option value="0">Ch 0</option>
+						<option value="1">Ch 1</option>
+						<option value="2">Ch 2</option>
+						<option value="3">Ch 3</option>
+						<option value="4">Ch 4</option>
+						<option value="5">Ch 5</option>
+						<option value="6">Ch 6</option>
+						<option value="7">Ch 7</option>
+						<option value="8">Ch 8</option>
+						<option value="9">Ch 9</option>
+						<option value="10">Ch 10</option>
+						<option value="11">Ch 11</option>
+						<option value="12">Ch 12</option>
+						<option value="13">Ch 13</option>
+						<option value="14">Ch 14</option>
+						<option value="15">Ch 15</option>
+					</select>
+				</div>
+			</div>
+			<div>
+				made with &lt;3<br />
+				<a href="https://iamschulz.com/" target="_blank" rel="noopener">
+					Daniel Schulz</a><br />
+				(<a href="https://github.com/iamschulz/js-synth" target="_blank" rel="noopener">Code</a>)
+			</div>
+		</form>
 	</footer>
 
 	<script src="./script.js" type="module" defer></script>

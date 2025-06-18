@@ -54,7 +54,7 @@ class Main {
 		this.pitchBend = 0.5;
 		this.activeNotes = [];
 		this.keyBtns = document.querySelectorAll(".keyboard button");
-		this.controls = document.querySelector(".controls")!;
+		this.controls = document.querySelector("#header-controls")!;
 		this.headerDiagram = document.querySelector("#header-vis")!;
 
 		this.keyboardControls();
@@ -344,8 +344,8 @@ class Main {
 			this.distort = parseFloat(data.distort || 0);
 			this.overdrive = parseFloat(data.overdrive || 0);
 			this.pitch = parseInt(data.pitch || 3);
-			this.midiIn = parseInt(data.midiIn) || 0;
-			this.midiOut = parseInt(data.midiOut) || 0;
+			//this.midiIn = parseInt(data.midiIn) || 0;
+			//this.midiOut = parseInt(data.midiOut) || 0;
 			this.drawWave();
 			this.drawAdsr();
 
@@ -359,8 +359,8 @@ class Main {
 				distort: this.distort,
 				overdrive: this.overdrive,
 				pitch: this.pitch,
-				midiIn: this.midiIn,
-				midiOut: this.midiOut,
+				//midiIn: this.midiIn,
+				//midiOut: this.midiOut,
 			});
 		};
 
@@ -391,7 +391,8 @@ class Main {
 				) as HTMLInputElement;
 				waveformEl.setAttribute("checked", "checked");
 			} else {
-				const waveformEl = this.controls.querySelector(`#${conf}`) as HTMLInputElement;
+				const waveformEl = this.controls.querySelector(`#${conf}`) as HTMLInputElement | undefined;
+				if (!waveformEl) return;
 				waveformEl.value = synthConfig[conf];
 			}
 		});

@@ -1,3 +1,4 @@
+import { Controls } from "./Controls.ts";
 import { getMidiCode } from "./keys.ts";
 
 type MidiMessage = {
@@ -17,8 +18,6 @@ type MidiConfig = {
 
 export class MidiAdapter {
 	midi: MIDIAccess | null;
-	inSelector: HTMLSelectElement;
-	outSelector: HTMLSelectElement;
 	inChannel: number;
 	outChannel: number;
 	playCallback: Callback;
@@ -26,23 +25,28 @@ export class MidiAdapter {
 	pitchCallback: Callback;
 	disabled: boolean;
 	activeNotes: number;
+	controls: Controls;
 
 	constructor(config: MidiConfig) {
 		this.midi = null;
-		this.inSelector = document.querySelector("#midiIn")!;
-		this.outSelector = document.querySelector("#midiOut")!;
-		this.watchChannelOptions();
+		this.controls = new Controls(
+			"midiConfig",
+			document.querySelector("#footer-controls") as HTMLFormElement,
+			(data) => {
+				this.inChannel = parseInt(data["midiIn"] as string);
+				this.outChannel = parseInt(data["midiOut"] as string);
+				this.checkRequirements();
+			}
+		);
 
 		this.playCallback = config.playCallback;
 		this.releaseCallback = config.releaseCallback;
 		this.pitchCallback = config.pitchCallback;
 
-		this.inChannel = parseInt(this.inSelector.value);
-		this.outChannel = parseInt(this.outSelector.value);
+		this.disabled = false;
 
 		this.inChannel >= 0 && this.outChannel >= 0 && this.checkRequirements();
 
-		this.disabled = false;
 		this.activeNotes = 0;
 	}
 
@@ -54,6 +58,7 @@ export class MidiAdapter {
 	checkRequirements(): void {
 		if (!navigator.requestMIDIAccess) {
 			this.disableMidi();
+			console.warn("MIDI not supported in this browser.");
 			return;
 		}
 
@@ -68,6 +73,7 @@ export class MidiAdapter {
 			.requestMIDIAccess()
 			.then(this.onMIDISuccess.bind(this))
 			.catch((e) => {
+				console.error("MIDI access failed:", e);
 				this.disableMidi();
 			});
 	}
@@ -78,6 +84,7 @@ export class MidiAdapter {
 	 * @param midiAccess - The granted MIDI access.
 	 */
 	onMIDISuccess(midiAccess: MIDIAccess): void {
+		console.log("MIDI access granted.");
 		this.midi = midiAccess;
 
 		for (const entry of midiAccess.outputs) {
@@ -192,34 +199,10 @@ export class MidiAdapter {
 	}
 
 	/**
-	 * Handles MIDI option changes.
-	 */
-	watchChannelOptions(): void {
-		if (!this.midi) {
-			this.checkRequirements();
-		}
-
-		this.inSelector.addEventListener("input", () => {
-			this.inChannel = parseInt(this.inSelector.value);
-			if (!this.midi) {
-				this.checkRequirements();
-			}
-		});
-
-		this.outSelector.addEventListener("input", () => {
-			this.outChannel = parseInt(this.outSelector.value);
-			if (!this.midi) {
-				this.checkRequirements();
-			}
-		});
-	}
-
-	/**
 	 * Disables MIDI option UI.
 	 */
 	disableMidi(): void {
-		this.inSelector.setAttribute("disabled", "disabled");
-		this.outSelector.setAttribute("disabled", "disabled");
+		this.controls.toggleDisable();
 		this.disabled = true;
 	}
 }
