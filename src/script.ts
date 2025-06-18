@@ -2,11 +2,7 @@ import { AudioRecorder } from "./audioRecorder";
 import { Waveform } from "./waveform.ts";
 import { MidiAdapter } from "./midi.ts";
 import { getKeyName, getNote } from "./keys.ts";
-
-type AudioNode = {
-	node: OscillatorNode | AudioBufferSourceNode;
-	release: GainNode;
-};
+import { ToneGenerator } from "./ToneGenerator.ts";
 
 class Main {
 	ctx: AudioContext;
@@ -27,7 +23,7 @@ class Main {
 	overdrive: number;
 	pitch: number;
 	pitchBend: number;
-	nodes: { [key: string]: AudioNode };
+	activeNotes: string[];
 	keyBtns: NodeListOf<HTMLButtonElement>;
 	controls: HTMLFormElement;
 	headerDiagram: SVGElement;
@@ -35,6 +31,7 @@ class Main {
 	midiIn: number;
 	midiOut: number;
 	AudioRecorder: AudioRecorder;
+	toneGenerators: ToneGenerator[];
 
 	constructor() {
 		if (!window.AudioContext) {
@@ -55,7 +52,7 @@ class Main {
 		this.overdrive = 0;
 		this.pitch = 0;
 		this.pitchBend = 0.5;
-		this.nodes = {};
+		this.activeNotes = [];
 		this.keyBtns = document.querySelectorAll(".keyboard button");
 		this.controls = document.querySelector(".controls")!;
 		this.headerDiagram = document.querySelector("#header-vis")!;
@@ -74,33 +71,7 @@ class Main {
 		this.killDeadNodes();
 
 		this.AudioRecorder = new AudioRecorder(this.ctx);
-	}
-
-	makeDistortionCurve() {
-		const k = typeof this.distort === "number" ? this.distort : 50;
-		const n_samples = 44100;
-		const curve = new Float32Array(n_samples);
-		const deg = Math.PI / 180;
-
-		for (let i = 0; i < n_samples; i++) {
-			const x = (i * 2) / n_samples - 1;
-			curve[i] = ((3 + k) * x * 20 * deg) / (Math.PI + k * Math.abs(x));
-		}
-		return curve;
-	}
-
-	makeOverdriveCurve() {
-		const k = typeof this.overdrive === "number" ? this.overdrive : 3;
-		const n_samples = 44100;
-		const curve = new Float32Array(n_samples);
-
-		for (let i = 0; i < n_samples; i++) {
-			const x = (i * 2) / n_samples - 1;
-			// Soft clipping using tanh-like curve
-			curve[i] = Math.tanh(k * x);
-		}
-
-		return curve;
+		this.toneGenerators = [new ToneGenerator(this.AudioRecorder, this.ctx)];
 	}
 
 	/**
@@ -109,188 +80,40 @@ class Main {
 	 * @param {String} key
 	 */
 	playNote(key = "a", velocity = 1): void {
-		//const ctx = new window.AudioContext();
-		const vel = this.ctx.createGain();
-		const volume = this.ctx.createGain();
-		const release = this.ctx.createGain();
-		const freq = this.getFrequency(key);
-		const attack = this.ctx.createGain();
-		const decay = this.ctx.createGain();
-		let node: AudioBufferSourceNode | OscillatorNode;
-		let distortion: WaveShaperNode | undefined;
-		let overdriveAmp: WaveShaperNode | undefined;
-
-		if (["sine", "triangle", "square", "sawtooth"].includes(this.wave)) {
-			// todo: own function
-			const osc = this.ctx.createOscillator();
-			osc.type = this.wave as OscillatorType;
-			osc.connect(attack);
-			osc.frequency.value = freq;
-
-			node = osc;
-		} else if (this.wave === "noise") {
-			// todo: own function
-			const bufSize = this.ctx.sampleRate * 10;
-			const buf = new AudioBuffer({
-				length: bufSize,
-				sampleRate: this.ctx.sampleRate,
-			});
-
-			const data = buf.getChannelData(0);
-			for (let i = 0; i < bufSize; i++) {
-				data[i] = Math.random() * 2 - 1;
-			}
-
-			const noise = new AudioBufferSourceNode(this.ctx, {
-				buffer: buf,
-			});
-
-			const bandpass = new BiquadFilterNode(this.ctx, {
-				type: "bandpass",
-				frequency: freq,
-			});
-
-			noise.connect(bandpass).connect(attack);
-
-			node = noise;
-		} else {
-			return;
+		if (this.activeNotes.includes(key)) {
+			return; // note is already playing
 		}
 
-		/* configure attack */
-		attack.gain.setValueAtTime(0.00001, this.ctx.currentTime);
-		if (this.attack > this.threshold) {
-			attack.gain.exponentialRampToValueAtTime(0.9, this.ctx.currentTime + this.threshold + this.attack);
-		} else {
-			attack.gain.exponentialRampToValueAtTime(0.9, this.ctx.currentTime + this.threshold);
-		}
-
-		/* configure decay */
-		decay.gain.setValueAtTime(1, this.ctx.currentTime + this.attack);
-		decay.gain.exponentialRampToValueAtTime(
-			Math.max(this.sustain / 100, 0.000001),
-			this.ctx.currentTime + this.attack + this.decay
-		);
-
-		/* apply distortion */
-		if (this.distort > 0) {
-			distortion = this.ctx.createWaveShaper();
-			distortion.curve = this.makeDistortionCurve();
-			distortion.oversample = "2x";
-		}
-
-		if (this.overdrive > 0) {
-			overdriveAmp = this.ctx.createWaveShaper();
-			overdriveAmp.curve = this.makeOverdriveCurve();
-			overdriveAmp.oversample = "2x";
-		}
-
-		/* apply key velocity */
-		vel.gain.value = vel.gain.value * velocity;
-
-		/* applay master volume */
-		volume.gain.value = volume.gain.value * (this.volume / 100);
-
-		/* configure release */
-		attack.connect(decay);
-		decay.connect(vel);
-		vel.connect(distortion || overdriveAmp || release);
-		distortion?.connect(overdriveAmp || release);
-		overdriveAmp?.connect(release);
-		release.connect(volume);
-		volume.connect(this.ctx.destination);
-
-		if (this.AudioRecorder.recordingStream) {
-			volume.connect(this.AudioRecorder.recordingStream);
-		}
-
-		/* apply pitch bend */
-		if (node instanceof OscillatorNode) {
-			node.frequency.setValueAtTime(freq * (0.5 + this.pitchBend), this.ctx.currentTime);
-		}
-
-		node.start(0);
+		this.toneGenerators.forEach((toneGenerator) => {
+			toneGenerator.playNote(key, velocity, this.pitchBend);
+		});
 
 		Array.from(this.keyBtns)
 			.filter((btn) => btn.dataset.note === key)[0]
 			?.classList.add("active");
 
-		this.nodes[key] = {
-			node: node,
-			release: release,
-		};
+		this.activeNotes.push(key);
 
 		this.MidiAdapter.onPlayNote(key, velocity);
 	}
 
 	/**
-	 * Called when a node stops playing
+	 * Called when a note stops playing
 	 *
 	 * @param {Object} node
 	 */
-	endNote(node: AudioNode): void {
-		const release = node.release;
-
-		/* configure release */
-		release.gain.setValueAtTime(0.9, this.ctx.currentTime);
-		release.gain.exponentialRampToValueAtTime(
-			0.00001,
-			this.ctx.currentTime + Math.max(this.release, this.threshold)
-		);
-
-		Object.keys(this.nodes).forEach((key) => {
-			if (this.nodes[key] === node) {
-				Array.from(this.keyBtns)
-					.filter((btn) => btn.dataset.note === key)[0]
-					?.classList.remove("active");
-
-				delete this.nodes[key];
-
-				this.MidiAdapter.onPlayNote(key, 0);
-			}
+	endNote(key: string): void {
+		this.toneGenerators.forEach((toneGenerator) => {
+			toneGenerator.releaseNote(key);
 		});
-	}
 
-	getFrequency(note: string): number {
-		const semitoneMap: Record<string, number> = {
-			c: 0,
-			cs: 1,
-			db: 1,
-			d: 2,
-			ds: 3,
-			eb: 3,
-			e: 4,
-			f: 5,
-			fs: 6,
-			gb: 6,
-			g: 7,
-			gs: 8,
-			ab: 8,
-			a: 9,
-			as: 10,
-			bb: 10,
-			b: 11,
-		};
+		Array.from(this.keyBtns)
+			.filter((btn) => btn.dataset.note === key)[0]
+			?.classList.remove("active");
 
-		const match = note.toLowerCase().match(/^([a-g]{1}s?|[a-g]{1}b?)([-]?\d?)$/);
+		this.activeNotes = this.activeNotes.filter((note) => note !== key);
 
-		if (!match) {
-			throw new Error("Invalid note name: " + note);
-		}
-
-		const [, baseNote, octaveStr] = match;
-		const semitone = semitoneMap[baseNote];
-		const octave = octaveStr === "" ? 4 : parseInt(octaveStr);
-
-		const semitonesFromA4 = semitone + (octave - 4) * 12 - 9;
-
-		let freq = +(440 * Math.pow(2, semitonesFromA4 / 12)).toFixed(2);
-
-		for (let i = 0; i <= this.pitch; i++) {
-			freq = freq * 2;
-		}
-
-		return freq;
+		this.MidiAdapter.onPlayNote(key, 0);
 	}
 
 	/**
@@ -319,9 +142,8 @@ class Main {
 					return;
 				}
 
-				if (
-					this.nodes[note] // note is already playing
-				) {
+				// note is already playing
+				if (this.activeNotes.includes(note)) {
 					return;
 				}
 
@@ -336,9 +158,7 @@ class Main {
 				return;
 			}
 
-			if (!this.nodes[note]) return;
-
-			this.endNote(this.nodes[note]);
+			this.endNote(note);
 		});
 	}
 
@@ -365,10 +185,8 @@ class Main {
 
 		note = this.transpose(note, -4);
 
-		if (
-			this.nodes[note] // note is already playing
-		)
-			return;
+		// note is already playing
+		if (this.activeNotes.includes(note)) return;
 
 		this.playNote(note, velocity);
 	}
@@ -388,10 +206,7 @@ class Main {
 		}
 
 		note = this.transpose(note, -4);
-
-		if (!this.nodes[note]) return;
-
-		this.endNote(this.nodes[note]);
+		this.endNote(note);
 	}
 
 	/**
@@ -400,21 +215,8 @@ class Main {
 	 * @param offset - Pitch offset, between 0 and 1, 0.5 is no offset.
 	 */
 	onMidiPitchBend(offset: number): void {
-		this.pitchBend = offset;
-		Object.keys(this.nodes).forEach((note) => {
-			if (this.nodes[note].node instanceof AudioBufferSourceNode) {
-				// cannot change frequency of AudioBufferSourceNode
-				return;
-			}
-			const node = this.nodes[note].node as OscillatorNode;
-
-			if (offset < 0 || offset > 1) {
-				throw new Error("Pitch offset must be between 0 and 1");
-			}
-
-			const baseFreq = this.getFrequency(note);
-
-			node.frequency.setValueAtTime(baseFreq * (0.5 + offset), this.ctx.currentTime);
+		this.toneGenerators.forEach((toneGenerator) => {
+			toneGenerator.pitchBend(offset);
 		});
 	}
 
@@ -470,9 +272,9 @@ class Main {
 				"mouseup",
 				(e) => {
 					const key = btn.dataset.note;
-					if (!key || !this.nodes[key]) return;
+					if (!key || !this.activeNotes.includes(key)) return;
 
-					this.endNote(this.nodes[key]);
+					this.endNote(key);
 				},
 				{ passive: true }
 			);
@@ -481,9 +283,9 @@ class Main {
 				"mouseout",
 				(e) => {
 					const key = btn.dataset.note;
-					if (!key || !this.nodes[key]) return;
+					if (!key || !this.activeNotes.includes(key)) return;
 
-					this.endNote(this.nodes[key]);
+					this.endNote(key);
 				},
 				{ passive: true }
 			);
@@ -492,9 +294,9 @@ class Main {
 				"touchend",
 				(e) => {
 					const key = btn.dataset.note;
-					if (!key || !this.nodes[key]) return;
+					if (!key || !this.activeNotes.includes(key)) return;
 
-					this.endNote(this.nodes[key]);
+					this.endNote(key);
 				},
 				{ passive: true }
 			);
@@ -503,9 +305,9 @@ class Main {
 				"touchcancel",
 				(e) => {
 					const key = btn.dataset.note;
-					if (!key || !this.nodes[key]) return;
+					if (!key || !this.activeNotes.includes(key)) return;
 
-					this.endNote(this.nodes[key]);
+					this.endNote(key);
 				},
 				{ passive: true }
 			);
@@ -513,16 +315,16 @@ class Main {
 			btn.addEventListener("keyup", (e) => {
 				const key = btn.dataset.note;
 				if (!(e.code === "Space" || e.key === "Enter")) return;
-				if (!key || !this.nodes[key]) return;
+				if (!key || !this.activeNotes.includes(key)) return;
 
-				this.endNote(this.nodes[key]);
+				this.endNote(key);
 			});
 
 			btn.addEventListener("blur", () => {
 				const key = btn.dataset.note;
-				if (!key || !this.nodes[key]) return;
+				if (!key || !this.activeNotes.includes(key)) return;
 
-				this.endNote(this.nodes[key]);
+				this.endNote(key);
 			});
 		});
 	}
@@ -658,8 +460,8 @@ class Main {
 
 	killDeadNodes(): void {
 		if (this.MidiAdapter.activeNotes === 0 && !document.querySelector("button.active")) {
-			Object.keys(this.nodes).forEach((note) => {
-				this.endNote(this.nodes[note]);
+			Object.keys(this.activeNotes).forEach((note) => {
+				this.endNote(note);
 			});
 		}
 
