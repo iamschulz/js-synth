@@ -1,5 +1,4 @@
 import { AudioRecorder } from "./audioRecorder";
-import { Waveform } from "./waveform.ts";
 import { MidiAdapter } from "./midi.ts";
 import { getKeyName, getNote } from "./keys.ts";
 import { ToneGenerator } from "./ToneGenerator.ts";
@@ -12,20 +11,9 @@ class Main {
 			midiIn: number;
 		};
 	};
-	volume: number;
-	wave: Waveform;
-	threshold: number;
-	attack: number;
-	decay: number;
-	sustain: number;
-	release: number;
-	distort: number;
-	overdrive: number;
-	pitch: number;
 	pitchBend: number;
 	activeNotes: string[];
 	keyBtns: NodeListOf<HTMLButtonElement>;
-	controls: HTMLFormElement;
 	headerDiagram: SVGElement;
 	MidiAdapter: MidiAdapter;
 	midiIn: number;
@@ -40,26 +28,17 @@ class Main {
 		}
 
 		this.ctx = new window.AudioContext();
+		this.headerDiagram = document.querySelector("#header-vis")!;
 
-		this.volume = 100;
-		this.wave = "sine";
-		this.threshold = 0.001;
-		this.attack = 0;
-		this.decay = 0;
-		this.sustain = 50;
-		this.release = 0;
-		this.distort = 0;
-		this.overdrive = 0;
-		this.pitch = 0;
+		this.AudioRecorder = new AudioRecorder(this.ctx);
+		this.toneGenerators = [new ToneGenerator(0, this.AudioRecorder, this.ctx, this.headerDiagram)];
+
 		this.pitchBend = 0.5;
 		this.activeNotes = [];
 		this.keyBtns = document.querySelectorAll(".keyboard button");
-		this.controls = document.querySelector("#synth-controls-1")!;
-		this.headerDiagram = document.querySelector("#header-vis")!;
 
 		this.keyboardControls();
 		this.buttonControls();
-		this.optionControls();
 		this.updateLegend();
 
 		this.MidiAdapter = new MidiAdapter({
@@ -69,9 +48,6 @@ class Main {
 		});
 
 		this.killDeadNodes();
-
-		this.AudioRecorder = new AudioRecorder(this.ctx);
-		this.toneGenerators = [new ToneGenerator(this.AudioRecorder, this.ctx)];
 	}
 
 	/**
@@ -327,118 +303,6 @@ class Main {
 				this.endNote(key);
 			});
 		});
-	}
-
-	/**
-	 * Applies synth option changes.
-	 */
-	optionControls(): void {
-		const applyOptions = () => {
-			const data = Object.fromEntries(new FormData(this.controls)) as any;
-			this.wave = data.waveform || "sine";
-			this.volume = parseFloat(data.volume || 99);
-			this.attack = parseFloat(data.attack || 0) + 0.001;
-			this.decay = parseFloat(data.decay || 0) + 0.001;
-			this.sustain = parseFloat(data.sustain || 50);
-			this.release = parseFloat(data.release || 0) + 0.001;
-			this.distort = parseFloat(data.distort || 0);
-			this.overdrive = parseFloat(data.overdrive || 0);
-			this.pitch = parseInt(data.pitch || 3);
-			//this.midiIn = parseInt(data.midiIn) || 0;
-			//this.midiOut = parseInt(data.midiOut) || 0;
-			this.drawWave();
-			this.drawAdsr();
-
-			localStorage.synthConfig = JSON.stringify({
-				wave: this.wave,
-				volume: this.volume,
-				attack: this.attack,
-				decay: this.decay,
-				sustain: this.sustain,
-				release: this.release,
-				distort: this.distort,
-				overdrive: this.overdrive,
-				pitch: this.pitch,
-				//midiIn: this.midiIn,
-				//midiOut: this.midiOut,
-			});
-		};
-
-		this.controls.addEventListener("change", () => {
-			applyOptions();
-		});
-
-		this.restoreConfig();
-
-		applyOptions();
-	}
-
-	/**
-	 * Restores synth options from localstorage.
-	 *
-	 * @returns
-	 */
-	restoreConfig(): void {
-		if (!localStorage.synthConfig) return;
-
-		const synthConfig = JSON.parse(localStorage.synthConfig);
-		Object.keys(synthConfig).map((conf) => {
-			this[synthConfig] = synthConfig[conf];
-
-			if (conf === "wave") {
-				const waveformEl = this.controls.querySelector(
-					`[name=waveform][value=${synthConfig[conf]}`
-				) as HTMLInputElement;
-				waveformEl.setAttribute("checked", "checked");
-			} else {
-				const waveformEl = this.controls.querySelector(`#${conf}`) as HTMLInputElement | undefined;
-				if (!waveformEl) return;
-				waveformEl.value = synthConfig[conf];
-			}
-		});
-	}
-
-	/**
-	 * Draws the waveform.
-	 */
-	drawWave(): void {
-		const waveDiagrams = this.headerDiagram.querySelectorAll('[id^="wave"]');
-		waveDiagrams.forEach((waveDiagram) => {
-			waveDiagram.toggleAttribute("hidden", waveDiagram.id !== `wave-${this.wave}`);
-		});
-	}
-
-	/**
-	 * Draws the ADSR diagram.
-	 */
-	drawAdsr(): void {
-		// header diagram is 400 x 200
-		const a = this.headerDiagram.querySelector("#adsr-a")!;
-		const d = this.headerDiagram.querySelector("#adsr-d")!;
-		const s = this.headerDiagram.querySelector("#adsr-s")!;
-		const r = this.headerDiagram.querySelector("#adsr-r")!;
-
-		const ax = this.attack * 50 - 0.05;
-		const dx = (this.decay - 0.001) * 20 + ax;
-		const sy = 200 - this.sustain * 2;
-		const rx = 400 - this.release * 10 + 0.01;
-
-		a.toggleAttribute("hidden", ax === 0);
-		a.setAttribute("x2", ax.toString());
-
-		d.toggleAttribute("hidden", dx === 0);
-		d.setAttribute("x1", ax.toString());
-		d.setAttribute("x2", dx.toString());
-		d.setAttribute("y2", sy.toString());
-
-		s.setAttribute("x1", dx.toString());
-		s.setAttribute("y1", sy.toString());
-		s.setAttribute("x2", rx.toString());
-		s.setAttribute("y2", sy.toString());
-
-		r.toggleAttribute("hidden", rx === 400);
-		r.setAttribute("x1", rx.toString());
-		r.setAttribute("y1", sy.toString());
 	}
 
 	/**

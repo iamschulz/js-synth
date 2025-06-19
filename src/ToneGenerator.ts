@@ -2,8 +2,11 @@ import { AudioRecorder } from "./audioRecorder";
 import { Waveform } from "./waveform.ts";
 import { getFrequency } from "./getFrequency.ts";
 import { MyAudioNode } from "./AudioNode.ts";
+import { createSynthControls } from "./createSynthControls.ts";
+import { Controls } from "./Controls.ts";
 
 export class ToneGenerator {
+	id: number;
 	ctx: AudioContext;
 	audioRecorder: AudioRecorder;
 	volume: number;
@@ -17,8 +20,11 @@ export class ToneGenerator {
 	distort: number;
 	overdrive: number;
 	nodes: { [key: string]: MyAudioNode };
+	controls: Controls;
+	headerDiagram: SVGElement;
 
-	constructor(audioRecorder: AudioRecorder, ctx: AudioContext) {
+	constructor(id: number, audioRecorder: AudioRecorder, ctx: AudioContext, headerDiagram: SVGElement) {
+		this.id = id;
 		this.ctx = ctx;
 		this.audioRecorder = audioRecorder;
 		this.volume = 100;
@@ -32,6 +38,11 @@ export class ToneGenerator {
 		this.distort = 0;
 		this.overdrive = 0;
 		this.nodes = {};
+		this.headerDiagram = headerDiagram;
+		this.controls = this.createControls();
+
+		this.drawWave();
+		this.drawAdsr();
 	}
 
 	makeDistortionCurve() {
@@ -212,5 +223,77 @@ export class ToneGenerator {
 
 			node.frequency.setValueAtTime(baseFreq * (0.5 + offset), this.ctx.currentTime);
 		});
+	}
+
+	createControls(): Controls {
+		const html = createSynthControls(this.id);
+
+		// create dom node from html string
+		const parser = new DOMParser();
+		const doc = parser.parseFromString(html, "text/html");
+		const el = doc.querySelector(`#synth-controls-${this.id}`) as HTMLFormElement;
+
+		// append controls to DOM
+		document.querySelector(".controls-slider")?.appendChild(el);
+
+		const controls = new Controls(`synth-controls-${this.id}`, el, (data) => {
+			this.volume = parseInt(data[`volume-${this.id}`] as string);
+			this.wave = data[`waveform-${this.id}`] as Waveform;
+			this.pitch = parseInt(data[`pitch-${this.id}`] as string);
+			this.attack = parseInt(data[`attack-${this.id}`] as string);
+			this.decay = parseInt(data[`decay-${this.id}`] as string);
+			this.sustain = parseInt(data[`sustain-${this.id}`] as string);
+			this.release = parseInt(data[`release-${this.id}`] as string);
+			this.distort = parseInt(data[`distort-${this.id}`] as string);
+			this.overdrive = parseInt(data[`overdrive-${this.id}`] as string);
+
+			this.drawWave();
+			this.drawAdsr();
+		});
+
+		return controls;
+	}
+
+	/**
+	 * Draws the waveform.
+	 */
+	drawWave(): void {
+		const waveDiagrams = this.headerDiagram.querySelectorAll('[id^="wave"]');
+		waveDiagrams.forEach((waveDiagram) => {
+			waveDiagram.toggleAttribute("hidden", waveDiagram.id !== `wave-${this.wave}`);
+		});
+	}
+
+	/**
+	 * Draws the ADSR diagram.
+	 */
+	drawAdsr(): void {
+		// header diagram is 400 x 200
+		const a = this.headerDiagram.querySelector("#adsr-a")!;
+		const d = this.headerDiagram.querySelector("#adsr-d")!;
+		const s = this.headerDiagram.querySelector("#adsr-s")!;
+		const r = this.headerDiagram.querySelector("#adsr-r")!;
+
+		const ax = this.attack * 50 - 0.05;
+		const dx = (this.decay - 0.001) * 20 + ax;
+		const sy = 200 - this.sustain * 2;
+		const rx = 400 - this.release * 10 + 0.01;
+
+		a.toggleAttribute("hidden", ax === 0);
+		a.setAttribute("x2", ax.toString());
+
+		d.toggleAttribute("hidden", dx === 0);
+		d.setAttribute("x1", ax.toString());
+		d.setAttribute("x2", dx.toString());
+		d.setAttribute("y2", sy.toString());
+
+		s.setAttribute("x1", dx.toString());
+		s.setAttribute("y1", sy.toString());
+		s.setAttribute("x2", rx.toString());
+		s.setAttribute("y2", sy.toString());
+
+		r.toggleAttribute("hidden", rx === 400);
+		r.setAttribute("x1", rx.toString());
+		r.setAttribute("y1", sy.toString());
 	}
 }
