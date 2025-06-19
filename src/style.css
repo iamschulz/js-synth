@@ -37,6 +37,7 @@
 body {
 	color: var(--fg);
 	background-color: var(--bg);
+	accent-color: var(--accent);
 	font-family: "Press Start 2P", monospace;
 	line-height: 1.3em;
 
@@ -70,6 +71,7 @@ body {
 header {
 	display: flex;
 	max-width: var(--ui-width);
+	justify-content: center;
 	align-items: center;
 	gap: 1ch;
 	margin: 0 auto 24px;
@@ -79,15 +81,43 @@ a {
 	color: white;
 }
 
-.controls {
+.controls-slider {
+	scrollbar-color: var(--fg) transparent;
+	scrollbar-width: thin;
+	scroll-snap-type: x mandatory;
+	max-width: calc(var(--ui-width) * var(--octaves));
+	margin: 0 auto 2rem;
+	display: flex;
+	align-items: flex-start;
+	gap: 1rem;
+	overflow-x: auto;
+	scroll-snap-type: x mandatory;
+
+	> * {
+		flex: 0 0 auto;
+		scroll-snap-align: center;
+	}
+}
+
+.synth-controls {
+	width: 100%;
+	max-width: 100%;
+	display: flex;
+	gap: 2rem;
+	justify-content: center;
+}
+
+.midi-controls {
 	max-width: calc(var(--ui-width) * var(--octaves));
 	margin: 0 auto;
-	display: grid;
-	grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+	display: block;
 	margin-bottom: 1rem;
+}
 
-	> .controls-box {
-		display: flex;
+.midi-controls,
+.synth-controls {
+	.controls-box {
+		display: inline-flex;
 		flex-direction: column;
 		margin-bottom: var(--gap-y);
 	}

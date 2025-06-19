@@ -54,7 +54,7 @@ class Main {
 		this.pitchBend = 0.5;
 		this.activeNotes = [];
 		this.keyBtns = document.querySelectorAll(".keyboard button");
-		this.controls = document.querySelector("#header-controls")!;
+		this.controls = document.querySelector("#synth-controls-1")!;
 		this.headerDiagram = document.querySelector("#header-vis")!;
 
 		this.keyboardControls();

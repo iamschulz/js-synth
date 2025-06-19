@@ -45,72 +45,75 @@
 		Your Browser can't play sounds with this synth.<br />
 		Maybe try Chrome or Firefox?
 	</dialog>
-	<form class="controls" id="header-controls">
-		<div class="controls-box">
-			<input type="radio" id="waveform-sine" name="waveform" value="sine" checked />
-			<label for="waveform-sine">Sine</label>
+	<div class="controls-slider">
+		<form class="synth-controls" id="synth-controls-1">
+			<div class="controls-box">
+				<input type="radio" id="waveform-sine" name="waveform" value="sine" checked />
+				<label for="waveform-sine">Sine</label>
 
-			<input type="radio" id="waveform-square" name="waveform" value="square" />
-			<label for="waveform-square">Square</label>
+				<input type="radio" id="waveform-square" name="waveform" value="square" />
+				<label for="waveform-square">Square</label>
 
-			<input type="radio" id="waveform-triangle" name="waveform" value="triangle" />
-			<label for="waveform-triangle">Triangle</label>
+				<input type="radio" id="waveform-triangle" name="waveform" value="triangle" />
+				<label for="waveform-triangle">Triangle</label>
 
-			<input type="radio" id="waveform-sawtooth" name="waveform" value="sawtooth" />
-			<label for="waveform-sawtooth">Sawtooth</label>
+				<input type="radio" id="waveform-sawtooth" name="waveform" value="sawtooth" />
+				<label for="waveform-sawtooth">Sawtooth</label>
 
-			<input type="radio" id="waveform-noise" name="waveform" value="noise" />
-			<label for="waveform-noise">Noise</label>
-		</div>
-
-		<div class="controls-box">
-			<div class="option">
-				<label for="volume">Volume</label>
-				<input name="volume" id="volume" type="range" data-control-name="pitch" min="0" max="99" value="99" />
+				<input type="radio" id="waveform-noise" name="waveform" value="noise" />
+				<label for="waveform-noise">Noise</label>
 			</div>
 
-			<div class="option">
-				<label for="pitch">Pitch</label>
-				<input name="pitch" id="pitch" type="range" data-control-name="pitch" min="-1" max="8" value="3" />
-			</div>
+			<div class="controls-box">
+				<div class="option">
+					<label for="volume">Volume</label>
+					<input name="volume" id="volume" type="range" data-control-name="pitch" min="0" max="99"
+						value="99" />
+				</div>
 
-			<div class="option">
-				<label for="attack">Attack</label>
-				<input name="attack" id="attack" type="range" data-control-name="attack" min="0" max="2" step="0.05"
-					value="0" />
-			</div>
+				<div class="option">
+					<label for="pitch">Pitch</label>
+					<input name="pitch" id="pitch" type="range" data-control-name="pitch" min="-1" max="8" value="3" />
+				</div>
 
-			<div class="option">
-				<label for="decay">Decay</label>
-				<input name="decay" id="decay" type="range" data-control-name="decay" min="0" max="5" step="0.1"
-					value="0" />
-			</div>
+				<div class="option">
+					<label for="attack">Attack</label>
+					<input name="attack" id="attack" type="range" data-control-name="attack" min="0" max="2" step="0.05"
+						value="0" />
+				</div>
 
-			<div class="option">
-				<label for="sustain">Sustain</label>
-				<input name="sustain" id="sustain" type="range" data-control-name="sustain" min="0" max="100"
-					value="50" />
-			</div>
+				<div class="option">
+					<label for="decay">Decay</label>
+					<input name="decay" id="decay" type="range" data-control-name="decay" min="0" max="5" step="0.1"
+						value="0" />
+				</div>
 
-			<div class="option">
-				<label for="release">Release</label>
-				<input name="release" id="release" type="range" data-control-name="release" min="0" max="10" step="0.1"
-					value="0" />
-			</div>
+				<div class="option">
+					<label for="sustain">Sustain</label>
+					<input name="sustain" id="sustain" type="range" data-control-name="sustain" min="0" max="100"
+						value="50" />
+				</div>
 
-			<div class="option">
-				<label for="distort">Distort</label>
-				<input name="distort" id="distort" type="range" data-control-name="distort" min="0" max="500" step="10"
-					value="0" />
-			</div>
+				<div class="option">
+					<label for="release">Release</label>
+					<input name="release" id="release" type="range" data-control-name="release" min="0" max="10"
+						step="0.1" value="0" />
+				</div>
 
-			<div class="option">
-				<label for="overdrive">Overdrive</label>
-				<input name="overdrive" id="overdrive" type="range" data-control-name="overdrive" min="0" max="11"
-					step="1" value="0" />
+				<div class="option">
+					<label for="distort">Distort</label>
+					<input name="distort" id="distort" type="range" data-control-name="distort" min="0" max="500"
+						step="10" value="0" />
+				</div>
+
+				<div class="option">
+					<label for="overdrive">Overdrive</label>
+					<input name="overdrive" id="overdrive" type="range" data-control-name="overdrive" min="0" max="11"
+						step="1" value="0" />
+				</div>
 			</div>
-		</div>
-	</form>
+		</form>
+	</div>
 	<section class="keyboard">
 		<button class="white md" data-note="c0" label="C">
 			<key>A</key>
@@ -298,7 +301,7 @@
 	</ul>
 
 	<footer>
-		<form class="controls" id="footer-controls">
+		<form class="midi-controls" id="midi-controls">
 			<div class="controls-box">
 				<div class="option">
 					<label for="midiIn">MIDI In</label>

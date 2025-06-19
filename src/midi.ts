@@ -31,7 +31,7 @@ export class MidiAdapter {
 		this.midi = null;
 		this.controls = new Controls(
 			"midiConfig",
-			document.querySelector("#footer-controls") as HTMLFormElement,
+			document.querySelector("#midi-controls") as HTMLFormElement,
 			(data) => {
 				this.inChannel = parseInt(data["midiIn"] as string);
 				this.outChannel = parseInt(data["midiOut"] as string);
