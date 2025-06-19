@@ -1,4 +1,4 @@
-export const createSynthControls = (i: number): string => `
+export const createSynthControls = (i: string): string => `
 <form class="synth-controls" id="synth-controls-${i}">
     <div class="controls-box">
         <input type="radio" id="waveform-sine-${i}" name="waveform-${i}" value="sine" checked />

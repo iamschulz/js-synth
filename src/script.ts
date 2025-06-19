@@ -20,6 +20,9 @@ class Main {
 	midiOut: number;
 	AudioRecorder: AudioRecorder;
 	toneGenerators: ToneGenerator[];
+	addBtn: HTMLButtonElement;
+	removeBtn: HTMLButtonElement;
+	sliderEl: HTMLDivElement;
 
 	constructor() {
 		if (!window.AudioContext) {
@@ -29,13 +32,25 @@ class Main {
 
 		this.ctx = new window.AudioContext();
 		this.headerDiagram = document.querySelector("#header-vis")!;
+		this.sliderEl = document.querySelector(".controls-slider")!;
 
 		this.AudioRecorder = new AudioRecorder(this.ctx);
-		this.toneGenerators = [new ToneGenerator(0, this.AudioRecorder, this.ctx, this.headerDiagram)];
+		this.toneGenerators = this.loadSavedToneGenerators();
+		this.toneGenerators[0].drawAdsr();
 
 		this.pitchBend = 0.5;
 		this.activeNotes = [];
 		this.keyBtns = document.querySelectorAll(".keyboard button");
+
+		this.addBtn = document.querySelector("#add-synth") as HTMLButtonElement;
+		this.addBtn.addEventListener("click", () => {
+			this.addSynth();
+		});
+
+		this.removeBtn = document.querySelector("#remove-synth") as HTMLButtonElement;
+		this.removeBtn.addEventListener("click", () => {
+			this.removeSynth();
+		});
 
 		this.keyboardControls();
 		this.buttonControls();
@@ -48,6 +63,70 @@ class Main {
 		});
 
 		this.killDeadNodes();
+	}
+
+	loadSavedToneGenerators(): ToneGenerator[] {
+		const items = { ...localStorage };
+		const ToneGenerators = Object.keys(items)
+			.filter((key) => key.startsWith("synth-controls-"))
+			.sort((a, b) => {
+				const aId = parseInt(a.split("-")[2]);
+				const bId = parseInt(b.split("-")[2]);
+				return aId - bId;
+			})
+			.map((key) => {
+				const id = key.split("-")[2];
+				return new ToneGenerator(id, this.AudioRecorder, this.ctx, this.headerDiagram);
+			});
+
+		if (ToneGenerators.length === 0) {
+			ToneGenerators.push(
+				new ToneGenerator(Date.now().toString(), this.AudioRecorder, this.ctx, this.headerDiagram)
+			);
+		}
+
+		return ToneGenerators;
+	}
+
+	addSynth(): void {
+		this.toneGenerators.push(
+			new ToneGenerator(Date.now().toString(), this.AudioRecorder, this.ctx, this.headerDiagram)
+		);
+		this.sliderEl.scrollTo({
+			left: this.sliderEl.scrollWidth,
+			behavior: "smooth",
+		});
+	}
+
+	removeSynth(): void {
+		if (this.toneGenerators.length <= 1) {
+			return; // cannot remove the last synth
+		}
+
+		const activeSynth = Array.from(document.querySelectorAll(".controls-slider .synth-controls")).find((el) => {
+			const rect = (el as HTMLElement).getBoundingClientRect();
+			return rect.left >= 0 && rect.right <= window.innerWidth;
+		}) as HTMLFormElement;
+		if (!activeSynth) {
+			return; // no active synth to remove
+		}
+		const synthId = activeSynth.id.split("-")[2];
+		const activeToneGenerator = this.toneGenerators.find((tg) => tg.id === synthId);
+		if (!activeToneGenerator) {
+			return; // no active tone generator to remove
+		}
+
+		const scrollTarget = (activeToneGenerator.controls.el.nextSibling ||
+			activeToneGenerator.controls.el.previousSibling) as HTMLElement;
+		this.sliderEl.scrollTo({
+			left: scrollTarget.offsetLeft + 1,
+			behavior: "smooth",
+		});
+
+		window.setTimeout(() => {
+			activeToneGenerator.destroy();
+			this.toneGenerators = this.toneGenerators.filter((tg) => tg.id !== synthId);
+		}, 700);
 	}
 
 	/**

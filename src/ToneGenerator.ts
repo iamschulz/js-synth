@@ -6,7 +6,7 @@ import { createSynthControls } from "./createSynthControls.ts";
 import { Controls } from "./Controls.ts";
 
 export class ToneGenerator {
-	id: number;
+	id: string;
 	ctx: AudioContext;
 	audioRecorder: AudioRecorder;
 	volume: number;
@@ -23,7 +23,7 @@ export class ToneGenerator {
 	controls: Controls;
 	headerDiagram: SVGElement;
 
-	constructor(id: number, audioRecorder: AudioRecorder, ctx: AudioContext, headerDiagram: SVGElement) {
+	constructor(id: string, audioRecorder: AudioRecorder, ctx: AudioContext, headerDiagram: SVGElement) {
 		this.id = id;
 		this.ctx = ctx;
 		this.audioRecorder = audioRecorder;
@@ -40,9 +40,6 @@ export class ToneGenerator {
 		this.nodes = {};
 		this.headerDiagram = headerDiagram;
 		this.controls = this.createControls();
-
-		this.drawWave();
-		this.drawAdsr();
 	}
 
 	makeDistortionCurve() {
@@ -237,17 +234,16 @@ export class ToneGenerator {
 		document.querySelector(".controls-slider")?.appendChild(el);
 
 		const controls = new Controls(`synth-controls-${this.id}`, el, (data) => {
-			this.volume = parseInt(data[`volume-${this.id}`] as string);
+			this.volume = parseFloat(data[`volume-${this.id}`] as string);
 			this.wave = data[`waveform-${this.id}`] as Waveform;
-			this.pitch = parseInt(data[`pitch-${this.id}`] as string);
-			this.attack = parseInt(data[`attack-${this.id}`] as string);
-			this.decay = parseInt(data[`decay-${this.id}`] as string);
-			this.sustain = parseInt(data[`sustain-${this.id}`] as string);
-			this.release = parseInt(data[`release-${this.id}`] as string);
-			this.distort = parseInt(data[`distort-${this.id}`] as string);
-			this.overdrive = parseInt(data[`overdrive-${this.id}`] as string);
+			this.pitch = parseFloat(data[`pitch-${this.id}`] as string);
+			this.attack = parseFloat(data[`attack-${this.id}`] as string);
+			this.decay = parseFloat(data[`decay-${this.id}`] as string);
+			this.sustain = parseFloat(data[`sustain-${this.id}`] as string);
+			this.release = parseFloat(data[`release-${this.id}`] as string);
+			this.distort = parseFloat(data[`distort-${this.id}`] as string);
+			this.overdrive = parseFloat(data[`overdrive-${this.id}`] as string);
 
-			this.drawWave();
 			this.drawAdsr();
 		});
 
@@ -255,19 +251,17 @@ export class ToneGenerator {
 	}
 
 	/**
-	 * Draws the waveform.
+	 * Draws the ADSR diagram.
 	 */
-	drawWave(): void {
+	drawAdsr(): void {
+		// Draws the waveform.
 		const waveDiagrams = this.headerDiagram.querySelectorAll('[id^="wave"]');
 		waveDiagrams.forEach((waveDiagram) => {
 			waveDiagram.toggleAttribute("hidden", waveDiagram.id !== `wave-${this.wave}`);
 		});
-	}
 
-	/**
-	 * Draws the ADSR diagram.
-	 */
-	drawAdsr(): void {
+		// todo: there's a bug when drawing the default diagram: attack is always on
+
 		// header diagram is 400 x 200
 		const a = this.headerDiagram.querySelector("#adsr-a")!;
 		const d = this.headerDiagram.querySelector("#adsr-d")!;
@@ -295,5 +289,23 @@ export class ToneGenerator {
 		r.toggleAttribute("hidden", rx === 400);
 		r.setAttribute("x1", rx.toString());
 		r.setAttribute("y1", sy.toString());
+	}
+
+	destroy(): void {
+		Object.keys(this.nodes).forEach((key) => {
+			const node = this.nodes[key];
+			if (node.node instanceof AudioBufferSourceNode) {
+				node.node.stop();
+			} else if (node.node instanceof OscillatorNode) {
+				node.node.stop();
+			}
+			node.release.disconnect();
+			node.release.gain.cancelScheduledValues(this.ctx.currentTime);
+		});
+
+		this.nodes = {};
+		this.controls.el.remove();
+
+		localStorage.removeItem(`synth-controls-${this.id}`);
 	}
 }

@@ -86,11 +86,11 @@ a {
 	scrollbar-width: thin;
 	scroll-snap-type: x mandatory;
 	max-width: calc(var(--ui-width) * var(--octaves));
-	margin: 0 auto 2rem;
+	margin: 0 auto;
 	display: flex;
 	align-items: flex-start;
 	gap: 1rem;
-	overflow-x: auto;
+	overflow-x: scroll;
 	scroll-snap-type: x mandatory;
 
 	> * {
@@ -105,6 +105,17 @@ a {
 	display: flex;
 	gap: 2rem;
 	justify-content: center;
+}
+
+.add-remove-synths {
+	max-width: calc(var(--ui-width) * var(--octaves));
+	margin: 1rem auto 2rem;
+
+	.controls-slider:has(.synth-controls:only-of-type) + & {
+		#remove-synth {
+			display: none;
+		}
+	}
 }
 
 .midi-controls {

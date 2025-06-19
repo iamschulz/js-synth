@@ -38,6 +38,7 @@ export class Controls {
 
 		this.loadData();
 		this.applyData();
+		this.persistData();
 
 		this.el.addEventListener("change", () => {
 			this.applyData();
