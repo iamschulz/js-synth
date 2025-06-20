@@ -40,7 +40,7 @@ export class Controls {
 		this.applyData();
 		this.persistData();
 
-		this.el.addEventListener("change", () => {
+		this.el.addEventListener("input", () => {
 			this.applyData();
 			this.persistData();
 		});

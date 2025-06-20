@@ -254,13 +254,13 @@ export class ToneGenerator {
 	 * Draws the ADSR diagram.
 	 */
 	drawAdsr(): void {
+		// todo: animate programmatic changes
+
 		// Draws the waveform.
 		const waveDiagrams = this.headerDiagram.querySelectorAll('[id^="wave"]');
 		waveDiagrams.forEach((waveDiagram) => {
 			waveDiagram.toggleAttribute("hidden", waveDiagram.id !== `wave-${this.wave}`);
 		});
-
-		// todo: there's a bug when drawing the default diagram: attack is always on
 
 		// header diagram is 400 x 200
 		const a = this.headerDiagram.querySelector("#adsr-a")!;
@@ -268,10 +268,10 @@ export class ToneGenerator {
 		const s = this.headerDiagram.querySelector("#adsr-s")!;
 		const r = this.headerDiagram.querySelector("#adsr-r")!;
 
-		const ax = this.attack * 50 - 0.05;
-		const dx = (this.decay - 0.001) * 20 + ax;
+		const ax = this.attack * 50 - 0.0;
+		const dx = (this.decay - 0.0) * 20 + ax;
 		const sy = 200 - this.sustain * 2;
-		const rx = 400 - this.release * 10 + 0.01;
+		const rx = 400 - this.release * 10 + 0.0;
 
 		a.toggleAttribute("hidden", ax === 0);
 		a.setAttribute("x2", ax.toString());

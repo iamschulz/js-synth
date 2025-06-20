@@ -33,6 +33,7 @@ class Main {
 		this.ctx = new window.AudioContext();
 		this.headerDiagram = document.querySelector("#header-vis")!;
 		this.sliderEl = document.querySelector(".controls-slider")!;
+		this.sliderEl.addEventListener("scroll", this.onSliderChange.bind(this));
 
 		this.AudioRecorder = new AudioRecorder(this.ctx);
 		this.toneGenerators = this.loadSavedToneGenerators();
@@ -55,6 +56,7 @@ class Main {
 		this.keyboardControls();
 		this.buttonControls();
 		this.updateLegend();
+		this.restoreSliderPosition();
 
 		this.MidiAdapter = new MidiAdapter({
 			playCallback: this.onMidiPlay.bind(this),
@@ -89,12 +91,17 @@ class Main {
 	}
 
 	addSynth(): void {
-		this.toneGenerators.push(
-			new ToneGenerator(Date.now().toString(), this.AudioRecorder, this.ctx, this.headerDiagram)
+		const toneGenerator = new ToneGenerator(
+			Date.now().toString(),
+			this.AudioRecorder,
+			this.ctx,
+			this.headerDiagram
 		);
+		toneGenerator.controls.el.classList.add("slide-in");
+		this.toneGenerators.push(toneGenerator);
 		this.sliderEl.scrollTo({
 			left: this.sliderEl.scrollWidth,
-			behavior: "smooth",
+			behavior: "smooth", // todo: this leads to a jump in safari
 		});
 	}
 
@@ -116,17 +123,40 @@ class Main {
 			return; // no active tone generator to remove
 		}
 
+		// todo: this only works reliably in chrome
 		const scrollTarget = (activeToneGenerator.controls.el.nextSibling ||
 			activeToneGenerator.controls.el.previousSibling) as HTMLElement;
 		this.sliderEl.scrollTo({
 			left: scrollTarget.offsetLeft + 1,
 			behavior: "smooth",
 		});
+		activeToneGenerator.controls.el.style.opacity = "0";
 
 		window.setTimeout(() => {
 			activeToneGenerator.destroy();
 			this.toneGenerators = this.toneGenerators.filter((tg) => tg.id !== synthId);
 		}, 700);
+	}
+
+	onSliderChange(): void {
+		localStorage.setItem("slider-position", this.sliderEl.scrollLeft.toString());
+
+		const activeSynth = Array.from(document.querySelectorAll(".controls-slider .synth-controls")).find((el) => {
+			const rect = (el as HTMLElement).getBoundingClientRect();
+			return rect.left >= 0 && rect.right <= window.innerWidth;
+		}) as HTMLFormElement;
+
+		if (!activeSynth) {
+			return; // no active synth to update
+		}
+
+		const synthId = activeSynth.id.split("-")[2];
+		const activeToneGenerator = this.toneGenerators.find((tg) => tg.id === synthId);
+		if (!activeToneGenerator) {
+			return; // no active tone generator to update
+		}
+
+		activeToneGenerator.drawAdsr();
 	}
 
 	/**
@@ -270,6 +300,7 @@ class Main {
 	 * @param offset - Pitch offset, between 0 and 1, 0.5 is no offset.
 	 */
 	onMidiPitchBend(offset: number): void {
+		this.pitchBend = offset;
 		this.toneGenerators.forEach((toneGenerator) => {
 			toneGenerator.pitchBend(offset);
 		});
@@ -402,6 +433,10 @@ class Main {
 		});
 	}
 
+	restoreSliderPosition(): void {
+		this.sliderEl.scrollLeft = parseInt(localStorage.getItem("slider-position") || "0");
+	}
+
 	killDeadNodes(): void {
 		if (this.MidiAdapter.activeNotes === 0 && !document.querySelector("button.active")) {
 			Object.keys(this.activeNotes).forEach((note) => {
@@ -424,6 +459,6 @@ window.Main = new Main();
 window.onload = () => {
 	"use strict";
 	if ("serviceWorker" in navigator) {
-		navigator.serviceWorker.register("./sw.js");
+		//navigator.serviceWorker.register("./sw.js");
 	}
 };
