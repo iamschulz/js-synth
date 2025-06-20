@@ -26,7 +26,7 @@ class Main {
 
 	constructor() {
 		if (!window.AudioContext) {
-			(document.querySelector("dialog") as HTMLDialogElement).setAttribute("open", "open");
+			(document.querySelector(".error") as HTMLDialogElement).showModal();
 			return;
 		}
 
@@ -97,7 +97,7 @@ class Main {
 			this.ctx,
 			this.headerDiagram
 		);
-		toneGenerator.controls.el.classList.add("slide-in");
+		toneGenerator.controls.el.classList.add("slide-in-left");
 		this.toneGenerators.push(toneGenerator);
 		this.animateScrollSliderToTarget(toneGenerator.controls.el);
 	}
@@ -473,13 +473,56 @@ class Main {
 	}
 }
 
+const swListener = new BroadcastChannel("chan");
+swListener.onmessage = (e) => {
+	if (e.data && e.data.type === "update") {
+		if (e.data) {
+			const dialog = document.createElement("dialog");
+			dialog.innerHTML = `
+				<p>
+					Update available!<br>
+					Please refresh to load version ${e.data.version}.
+				</p>
+				<div class="buttons">
+					<button class="refresh">Refresh</button>
+					<button class="close">Close</button>
+				</div>
+			`;
+			document.body.appendChild(dialog);
+			dialog.addEventListener("close", () => {
+				document.body.removeChild(dialog);
+			});
+			const refreshBtn = dialog.querySelector(".refresh") as HTMLButtonElement;
+			refreshBtn.addEventListener("click", () => {
+				window.location.reload();
+			});
+
+			const closeBtn = dialog.querySelector(".close") as HTMLButtonElement;
+			closeBtn?.addEventListener("click", () => {
+				dialog.close();
+			});
+
+			dialog.showModal();
+		}
+	}
+};
+
+document.querySelectorAll("dialog").forEach((el) => {
+	const closeBtn = el.querySelector(".close") as HTMLButtonElement | null;
+	closeBtn?.addEventListener("click", () => {
+		el.close();
+	});
+});
+
 // start synth
 window.Main = new Main();
 
 // register sw
-window.onload = () => {
+window.onload = async () => {
 	"use strict";
+	let sw: ServiceWorkerRegistration | undefined;
+
 	if ("serviceWorker" in navigator) {
-		//navigator.serviceWorker.register("./sw.js");
+		sw = await navigator.serviceWorker.register("./sw.js");
 	}
 };
