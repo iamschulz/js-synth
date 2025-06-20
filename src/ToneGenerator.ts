@@ -197,6 +197,12 @@ export class ToneGenerator {
 			this.ctx.currentTime + Math.max(this.release, this.threshold)
 		);
 
+		// clean up
+		window.setTimeout(() => {
+			node.node.stop(this.ctx.currentTime + Math.max(this.release, this.threshold));
+			release.disconnect();
+		}, (this.release + this.threshold) * 1000);
+
 		Object.keys(this.nodes).forEach((key) => {
 			if (this.nodes[key] === node) {
 				delete this.nodes[key];
@@ -299,6 +305,7 @@ export class ToneGenerator {
 			} else if (node.node instanceof OscillatorNode) {
 				node.node.stop();
 			}
+			node.node.stop(this.ctx.currentTime + Math.max(this.release, this.threshold));
 			node.release.disconnect();
 			node.release.gain.cancelScheduledValues(this.ctx.currentTime);
 		});
