@@ -96,9 +96,6 @@ a {
 }
 
 .controls-slider {
-	scrollbar-color: var(--fg) transparent;
-	scrollbar-width: thin;
-	scroll-snap-type: x mandatory;
 	max-width: calc(var(--ui-width) * var(--octaves));
 	margin: 0 auto;
 	display: flex;
@@ -107,6 +104,23 @@ a {
 	overflow-x: scroll;
 	scroll-snap-type: x mandatory;
 	transition: width 0.2s ease-out;
+
+	scrollbar-color: var(--fg) transparent;
+
+	&::-webkit-scrollbar-track {
+		border-radius: 6px;
+		background-color: transparent;
+	}
+
+	&::-webkit-scrollbar {
+		width: 6px;
+		background-color: transparent;
+	}
+
+	&::-webkit-scrollbar-thumb {
+		border-radius: 6px;
+		background-color: var(--fg);
+	}
 
 	> * {
 		flex: 0 0 auto;

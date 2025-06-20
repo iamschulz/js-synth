@@ -202,7 +202,9 @@ export class MidiAdapter {
 	 * Disables MIDI option UI.
 	 */
 	disableMidi(): void {
-		this.controls.toggleDisable();
 		this.disabled = true;
+		window.requestAnimationFrame(() => {
+			this.controls.toggleDisable();
+		});
 	}
 }

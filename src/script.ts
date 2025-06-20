@@ -33,7 +33,7 @@ class Main {
 		this.ctx = new window.AudioContext();
 		this.headerDiagram = document.querySelector("#header-vis")!;
 		this.sliderEl = document.querySelector(".controls-slider")!;
-		this.sliderEl.addEventListener("scroll", this.onSliderChange.bind(this));
+		this.sliderEl.addEventListener("scrollsnapchange", this.onSliderChange.bind(this));
 
 		this.AudioRecorder = new AudioRecorder(this.ctx);
 		this.toneGenerators = this.loadSavedToneGenerators();
@@ -99,10 +99,7 @@ class Main {
 		);
 		toneGenerator.controls.el.classList.add("slide-in");
 		this.toneGenerators.push(toneGenerator);
-		this.sliderEl.scrollTo({
-			left: this.sliderEl.scrollWidth,
-			behavior: "smooth", // todo: this leads to a jump in safari
-		});
+		this.animateScrollSliderToTarget(toneGenerator.controls.el);
 	}
 
 	removeSynth(): void {
@@ -123,19 +120,43 @@ class Main {
 			return; // no active tone generator to remove
 		}
 
-		// todo: this only works reliably in chrome
 		const scrollTarget = (activeToneGenerator.controls.el.nextSibling ||
 			activeToneGenerator.controls.el.previousSibling) as HTMLElement;
-		this.sliderEl.scrollTo({
-			left: scrollTarget.offsetLeft + 1,
-			behavior: "smooth",
-		});
+		this.animateScrollSliderToTarget(scrollTarget);
 		activeToneGenerator.controls.el.style.opacity = "0";
 
 		window.setTimeout(() => {
 			activeToneGenerator.destroy();
 			this.toneGenerators = this.toneGenerators.filter((tg) => tg.id !== synthId);
-		}, 700);
+		}, 520);
+	}
+
+	animateScrollSliderToTarget(el: HTMLElement): void {
+		// todo: this still jumps in safari
+		this.sliderEl.style.scrollSnapType = "none"; // Disable scroll snapping for smooth animation
+
+		const position = el.offsetLeft + el.clientWidth / 2 - this.sliderEl.clientWidth / 2; // Center the target element in the slider
+		const start = this.sliderEl.scrollLeft;
+		const distance = position - start;
+		const duration = 500; // duration in milliseconds
+		const startTime = performance.now();
+		const animateScroll = (currentTime: number) => {
+			const elapsed = currentTime - startTime;
+			const progress = Math.min(elapsed / duration, 1); // Ensure progress does not exceed 1
+			const easeInOutQuad = (t: number) => (t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t); // Easing function
+
+			this.sliderEl.scrollLeft = start + distance * easeInOutQuad(progress);
+
+			if (progress < 1) {
+				window.requestAnimationFrame(animateScroll);
+			} else {
+				this.sliderEl.style.scrollSnapType = "x mandatory"; // Re-enable scroll snapping after animation
+			}
+		};
+
+		window.requestAnimationFrame(animateScroll);
+
+		//this.sliderEl.style.scrollSnapType = "x mandatory"; // Re-enable scroll snapping after animation
 	}
 
 	onSliderChange(): void {
@@ -179,7 +200,7 @@ class Main {
 
 		this.activeNotes.push(key);
 
-		this.MidiAdapter.onPlayNote(key, velocity);
+		this.MidiAdapter?.onPlayNote(key, velocity);
 	}
 
 	/**
@@ -198,7 +219,7 @@ class Main {
 
 		this.activeNotes = this.activeNotes.filter((note) => note !== key);
 
-		this.MidiAdapter.onPlayNote(key, 0);
+		this.MidiAdapter?.onPlayNote(key, 0);
 	}
 
 	/**
@@ -438,7 +459,7 @@ class Main {
 	}
 
 	killDeadNodes(): void {
-		if (this.MidiAdapter.activeNotes === 0 && !document.querySelector("button.active")) {
+		if (this.MidiAdapter?.activeNotes === 0 && !document.querySelector("button.active")) {
 			Object.keys(this.activeNotes).forEach((note) => {
 				this.endNote(note);
 			});
