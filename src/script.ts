@@ -126,13 +126,14 @@ class Main {
 		activeToneGenerator.controls.el.style.opacity = "0";
 
 		window.setTimeout(() => {
+			const scrollLeft = this.sliderEl.scrollLeft - scrollTarget.clientWidth;
 			activeToneGenerator.destroy();
 			this.toneGenerators = this.toneGenerators.filter((tg) => tg.id !== synthId);
+			this.sliderEl.scrollLeft = scrollLeft; // prevet scroll jump in safari
 		}, 520);
 	}
 
 	animateScrollSliderToTarget(el: HTMLElement): void {
-		// todo: this still jumps in safari
 		this.sliderEl.style.scrollSnapType = "none"; // Disable scroll snapping for smooth animation
 
 		const position = el.offsetLeft + el.clientWidth / 2 - this.sliderEl.clientWidth / 2; // Center the target element in the slider

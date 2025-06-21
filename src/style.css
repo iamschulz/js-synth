@@ -164,7 +164,10 @@ a {
 
 .add-remove-synths {
 	max-width: calc(var(--ui-width) * var(--octaves));
-	margin: 1rem auto 2rem;
+	margin: 1rem auto;
+	display: flex;
+	gap: 1rem;
+	justify-content: center;
 
 	#remove-synth {
 		transform: translateX(0);
@@ -339,6 +342,7 @@ button:not(:is(.black, .white)) {
 .recordingControls {
 	display: flex;
 	align-items: center;
+	justify-content: center;
 	gap: 1rem;
 	margin: var(--gap-y) auto 0.5rem;
 	max-width: calc(var(--ui-width) * var(--octaves));
@@ -352,10 +356,19 @@ button:not(:is(.black, .white)) {
 
 #rec {
 	border-color: black;
+	transition: opacity 0.2s ease-out;
+
 	&[aria-pressed="true"] {
 		background: red;
 		color: white;
 		box-shadow: 0 0 1rem 0 red;
+	}
+}
+
+.recordingControls:has(+ #recordingsList > .audioTrack[data-ready="true"]) {
+	#rec {
+		opacity: 0;
+		pointer-events: none;
 	}
 }
 
@@ -385,25 +398,27 @@ button:not(:is(.black, .white)) {
 
 .audioTrack {
 	display: grid;
-	grid-template-columns: 7ch auto 3rem 3rem 3rem 3rem;
+	grid-template-columns: 7ch auto 3rem 3rem 3rem;
 	grid-template-rows: 1fr 1fr;
 	grid-template-areas:
-		"in out mute loop del down"
-		"play audio audio audio audio audio";
+		"in out loop del down"
+		"play audio audio audio audio";
 	gap: 0 1rem;
 	align-items: center;
 	width: 100%;
 	opacity: 0;
+	pointer-events: none;
 	transition: opacity 0.2s ease-out;
 
 	&[data-ready="true"] {
 		opacity: 1;
+		pointer-events: all;
 	}
 
 	@media (min-width: 86rem) {
-		grid-template-columns: 7ch 3rem auto 7ch 3rem 3rem 3rem 3rem;
+		grid-template-columns: 7ch 3rem auto 7ch 3rem 3rem 3rem;
 		grid-template-rows: auto;
-		grid-template-areas: "in play audio out mute loop del down";
+		grid-template-areas: "in play audio out loop del down";
 		gap: 1rem;
 	}
 
