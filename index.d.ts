@@ -2,9 +2,7 @@ export {};
 
 declare global {
 	interface Window {
-		Main: {
-			nodes: Object;
-		};
+		Main: Object;
 	}
 
 	interface Navigator {

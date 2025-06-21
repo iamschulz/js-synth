@@ -521,9 +521,8 @@ window.Main = new Main();
 // register sw
 window.onload = async () => {
 	"use strict";
-	let sw: ServiceWorkerRegistration | undefined;
 
 	if ("serviceWorker" in navigator) {
-		sw = await navigator.serviceWorker.register("./sw.js");
+		await navigator.serviceWorker.register("./sw.js");
 	}
 };
