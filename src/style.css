@@ -8,17 +8,6 @@
 		U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
 
-@keyframes slide-in {
-	from {
-		opacity: 0;
-		transform: translateX(5rem);
-	}
-	to {
-		opacity: 1;
-		transform: translateX(0);
-	}
-}
-
 @keyframes slide-in-top {
 	from {
 		opacity: 0;
@@ -27,6 +16,23 @@
 	to {
 		opacity: 1;
 		transform: translateX(0);
+	}
+}
+
+@keyframes enable-slider-item {
+	0%,
+	10% {
+		opacity: 0;
+		pointer-events: none;
+	}
+	50% {
+		opacity: 1;
+		pointer-events: all;
+	}
+	90%,
+	100% {
+		opacity: 0;
+		pointer-events: none;
 	}
 }
 
@@ -142,6 +148,12 @@ a {
 	> * {
 		flex: 0 0 auto;
 		scroll-snap-align: center;
+
+		view-timeline-name: --enable-slider-item;
+		view-timeline-axis: inline;
+		animation: linear enable-slider-item both;
+		animation-timeline: --enable-slider-item;
+		animation-range: cover;
 	}
 }
 
@@ -152,10 +164,6 @@ a {
 	gap: 2rem;
 	justify-content: center;
 	transition: opacity 0.7s ease-out;
-
-	&.slide-in-left {
-		animation: slide-in-left 0.7s ease-out;
-	}
 
 	&:first-of-type {
 		padding-left: calc((100% - var(--slider-width)) / 2);
@@ -170,23 +178,10 @@ a {
 
 .add-remove-synths {
 	max-width: calc(var(--ui-width) * var(--octaves));
-	margin: 1rem auto;
+	margin: 0.5rem auto 2rem;
 	display: flex;
 	gap: 1rem;
 	justify-content: center;
-
-	#remove-synth {
-		transform: translateX(0);
-		transition: opacity 0.1s ease-out, transform 0.1s ease-out;
-	}
-
-	.controls-slider:has(.synth-controls:only-of-type) + & {
-		#remove-synth {
-			opacity: 0;
-			transform: translateX(-6px);
-			pointer-events: none;
-		}
-	}
 }
 
 .midi-controls {
@@ -201,7 +196,7 @@ a {
 	.controls-box {
 		display: inline-flex;
 		flex-direction: column;
-		margin-bottom: var(--gap-y);
+		margin-bottom: 0.5rem;
 	}
 
 	& [type="radio"] {
@@ -344,9 +339,19 @@ button:not(:is(.black, .white)) {
 	cursor: pointer;
 
 	&[aria-pressed="true"] {
-		background: green;
+		background: var(--bg);
 		color: white;
-		box-shadow: 0 0 1rem 0 green;
+		box-shadow: 0 0 1rem 0 var(--bg);
+	}
+
+	&:active:not([disabled]) {
+		background: var(--accent);
+		color: initial;
+	}
+
+	&[disabled] {
+		opacity: 0.5;
+		cursor: not-allowed;
 	}
 }
 

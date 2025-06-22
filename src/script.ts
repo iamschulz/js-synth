@@ -2,6 +2,7 @@ import { AudioRecorder } from "./audioRecorder";
 import { MidiAdapter } from "./midi.ts";
 import { getKeyName, getNote } from "./keys.ts";
 import { ToneGenerator } from "./ToneGenerator.ts";
+import { Slider } from "./Slider.ts";
 
 class Main {
 	ctx: AudioContext;
@@ -22,7 +23,7 @@ class Main {
 	toneGenerators: ToneGenerator[];
 	addBtn: HTMLButtonElement;
 	removeBtn: HTMLButtonElement;
-	sliderEl: HTMLDivElement;
+	slider: Slider;
 
 	constructor() {
 		if (!window.AudioContext) {
@@ -32,12 +33,16 @@ class Main {
 
 		this.ctx = new window.AudioContext();
 		this.headerDiagram = document.querySelector("#header-vis")!;
-		this.sliderEl = document.querySelector(".controls-slider")!;
-		this.sliderEl.addEventListener("scrollsnapchange", this.onSliderChange.bind(this));
 
 		this.AudioRecorder = new AudioRecorder(this.ctx);
 		this.toneGenerators = this.loadSavedToneGenerators();
 		this.toneGenerators[0].drawAdsr();
+
+		this.slider = new Slider((el: HTMLElement) => {
+			const id = el.id.split("-")[2];
+			const activeToneGenerator = this.toneGenerators.find((tg) => tg.id === id);
+			activeToneGenerator?.drawAdsr();
+		});
 
 		this.pitchBend = 0.5;
 		this.activeNotes = [];
@@ -56,7 +61,10 @@ class Main {
 		this.keyboardControls();
 		this.buttonControls();
 		this.updateLegend();
-		this.restoreSliderPosition();
+
+		if (this.toneGenerators.length === 1) {
+			this.removeBtn.disabled = true; // disable remove button if only one synth is left
+		}
 
 		this.MidiAdapter = new MidiAdapter({
 			playCallback: this.onMidiPlay.bind(this),
@@ -69,7 +77,7 @@ class Main {
 
 	loadSavedToneGenerators(): ToneGenerator[] {
 		const items = { ...localStorage };
-		const ToneGenerators = Object.keys(items)
+		const toneGenerators = Object.keys(items)
 			.filter((key) => key.startsWith("synth-controls-"))
 			.sort((a, b) => {
 				const aId = parseInt(a.split("-")[2]);
@@ -81,13 +89,12 @@ class Main {
 				return new ToneGenerator(id, this.AudioRecorder, this.ctx, this.headerDiagram);
 			});
 
-		if (ToneGenerators.length === 0) {
-			ToneGenerators.push(
-				new ToneGenerator(Date.now().toString(), this.AudioRecorder, this.ctx, this.headerDiagram)
-			);
+		if (toneGenerators.length === 0) {
+			const tg = new ToneGenerator(Date.now().toString(), this.AudioRecorder, this.ctx, this.headerDiagram);
+			toneGenerators.push(tg);
 		}
 
-		return ToneGenerators;
+		return toneGenerators;
 	}
 
 	addSynth(): void {
@@ -97,9 +104,10 @@ class Main {
 			this.ctx,
 			this.headerDiagram
 		);
-		toneGenerator.controls.el.classList.add("slide-in-left");
 		this.toneGenerators.push(toneGenerator);
-		this.animateScrollSliderToTarget(toneGenerator.controls.el);
+		this.slider.animateScrollSliderToTarget(toneGenerator.controls.el);
+
+		this.removeBtn.disabled = false; // enble remove button when a second synth is added
 	}
 
 	removeSynth(): void {
@@ -107,14 +115,8 @@ class Main {
 			return; // cannot remove the last synth
 		}
 
-		const activeSynth = Array.from(document.querySelectorAll(".controls-slider .synth-controls")).find((el) => {
-			const rect = (el as HTMLElement).getBoundingClientRect();
-			return rect.left >= 0 && rect.right <= window.innerWidth;
-		}) as HTMLFormElement;
-		if (!activeSynth) {
-			return; // no active synth to remove
-		}
-		const synthId = activeSynth.id.split("-")[2];
+		const activeElement = this.slider.getActiveElement();
+		const synthId = activeElement?.id.split("-")[2];
 		const activeToneGenerator = this.toneGenerators.find((tg) => tg.id === synthId);
 		if (!activeToneGenerator) {
 			return; // no active tone generator to remove
@@ -122,63 +124,20 @@ class Main {
 
 		const scrollTarget = (activeToneGenerator.controls.el.nextSibling ||
 			activeToneGenerator.controls.el.previousSibling) as HTMLElement;
-		this.animateScrollSliderToTarget(scrollTarget);
+		this.slider.animateScrollSliderToTarget(scrollTarget);
 		activeToneGenerator.controls.el.style.opacity = "0";
 
 		window.setTimeout(() => {
-			const scrollLeft = this.sliderEl.scrollLeft - scrollTarget.clientWidth;
+			const scrollLeft = this.slider.el.scrollLeft - scrollTarget.clientWidth;
 			activeToneGenerator.destroy();
-			this.toneGenerators = this.toneGenerators.filter((tg) => tg.id !== synthId);
-			this.sliderEl.scrollLeft = scrollLeft; // prevet scroll jump in safari
-		}, 520);
-	}
+			this.toneGenerators = this.toneGenerators.filter((tg) => tg.id !== activeToneGenerator.id);
+			this.slider.el.scrollLeft = scrollLeft; // prevent scroll jump in safari
 
-	animateScrollSliderToTarget(el: HTMLElement): void {
-		this.sliderEl.style.scrollSnapType = "none"; // Disable scroll snapping for smooth animation
-
-		const position = el.offsetLeft + el.clientWidth / 2 - this.sliderEl.clientWidth / 2; // Center the target element in the slider
-		const start = this.sliderEl.scrollLeft;
-		const distance = position - start;
-		const duration = 500; // duration in milliseconds
-		const startTime = performance.now();
-		const animateScroll = (currentTime: number) => {
-			const elapsed = currentTime - startTime;
-			const progress = Math.min(elapsed / duration, 1); // Ensure progress does not exceed 1
-			const easeInOutQuad = (t: number) => (t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t); // Easing function
-
-			this.sliderEl.scrollLeft = start + distance * easeInOutQuad(progress);
-
-			if (progress < 1) {
-				window.requestAnimationFrame(animateScroll);
-			} else {
-				this.sliderEl.style.scrollSnapType = "x mandatory"; // Re-enable scroll snapping after animation
+			if (this.toneGenerators.length === 1) {
+				this.removeBtn.disabled = true; // disable remove button if only one synth is left
 			}
-		};
-
-		window.requestAnimationFrame(animateScroll);
-
-		//this.sliderEl.style.scrollSnapType = "x mandatory"; // Re-enable scroll snapping after animation
-	}
-
-	onSliderChange(): void {
-		localStorage.setItem("slider-position", this.sliderEl.scrollLeft.toString());
-
-		const activeSynth = Array.from(document.querySelectorAll(".controls-slider .synth-controls")).find((el) => {
-			const rect = (el as HTMLElement).getBoundingClientRect();
-			return rect.left >= 0 && rect.right <= window.innerWidth;
-		}) as HTMLFormElement;
-
-		if (!activeSynth) {
-			return; // no active synth to update
-		}
-
-		const synthId = activeSynth.id.split("-")[2];
-		const activeToneGenerator = this.toneGenerators.find((tg) => tg.id === synthId);
-		if (!activeToneGenerator) {
-			return; // no active tone generator to update
-		}
-
-		activeToneGenerator.drawAdsr();
+			this.slider.updateButtons();
+		}, 520);
 	}
 
 	/**
@@ -453,10 +412,6 @@ class Main {
 			if (!keyName) return;
 			btn.textContent = layoutMap.get(keyName) || keyName;
 		});
-	}
-
-	restoreSliderPosition(): void {
-		this.sliderEl.scrollLeft = parseInt(localStorage.getItem("slider-position") || "0");
 	}
 
 	killDeadNodes(): void {
