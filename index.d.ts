@@ -1,8 +1,8 @@
-export {};
+import { Main } from "./src/script";
 
 declare global {
 	interface Window {
-		Main: Object;
+		Main: Main;
 	}
 
 	interface Navigator {

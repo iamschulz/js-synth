@@ -4,7 +4,7 @@ import { getKeyName, getNote } from "./keys.ts";
 import { ToneGenerator } from "./ToneGenerator.ts";
 import { Slider } from "./Slider.ts";
 
-class Main {
+export class Main {
 	ctx: AudioContext;
 	keys: {
 		[key: string]: {
