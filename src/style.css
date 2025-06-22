@@ -149,11 +149,13 @@ a {
 		flex: 0 0 auto;
 		scroll-snap-align: center;
 
-		view-timeline-name: --enable-slider-item;
-		view-timeline-axis: inline;
-		animation: linear enable-slider-item both;
-		animation-timeline: --enable-slider-item;
-		animation-range: cover;
+		@supports (animation-timeline: --enable-slider-item) {
+			view-timeline-name: --enable-slider-item;
+			view-timeline-axis: inline;
+			animation: linear enable-slider-item both;
+			animation-timeline: --enable-slider-item;
+			animation-range: cover;
+		}
 	}
 }
 

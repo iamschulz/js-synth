@@ -33,7 +33,6 @@ export class Slider {
 	}
 
 	registerSliderControls(): void {
-		this.el.addEventListener("scrollsnapchange", this.onSliderChange.bind(this));
 		this.el.addEventListener("scroll", this.onSliderScroll.bind(this));
 
 		this.prevBtn.addEventListener("click", () => {
@@ -52,22 +51,19 @@ export class Slider {
 		});
 	}
 
-	onSliderChange(e: Event): void {
-		window.requestAnimationFrame(() => {
-			localStorage.setItem("slider-position", this.el.scrollLeft.toString());
-
-			const targetElement = e["snapTargetInline"];
-			if (!targetElement) {
-				return; // no target element to update
-			}
-
-			this.changeCallback(targetElement);
-		});
-	}
-
 	onSliderScroll(): void {
+		localStorage.setItem("slider-position", this.el.scrollLeft.toString());
+
+		const targetElement = Array.from(this.el.children).find(
+			(item) => (item as HTMLElement).offsetLeft - this.el.scrollLeft > 0
+		) as HTMLElement;
+		if (!targetElement) {
+			return; // no target element to update
+		}
+
 		window.requestAnimationFrame(() => {
 			this.updateButtons();
+			this.changeCallback(targetElement);
 		});
 	}
 
