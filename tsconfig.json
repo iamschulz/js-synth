@@ -1,0 +1,8 @@
+{
+	"compilerOptions": {
+		"typeRoots": ["index.d.ts"],
+		"noEmit": true,
+		"allowImportingTsExtensions": true,
+		"lib": ["ES2024", "dom"]
+	}
+}
