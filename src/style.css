@@ -202,10 +202,15 @@ a {
 	}
 
 	& [type="radio"] {
-		display: none;
+		opacity: 0;
+		width: 0;
 
 		+ label {
 			display: inline-block;
+		}
+
+		&:focus + label {
+			outline: -webkit-focus-ring-color auto 1px;
 		}
 
 		&:checked + label {

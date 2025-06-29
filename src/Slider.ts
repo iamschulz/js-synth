@@ -1,5 +1,6 @@
 export class Slider {
 	el: HTMLDivElement;
+	activeItem: HTMLElement;
 	prevBtn: HTMLButtonElement;
 	nextBtn: HTMLButtonElement;
 	changeCallback: (el: HTMLElement) => void;
@@ -13,6 +14,56 @@ export class Slider {
 		this.registerSliderControls();
 		this.updateButtons();
 		this.restoreSliderPosition();
+
+		Array.from(this.el.children).forEach((item) => {
+			this.registerIntersectionObserver(item as HTMLElement);
+		});
+		this.registerMutationObserver();
+	}
+
+	registerMutationObserver() {
+		const options = { childList: true };
+
+		const callback = (mutationList: MutationRecord[]) => {
+			for (const mutation of mutationList) {
+				if (mutation.type !== "childList") {
+					return;
+				}
+
+				Array.from(mutation.addedNodes).forEach((item: HTMLElement) => {
+					this.registerIntersectionObserver(item);
+				});
+			}
+		};
+
+		const observer = new MutationObserver(callback);
+		observer.observe(this.el, options);
+	}
+
+	registerIntersectionObserver(el: HTMLElement) {
+		const options = {
+			root: this.el,
+			rootMargin: "0px",
+			threshold: 1.0,
+		};
+
+		const callback = (items: IntersectionObserverEntry[]) => {
+			const activeItem = Array.from(items).find((x) => x.isIntersecting)?.target as HTMLElement | null;
+			if (!activeItem) {
+				return;
+			}
+			this.activeItem = activeItem;
+
+			localStorage.setItem("slider-position", this.el.scrollLeft.toString());
+
+			window.requestAnimationFrame(() => {
+				this.updateButtons();
+				this.changeCallback(this.activeItem);
+			});
+		};
+
+		const observer = new IntersectionObserver(callback, options);
+		observer.observe(el);
 	}
 
 	restoreSliderPosition(): void {
@@ -21,49 +72,12 @@ export class Slider {
 		});
 	}
 
-	getActiveElement(): HTMLElement | null {
-		const activeSynth = Array.from(document.querySelectorAll(".controls-slider .synth-controls")).find((el) => {
-			const rect = (el as HTMLElement).getBoundingClientRect();
-			return rect.left >= 0 && rect.right <= window.innerWidth;
-		}) as HTMLFormElement;
-		if (!activeSynth) {
-			return null; // no active synth to remove
-		}
-		return activeSynth;
-	}
-
 	registerSliderControls(): void {
-		this.el.addEventListener("scroll", this.onSliderScroll.bind(this));
-
 		this.prevBtn.addEventListener("click", () => {
-			const target = this.getActiveElement()?.previousElementSibling;
-			if (!target) {
-				return;
-			}
-			this.animateScrollSliderToTarget(target as HTMLElement);
+			this.animateScrollSliderToTarget(this.activeItem.previousSibling as HTMLElement);
 		});
 		this.nextBtn.addEventListener("click", () => {
-			const target = this.getActiveElement()?.nextElementSibling;
-			if (!target) {
-				return;
-			}
-			this.animateScrollSliderToTarget(target as HTMLElement);
-		});
-	}
-
-	onSliderScroll(): void {
-		localStorage.setItem("slider-position", this.el.scrollLeft.toString());
-
-		const targetElement = Array.from(this.el.children).find(
-			(item) => (item as HTMLElement).offsetLeft - this.el.scrollLeft > 0
-		) as HTMLElement;
-		if (!targetElement) {
-			return; // no target element to update
-		}
-
-		window.requestAnimationFrame(() => {
-			this.updateButtons();
-			this.changeCallback(targetElement);
+			this.animateScrollSliderToTarget(this.activeItem.nextSibling as HTMLElement);
 		});
 	}
 
@@ -77,7 +91,8 @@ export class Slider {
 	animateScrollSliderToTarget(el: HTMLElement): void {
 		this.el.style.scrollSnapType = "none"; // Disable scroll snapping for smooth animation
 
-		const position = -8 + el.offsetLeft + el.clientWidth / 2 - this.el.clientWidth / 2; // Center the target element in the slider
+		const itemWidth = el.clientWidth;
+		const position = el.offsetLeft - this.el.offsetLeft + itemWidth / 2 - this.el.clientWidth / 2; // Center the target element in the slider
 		const start = this.el.scrollLeft;
 		const distance = position - start;
 		const duration = 500; // duration in milliseconds

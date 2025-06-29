@@ -1,20 +1,30 @@
 export const createSynthControls = (i: string): string => `
 <form class="synth-controls" id="synth-controls-${i}">
     <div class="controls-box">
-        <input type="radio" id="waveform-sine-${i}" name="waveform-${i}" value="sine" checked />
-        <label for="waveform-sine-${i}">Sine</label>
+        <span>
+            <input type="radio" id="waveform-sine-${i}" name="waveform-${i}" value="sine" checked />
+            <label for="waveform-sine-${i}">Sine</label>
+        </span>
 
-        <input type="radio" id="waveform-square-${i}" name="waveform-${i}" value="square" />
-        <label for="waveform-square-${i}">Square</label>
+        <span>
+            <input type="radio" id="waveform-square-${i}" name="waveform-${i}" value="square" />
+            <label for="waveform-square-${i}">Square</label>
+        </span>
 
-        <input type="radio" id="waveform-triangle-${i}" name="waveform-${i}" value="triangle" />
-        <label for="waveform-triangle-${i}">Triangle</label>
+        <span>
+            <input type="radio" id="waveform-triangle-${i}" name="waveform-${i}" value="triangle" />
+            <label for="waveform-triangle-${i}">Triangle</label>
+        </span>
 
-        <input type="radio" id="waveform-sawtooth-${i}" name="waveform-${i}" value="sawtooth" />
-        <label for="waveform-sawtooth-${i}">Sawtooth</label>
+        <span>
+            <input type="radio" id="waveform-sawtooth-${i}" name="waveform-${i}" value="sawtooth" />
+            <label for="waveform-sawtooth-${i}">Sawtooth</label>
+        </span>
 
-        <input type="radio" id="waveform-noise-${i}" name="waveform-${i}" value="noise" />
-        <label for="waveform-noise-${i}">Noise</label>
+        <span>
+            <input type="radio" id="waveform-noise-${i}" name="waveform-${i}" value="noise" />
+            <label for="waveform-noise-${i}">Noise</label>
+        </span>
     </div>
 
     <div class="controls-box">

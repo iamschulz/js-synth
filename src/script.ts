@@ -115,7 +115,7 @@ export class Main {
 			return; // cannot remove the last synth
 		}
 
-		const activeElement = this.slider.getActiveElement();
+		const activeElement = this.slider.activeItem;
 		const synthId = activeElement?.id.split("-")[2];
 		const activeToneGenerator = this.toneGenerators.find((tg) => tg.id === synthId);
 		if (!activeToneGenerator) {
