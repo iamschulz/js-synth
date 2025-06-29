@@ -59,11 +59,20 @@ export class ToneGenerator {
 		const k = typeof this.overdrive === "number" ? this.overdrive : 3;
 		const n_samples = 44100;
 		const curve = new Float32Array(n_samples);
+		const deg = Math.PI / 180;
 
 		for (let i = 0; i < n_samples; i++) {
 			const x = (i * 2) / n_samples - 1;
-			// Soft clipping using tanh-like curve
-			curve[i] = Math.tanh(k * x);
+			curve[i] = ((3 + k) * x * 20 * deg) / (Math.PI + k * Math.abs(x));
+		}
+
+		for (let i = 0; i < n_samples; i++) {
+			const x = (i * 2) / n_samples - 1;
+			if (x < 0) {
+				curve[i] = Math.tanh(k * x);
+			} else {
+				curve[i] = Math.tanh((k * x) / 2);
+			}
 		}
 
 		return curve;

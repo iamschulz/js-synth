@@ -71,7 +71,7 @@ export const createSynthControls = (i: string): string => `
 
         <div class="option">
             <label for="overdrive-${i}">Overdrive</label>
-            <input name="overdrive-${i}" id="overdrive-${i}" type="range" data-control-name="overdrive" min="0" max="11"
+            <input name="overdrive-${i}" id="overdrive-${i}" type="range" data-control-name="overdrive" min="0" max="30"
                 step="1" value="0" />
         </div>
     </div>
