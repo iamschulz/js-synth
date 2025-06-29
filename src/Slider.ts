@@ -17,6 +17,7 @@ export class Slider {
 
 		Array.from(this.el.children).forEach((item) => {
 			this.registerIntersectionObserver(item as HTMLElement);
+			this.registerFocusEvents(item as HTMLElement);
 		});
 		this.registerMutationObserver();
 	}
@@ -32,6 +33,7 @@ export class Slider {
 
 				Array.from(mutation.addedNodes).forEach((item: HTMLElement) => {
 					this.registerIntersectionObserver(item);
+					this.registerFocusEvents(item);
 				});
 			}
 		};
@@ -88,14 +90,22 @@ export class Slider {
 		this.nextBtn.disabled = isRight;
 	}
 
-	animateScrollSliderToTarget(el: HTMLElement): void {
+	registerFocusEvents(el: HTMLElement): void {
+		el.querySelectorAll("input, label").forEach((input) => {
+			input.addEventListener("focus", () => {
+				this.animateScrollSliderToTarget(el, true);
+			});
+		});
+	}
+
+	animateScrollSliderToTarget(el: HTMLElement, immediate = false): void {
 		this.el.style.scrollSnapType = "none"; // Disable scroll snapping for smooth animation
 
 		const itemWidth = el.clientWidth;
 		const position = el.offsetLeft - this.el.offsetLeft + itemWidth / 2 - this.el.clientWidth / 2; // Center the target element in the slider
 		const start = this.el.scrollLeft;
 		const distance = position - start;
-		const duration = 500; // duration in milliseconds
+		const duration = immediate ? 1 : 500; // duration in milliseconds
 		const startTime = performance.now();
 		const animateScroll = (currentTime: number) => {
 			const elapsed = currentTime - startTime;

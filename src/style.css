@@ -25,7 +25,8 @@
 		opacity: 0;
 		pointer-events: none;
 	}
-	50% {
+	40%,
+	60% {
 		opacity: 1;
 		pointer-events: all;
 	}
@@ -204,6 +205,7 @@ a {
 	& [type="radio"] {
 		opacity: 0;
 		width: 0;
+		pointer-events: none;
 
 		+ label {
 			display: inline-block;
