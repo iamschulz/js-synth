@@ -14,6 +14,7 @@ export class Main {
 	};
 	pitchBend: number;
 	activeNotes: string[];
+	pressedKeys: Set<string>;
 	keyBtns: NodeListOf<HTMLButtonElement>;
 	headerDiagram: SVGElement;
 	MidiAdapter: MidiAdapter;
@@ -24,6 +25,7 @@ export class Main {
 	addBtn: HTMLButtonElement;
 	removeBtn: HTMLButtonElement;
 	slider: Slider;
+	sustain: boolean;
 
 	constructor() {
 		if (!window.AudioContext) {
@@ -45,7 +47,9 @@ export class Main {
 		});
 
 		this.pitchBend = 0.5;
+		this.sustain = false;
 		this.activeNotes = [];
+		this.pressedKeys = new Set();
 		this.keyBtns = document.querySelectorAll(".keyboard button");
 
 		this.addBtn = document.querySelector("#add-synth") as HTMLButtonElement;
@@ -70,6 +74,7 @@ export class Main {
 			playCallback: this.onMidiPlay.bind(this),
 			releaseCallback: this.onMidiRelease.bind(this),
 			pitchCallback: this.onMidiPitchBend.bind(this),
+			sustainCallback: this.onMidiSustain.bind(this),
 		});
 
 		this.killDeadNodes();
@@ -146,6 +151,9 @@ export class Main {
 	 * @param {String} key
 	 */
 	playNote(key = "a", velocity = 1): void {
+		if (this.sustain && this.pressedKeys.has(key)) {
+			this.endNote(key, true);
+		}
 		if (this.activeNotes.includes(key)) {
 			return; // note is already playing
 		}
@@ -168,7 +176,11 @@ export class Main {
 	 *
 	 * @param {Object} node
 	 */
-	endNote(key: string): void {
+	endNote(key: string, force = false): void {
+		if (this.sustain && !force) {
+			return;
+		}
+
 		this.toneGenerators.forEach((toneGenerator) => {
 			toneGenerator.releaseNote(key);
 		});
@@ -187,6 +199,9 @@ export class Main {
 	 */
 	keyboardControls(): void {
 		document.addEventListener("keydown", (e) => {
+			if (e.repeat) {
+				return;
+			}
 			const recordingsList = document.querySelector("#recordingsList") as HTMLElement;
 			if (recordingsList.contains(document.activeElement)) {
 				if (e.code === "KeyI") {
@@ -208,11 +223,7 @@ export class Main {
 					return;
 				}
 
-				// note is already playing
-				if (this.activeNotes.includes(note)) {
-					return;
-				}
-
+				this.pressedKeys.add(note);
 				this.playNote(note);
 			}
 		});
@@ -223,6 +234,7 @@ export class Main {
 			if (!note) {
 				return;
 			}
+			this.pressedKeys.delete(note);
 
 			this.endNote(note);
 		});
@@ -251,9 +263,11 @@ export class Main {
 
 		note = this.transpose(note, -4);
 
-		// note is already playing
-		if (this.activeNotes.includes(note)) return;
+		if (this.sustain && this.pressedKeys.has(note)) {
+			this.endNote(note, true);
+		}
 
+		this.pressedKeys.add(note);
 		this.playNote(note, velocity);
 	}
 
@@ -272,6 +286,7 @@ export class Main {
 		}
 
 		note = this.transpose(note, -4);
+		this.pressedKeys.delete(note);
 		this.endNote(note);
 	}
 
@@ -284,6 +299,19 @@ export class Main {
 		this.pitchBend = offset;
 		this.toneGenerators.forEach((toneGenerator) => {
 			toneGenerator.pitchBend(offset);
+		});
+	}
+
+	onMidiSustain(toggle: number): void {
+		this.sustain = !!toggle;
+		if (!this.sustain) {
+			this.onSustainEnd();
+		}
+	}
+
+	onSustainEnd(): void {
+		this.activeNotes.forEach((key) => {
+			this.endNote(key);
 		});
 	}
 
@@ -328,9 +356,8 @@ export class Main {
 			);
 
 			/* trigger button with tab controls */
-			btn.addEventListener("keydown", (e) => {
+			btn.addEventListener("keypress", (e) => {
 				if (!(e.code === "Space" || e.key === "Enter")) return;
-
 				this.playNote((e.target as HTMLButtonElement).dataset.note);
 			});
 

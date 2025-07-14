@@ -14,6 +14,7 @@ type MidiConfig = {
 	playCallback: Callback;
 	releaseCallback: Callback;
 	pitchCallback: Callback;
+	sustainCallback: Callback;
 };
 
 export class MidiAdapter {
@@ -23,6 +24,7 @@ export class MidiAdapter {
 	playCallback: Callback;
 	releaseCallback: Callback;
 	pitchCallback: Callback;
+	sustainCallback: Callback;
 	disabled: boolean;
 	activeNotes: number;
 	controls: Controls;
@@ -42,6 +44,7 @@ export class MidiAdapter {
 		this.playCallback = config.playCallback;
 		this.releaseCallback = config.releaseCallback;
 		this.pitchCallback = config.pitchCallback;
+		this.sustainCallback = config.sustainCallback;
 
 		this.disabled = false;
 
@@ -172,6 +175,10 @@ export class MidiAdapter {
 
 		if (data.channel === this.inChannel && data.command === 14) {
 			this.pitchCallback(data.velocity);
+		}
+
+		if (data.channel === this.inChannel && data.command === 11) {
+			this.sustainCallback(data.velocity);
 		}
 	}
 
