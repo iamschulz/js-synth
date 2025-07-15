@@ -311,7 +311,9 @@ export class Main {
 
 	onSustainEnd(): void {
 		this.activeNotes.forEach((key) => {
-			this.endNote(key);
+			if (!this.pressedKeys.has(key)) {
+				this.endNote(key);
+			}
 		});
 	}
 
