@@ -173,11 +173,7 @@ export class ToneGenerator {
 		distortion?.connect(overdriveAmp || release);
 		overdriveAmp?.connect(release);
 		release.connect(volume);
-		volume.connect(this.ctx.destination);
-
-		if (this.audioRecorder.recordingStream) {
-			volume.connect(this.audioRecorder.recordingStream);
-		}
+		volume.connect(this.audioRecorder.master);
 
 		/* apply pre-existing pitch bend */
 		if (node instanceof OscillatorNode) {

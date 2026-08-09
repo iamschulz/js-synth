@@ -22,6 +22,7 @@ export class AudioTrack {
 	out: number;
 	delBtn: HTMLButtonElement;
 	saveBtn: HTMLButtonElement;
+	destroyed: boolean;
 
 	constructor(id: number) {
 		this.template = document.querySelector("#recordingTemplate") as HTMLTemplateElement;
@@ -33,6 +34,7 @@ export class AudioTrack {
 		this.in = 0;
 		this.out = 0;
 		this.mute = false;
+		this.destroyed = false;
 
 		this.createNewAudioElement();
 		this.handleTimingControls();
@@ -130,9 +132,6 @@ export class AudioTrack {
 		// Event listeners
 		this.playButton.addEventListener("click", () => this.togglePlay());
 		this.scrubInput.addEventListener("input", () => this.scrubAudio());
-		this.audioEl.addEventListener("play", () => {
-			this.updateCurrentTime();
-		});
 		this.audioEl.addEventListener("pause", () => {
 			this.playButton.ariaPressed = "false";
 		});
@@ -169,8 +168,12 @@ export class AudioTrack {
 	}
 
 	loop() {
-		if (!this.audioEl.paused) {
-			if (this.audioEl.currentTime <= this.in) {
+		if (this.destroyed) {
+			return;
+		}
+
+		if (!this.audioEl.paused && this.out > this.in) {
+			if (this.audioEl.currentTime < this.in) {
 				this.audioEl.currentTime = this.in;
 			}
 			if (this.audioEl.currentTime >= this.out) {
@@ -215,6 +218,10 @@ export class AudioTrack {
 	}
 
 	private updateCurrentTime(): void {
+		if (this.destroyed) {
+			return;
+		}
+
 		this.scrubInput.value = String((this.audioEl.currentTime / this.duration) * 10000);
 
 		const inPerc = (this.in / this.duration) * 10000;
@@ -282,6 +289,11 @@ export class AudioTrack {
 	}
 
 	delete() {
+		this.destroyed = true;
+		this.audioEl.pause();
+		if (this.audioEl.src) {
+			URL.revokeObjectURL(this.audioEl.src);
+		}
 		this.element.remove();
 	}
 

@@ -3,9 +3,10 @@ import { AudioTrack } from "./AudioTrack";
 export class AudioRecorder {
 	ctx: AudioContext;
 	analyser: AnalyserNode;
+	master: GainNode;
 	recorder: MediaRecorder | null;
 	singleMode: boolean;
-	recordingStream: MediaStreamAudioDestinationNode | null;
+	recordingStream: MediaStreamAudioDestinationNode;
 	recordingsList: HTMLUListElement;
 	recordings: AudioTrack[];
 	recordingTemplate: HTMLTemplateElement;
@@ -18,6 +19,17 @@ export class AudioRecorder {
 		this.ctx = ctx;
 		this.analyser = this.ctx.createAnalyser();
 
+		/* Master bus. Every voice routes through here instead of connecting to the
+		   speakers and the recording destination itself. The destination stays
+		   connected for the whole session, so its stream keeps delivering frames
+		   while nothing is playing — with only per-note connections the node has no
+		   input between notes, and Chromium then drops those gaps from the
+		   recording instead of encoding them as silence. */
+		this.master = this.ctx.createGain();
+		this.recordingStream = this.ctx.createMediaStreamDestination();
+		this.master.connect(this.ctx.destination);
+		this.master.connect(this.recordingStream);
+
 		this.recordingTemplate = document.querySelector("#recordingTemplate") as HTMLTemplateElement;
 		this.recordingsList = document.querySelector("#recordingsList") as HTMLUListElement;
 		this.recBtn = document.querySelector("#rec") as HTMLButtonElement;
@@ -25,7 +37,6 @@ export class AudioRecorder {
 
 		this.recordings = [];
 		this.recorder = null;
-		this.recordingStream = null;
 
 		this.recBtn.addEventListener("click", () => {
 			const active = this.recBtn.ariaPressed === "true";
@@ -65,7 +76,6 @@ export class AudioRecorder {
 		this.recordings.push(audioTrack);
 
 		this.recorder?.stop();
-		this.recordingStream = this.ctx.createMediaStreamDestination();
 		this.recorder = new MediaRecorder(this.recordingStream.stream);
 		this.recorder.start();
 	}
@@ -74,7 +84,6 @@ export class AudioRecorder {
 		this.recorder?.addEventListener("dataavailable", (e) => {
 			this.recordings.at(-1)?.addSrc(URL.createObjectURL(e.data));
 			this.recorder = null;
-			this.recordingStream = null;
 		});
 		this.recorder?.stop();
 	}
