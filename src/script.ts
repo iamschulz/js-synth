@@ -1,6 +1,6 @@
 import { AudioRecorder } from "./audioRecorder";
 import { MidiAdapter } from "./midi.ts";
-import { getKeyName, getNote } from "./keys.ts";
+import { getKeyName, getNote, midiOctaveOffset } from "./keys.ts";
 import { ToneGenerator } from "./ToneGenerator.ts";
 import { Slider } from "./Slider.ts";
 
@@ -241,9 +241,12 @@ export class Main {
 	}
 
 	transpose(keyName: string, offset: number): string {
-		const octave = parseInt(keyName.slice(-1));
-		const note = keyName.slice(0, -1);
-		return `${note}${octave + offset}`;
+		const match = keyName.match(/^(.*?)(-?\d+)$/);
+		if (!match) {
+			return keyName;
+		}
+		const [, note, octaveStr] = match;
+		return `${note}${parseInt(octaveStr, 10) + offset}`;
 	}
 
 	/**
@@ -261,7 +264,7 @@ export class Main {
 			return;
 		}
 
-		note = this.transpose(note, -4);
+		note = this.transpose(note, -midiOctaveOffset);
 
 		if (this.sustain && this.pressedKeys.has(note)) {
 			this.endNote(note, true);
@@ -285,7 +288,7 @@ export class Main {
 			return;
 		}
 
-		note = this.transpose(note, -4);
+		note = this.transpose(note, -midiOctaveOffset);
 		this.pressedKeys.delete(note);
 		this.endNote(note);
 	}

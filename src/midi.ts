@@ -191,13 +191,19 @@ export class MidiAdapter {
 	 * @returns
 	 */
 	sendMidiMessage(command: string, note: string, velocity = 0): void {
-		if (this.outChannel < 0 || command !== "play" || !this.midi) {
+		if (!Number.isInteger(this.outChannel) || this.outChannel < 0 || command !== "play" || !this.midi) {
 			return;
 		}
 
-		const midiCode = getMidiCode(note) as any; // todo: fix typing
-		const midiCommand = "0x" + ((9 << 4) | this.outChannel).toString(16);
-		const midiVelocity = "0x" + (velocity * 127).toString(16);
+		const midiCode = getMidiCode(note);
+		if (midiCode === null || midiCode < 0 || midiCode > 127) {
+			return;
+		}
+
+		const midiCommand = (9 << 4) | this.outChannel;
+		// velocity is a 0..1 float, so round rather than truncate: a MIDI-in
+		// velocity of 100 arrives as 100/127 and multiplies back to 99.999...
+		const midiVelocity = Math.min(127, Math.max(0, Math.round(velocity * 127)));
 
 		this.midi!.outputs.forEach((outputDevice) => {
 			outputDevice.send([midiCommand, midiCode, midiVelocity]);
