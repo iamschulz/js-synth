@@ -5,7 +5,7 @@ const watchFlag = process.argv.indexOf("--watch") > -1;
 const minifyFlag = process.argv.indexOf("--minify") > -1;
 
 const opts = {
-	entryPoints: ["src/script.ts", "src/sw.ts"],
+	entryPoints: ["src/script.ts", "src/sw.ts", "src/samplePlayer.worklet.ts"],
 	bundle: true,
 	outdir: "dist",
 	bundle: true,

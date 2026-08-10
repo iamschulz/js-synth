@@ -19,6 +19,12 @@
 	}
 }
 
+@keyframes blink {
+	50% {
+		opacity: 0.2;
+	}
+}
+
 @keyframes enable-slider-item {
 	0%,
 	10% {
@@ -217,6 +223,43 @@ a {
 
 		&:checked + label {
 			color: var(--accent);
+		}
+	}
+
+	& .sample-option {
+		label {
+			display: inline-flex;
+			align-items: center;
+			gap: 0.5ch;
+			cursor: pointer;
+		}
+
+		.icon {
+			display: inline-flex;
+			line-height: 1;
+
+			&[hidden] {
+				display: none;
+			}
+
+			svg {
+				display: block;
+				width: 1em;
+				height: 1em;
+			}
+		}
+
+		.icon-rec svg {
+			width: 0.7em;
+			height: 0.7em;
+		}
+
+		&[data-recording="true"] label {
+			color: red;
+		}
+
+		&[data-recording="true"] .icon-rec {
+			animation: blink 1s steps(1, end) infinite;
 		}
 	}
 

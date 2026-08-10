@@ -1,6 +1,13 @@
-const ver = "1.2.0";
+const ver = "1.2.1";
 const cacheName = `js-synth-${ver}`;
-const filesToCache = ["./", "./index.html", "./style.css", "./script.js", "./press-start-2p-latin-400-normal.woff2"];
+const filesToCache = [
+	"./",
+	"./index.html",
+	"./style.css",
+	"./script.js",
+	"./samplePlayer.worklet.js",
+	"./press-start-2p-latin-400-normal.woff2",
+];
 const msgChannel = new BroadcastChannel("chan");
 let updateAvailable = false;
 

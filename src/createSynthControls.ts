@@ -25,6 +25,44 @@ export const createSynthControls = (i: string): string => `
             <input type="radio" id="waveform-noise-${i}" name="waveform-${i}" value="noise" />
             <label for="waveform-noise-${i}">Noise</label>
         </span>
+
+        <span class="sample-option" data-recording="false">
+            <input type="radio" id="waveform-sample-${i}" name="waveform-${i}" value="sample" />
+            <label for="waveform-sample-${i}" aria-live="polite">
+                <span class="sample-text">Sample</span>
+                <span class="icon icon-mic" aria-hidden="true">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 12" width="12" height="12"
+                        shape-rendering="crispEdges" fill="currentColor">
+                        <rect x="4" y="0" width="4" height="1" />
+                        <rect x="3" y="1" width="1" height="5" />
+                        <rect x="8" y="1" width="1" height="5" />
+                        <rect x="4" y="1" width="4" height="1" />
+                        <rect x="4" y="3" width="4" height="1" />
+                        <rect x="4" y="5" width="4" height="2" />
+                        <rect x="1" y="1" width="1" height="6" />
+                        <rect x="10" y="1" width="1" height="6" />
+                        <rect x="2" y="3" width="1" height="1" />
+                        <rect x="9" y="3" width="1" height="1" />
+                        <rect x="1" y="7" width="2" height="1" />
+                        <rect x="9" y="7" width="2" height="1" />
+                        <rect x="3" y="8" width="2" height="1" />
+                        <rect x="7" y="8" width="2" height="1" />
+                        <rect x="5" y="9" width="2" height="2" />
+                        <rect x="4" y="11" width="4" height="1" />
+                    </svg>
+                </span>
+                <span class="icon icon-rec" aria-hidden="true" hidden>
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 6 6" width="6" height="6"
+                        shape-rendering="crispEdges" fill="#ff0000">
+                        <rect x="2" y="0" width="2" height="1" />
+                        <rect x="1" y="1" width="4" height="1" />
+                        <rect x="0" y="2" width="6" height="2" />
+                        <rect x="1" y="4" width="4" height="1" />
+                        <rect x="2" y="5" width="2" height="1" />
+                    </svg>
+                </span>
+            </label>
+        </span>
     </div>
 
     <div class="controls-box">

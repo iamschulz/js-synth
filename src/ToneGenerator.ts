@@ -4,6 +4,9 @@ import { getFrequency } from "./getFrequency.ts";
 import { MyAudioNode } from "./AudioNode.ts";
 import { createSynthControls } from "./createSynthControls.ts";
 import { Controls } from "./Controls.ts";
+import { Sampler } from "./Sampler.ts";
+import { flatWaveformPoints, waveformPoints } from "./waveformPoints.ts";
+import { canPlaySamples, loadSamplePlayer, SamplePlayer } from "./SamplePlayer.ts";
 
 export class ToneGenerator {
 	id: string;
@@ -22,6 +25,8 @@ export class ToneGenerator {
 	nodes: { [key: string]: MyAudioNode };
 	controls: Controls;
 	headerDiagram: SVGElement;
+	sampler: Sampler;
+	sampleOption!: HTMLElement;
 
 	constructor(id: string, audioRecorder: AudioRecorder, ctx: AudioContext, headerDiagram: SVGElement) {
 		this.id = id;
@@ -39,6 +44,8 @@ export class ToneGenerator {
 		this.overdrive = 0;
 		this.nodes = {};
 		this.headerDiagram = headerDiagram;
+		this.sampler = new Sampler(this.ctx);
+		this.sampler.onFrame = (data) => this.drawSampleWave(data);
 		this.controls = this.createControls();
 	}
 
@@ -93,7 +100,7 @@ export class ToneGenerator {
 		let distortion: WaveShaperNode | undefined;
 		let overdriveAmp: WaveShaperNode | undefined;
 
-		let node: AudioBufferSourceNode | OscillatorNode;
+		let node: AudioBufferSourceNode | OscillatorNode | SamplePlayer;
 
 		if (["sine", "triangle", "square", "sawtooth"].includes(this.wave)) {
 			// todo: own function
@@ -128,6 +135,29 @@ export class ToneGenerator {
 			noise.connect(bandpass).connect(attack);
 
 			node = noise;
+		} else if (this.wave === "sample") {
+			// todo: own function
+			if (!this.sampler.buffer) {
+				return; // nothing recorded yet
+			}
+
+			const rate = this.getPlaybackRate(freq);
+			// the grain player keeps the sample's length, resampling alone would not
+			const sample = canPlaySamples(this.ctx)
+				? new SamplePlayer(
+						this.ctx,
+						this.sampler.buffer,
+						rate,
+						this.sampler.note ? this.sampler.frequency : 0 // no note means the pitch was guessed
+				  )
+				: new AudioBufferSourceNode(this.ctx, {
+						buffer: this.sampler.buffer,
+						playbackRate: rate,
+				  });
+
+			sample.connect(attack);
+
+			node = sample;
 		} else {
 			return;
 		}
@@ -178,6 +208,8 @@ export class ToneGenerator {
 		/* apply pre-existing pitch bend */
 		if (node instanceof OscillatorNode) {
 			node.frequency.setValueAtTime(freq * (0.5 + pitchBend), this.ctx.currentTime);
+		} else if (this.wave === "sample") {
+			node.playbackRate.setValueAtTime(this.getPlaybackRate(freq * (0.5 + pitchBend)), this.ctx.currentTime);
 		}
 
 		this.nodes[key] = {
@@ -216,21 +248,96 @@ export class ToneGenerator {
 	}
 
 	pitchBend(offset: number): void {
+		if (offset < 0 || offset > 1) {
+			throw new Error("Pitch offset must be between 0 and 1");
+		}
+
 		Object.keys(this.nodes).forEach((note) => {
-			if (this.nodes[note].node instanceof AudioBufferSourceNode) {
-				// cannot change frequency of AudioBufferSourceNode
-				return;
+			const node = this.nodes[note].node;
+			const baseFreq = getFrequency(note, this.pitch) * (0.5 + offset);
+
+			if (node instanceof OscillatorNode) {
+				node.frequency.setValueAtTime(baseFreq, this.ctx.currentTime);
+			} else if (this.wave === "sample") {
+				node.playbackRate.setValueAtTime(this.getPlaybackRate(baseFreq), this.ctx.currentTime);
 			}
-			const node = this.nodes[note].node as OscillatorNode;
-
-			if (offset < 0 || offset > 1) {
-				throw new Error("Pitch offset must be between 0 and 1");
-			}
-
-			const baseFreq = getFrequency(note, this.pitch);
-
-			node.frequency.setValueAtTime(baseFreq * (0.5 + offset), this.ctx.currentTime);
+			// noise has no frequency to bend
 		});
+	}
+
+	getPlaybackRate(frequency: number): number {
+		return Math.min(Math.max(frequency / this.sampler.frequency, 1 / 32), 32);
+	}
+
+	async toggleSampling(): Promise<void> {
+		if (this.sampler.pending) {
+			return; // still opening the microphone, or still decoding the last take
+		}
+
+		if (this.sampler.recording) {
+			await this.stopSampling();
+			return;
+		}
+
+		/* runs while the mic is still recording, so it is ready for the first note */
+		loadSamplePlayer(this.ctx).catch((e) => console.error("Could not load the sample player.", e));
+
+		this.wave = "sample";
+		this.updateSampleControls(true);
+		this.drawSampleWave(); // clear the previous sample, the mic takes over from here
+		this.drawAdsr();
+
+		try {
+			await this.sampler.start();
+		} catch (e) {
+			console.error("Could not access the microphone.", e);
+			this.updateSampleControls(false);
+			if (!this.sampler.buffer) {
+				this.selectWave("sine");
+			}
+		}
+	}
+
+	async stopSampling(): Promise<void> {
+		await this.sampler.stop();
+		this.updateSampleControls(false);
+		this.drawSample();
+	}
+
+	updateSampleControls(recording: boolean): void {
+		this.sampleOption.dataset.recording = recording.toString();
+		(this.sampleOption.querySelector(".sample-text") as HTMLElement).textContent = recording
+			? "Sampling"
+			: "Sample";
+		(this.sampleOption.querySelector(".icon-mic") as HTMLElement).hidden = recording;
+		(this.sampleOption.querySelector(".icon-rec") as HTMLElement).hidden = !recording;
+
+		const label = this.sampleOption.querySelector("label") as HTMLLabelElement;
+		if (recording) {
+			label.removeAttribute("title");
+		} else if (this.sampler.buffer) {
+			label.title = this.sampler.note ? `Sampled at ${this.sampler.note}` : "Sampled at an unknown pitch";
+		}
+	}
+
+	drawSampleWave(data?: Float32Array): void {
+		this.headerDiagram
+			.querySelector("#wave-sample")
+			?.setAttribute("points", data && data.length ? waveformPoints(data) : flatWaveformPoints());
+	}
+
+	drawSample(): void {
+		this.drawSampleWave(this.sampler.buffer?.getChannelData(0));
+	}
+
+	selectWave(wave: Waveform): void {
+		const input = this.controls.el.querySelector(`#waveform-${wave}-${this.id}`) as HTMLInputElement | null;
+		if (!input) {
+			return;
+		}
+
+		input.checked = true;
+		input.dispatchEvent(new Event("input", { bubbles: true }));
 	}
 
 	createControls(): Controls {
@@ -244,6 +351,13 @@ export class ToneGenerator {
 		// append controls to DOM
 		document.querySelector(".controls-slider")?.appendChild(el);
 
+		this.sampleOption = el.querySelector(".sample-option") as HTMLElement;
+
+		const sampleInput = el.querySelector(`#waveform-sample-${this.id}`) as HTMLInputElement;
+		sampleInput.addEventListener("click", () => {
+			this.toggleSampling();
+		});
+
 		const controls = new Controls(`synth-controls-${this.id}`, el, (data) => {
 			this.volume = parseFloat(data[`volume-${this.id}`] as string);
 			this.wave = data[`waveform-${this.id}`] as Waveform;
@@ -254,6 +368,10 @@ export class ToneGenerator {
 			this.release = parseFloat(data[`release-${this.id}`] as string);
 			this.distort = parseFloat(data[`distort-${this.id}`] as string);
 			this.overdrive = parseFloat(data[`overdrive-${this.id}`] as string);
+
+			if (this.wave !== "sample" && this.sampler.recording) {
+				this.stopSampling(); // switching away mid-recording still keeps the sample
+			}
 
 			this.drawAdsr();
 		});
@@ -272,6 +390,11 @@ export class ToneGenerator {
 		waveDiagrams.forEach((waveDiagram) => {
 			waveDiagram.toggleAttribute("hidden", waveDiagram.id !== `wave-${this.wave}`);
 		});
+
+		if (this.wave === "sample" && !this.sampler.recording) {
+			// the header is shared, so this generator's sample has to be redrawn
+			this.drawSample();
+		}
 
 		// header diagram is 400 x 200
 		const a = this.headerDiagram.querySelector("#adsr-a")!;
@@ -316,6 +439,7 @@ export class ToneGenerator {
 		});
 
 		this.nodes = {};
+		this.sampler.destroy();
 		this.controls.el.remove();
 
 		localStorage.removeItem(`synth-controls-${this.id}`);

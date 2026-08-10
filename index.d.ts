@@ -12,4 +12,7 @@ declare global {
 			}>;
 		};
 	}
+
+	/* the lib types leave out the maplike half of AudioParamMap */
+	interface AudioParamMap extends ReadonlyMap<string, AudioParam> {}
 }
