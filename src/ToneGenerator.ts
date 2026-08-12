@@ -7,6 +7,7 @@ import { Controls } from "./Controls.ts";
 import { Sampler } from "./Sampler.ts";
 import { flatWaveformPoints, waveformPoints } from "./waveformPoints.ts";
 import { canPlaySamples, loadSamplePlayer, SamplePlayer } from "./SamplePlayer.ts";
+import { DriveChain } from "./DriveChain.ts";
 
 export class ToneGenerator {
 	id: string;
@@ -27,6 +28,7 @@ export class ToneGenerator {
 	headerDiagram: SVGElement;
 	sampler: Sampler;
 	sampleOption!: HTMLElement;
+	drive: DriveChain;
 
 	constructor(id: string, audioRecorder: AudioRecorder, ctx: AudioContext, headerDiagram: SVGElement) {
 		this.id = id;
@@ -46,43 +48,9 @@ export class ToneGenerator {
 		this.headerDiagram = headerDiagram;
 		this.sampler = new Sampler(this.ctx);
 		this.sampler.onFrame = (data) => this.drawSampleWave(data);
+		/* has to exist before the controls, they push their initial values into it */
+		this.drive = new DriveChain(this.ctx, this.audioRecorder.master);
 		this.controls = this.createControls();
-	}
-
-	makeDistortionCurve() {
-		const k = typeof this.distort === "number" ? this.distort : 50;
-		const n_samples = 44100;
-		const curve = new Float32Array(n_samples);
-		const deg = Math.PI / 180;
-
-		for (let i = 0; i < n_samples; i++) {
-			const x = (i * 2) / n_samples - 1;
-			curve[i] = ((3 + k) * x * 20 * deg) / (Math.PI + k * Math.abs(x));
-		}
-		return curve;
-	}
-
-	makeOverdriveCurve() {
-		const k = typeof this.overdrive === "number" ? this.overdrive : 3;
-		const n_samples = 44100;
-		const curve = new Float32Array(n_samples);
-		const deg = Math.PI / 180;
-
-		for (let i = 0; i < n_samples; i++) {
-			const x = (i * 2) / n_samples - 1;
-			curve[i] = ((3 + k) * x * 20 * deg) / (Math.PI + k * Math.abs(x));
-		}
-
-		for (let i = 0; i < n_samples; i++) {
-			const x = (i * 2) / n_samples - 1;
-			if (x < 0) {
-				curve[i] = Math.tanh(k * x);
-			} else {
-				curve[i] = Math.tanh((k * x) / 2);
-			}
-		}
-
-		return curve;
 	}
 
 	/**
@@ -92,13 +60,10 @@ export class ToneGenerator {
 	 */
 	playNote(key = "a", velocity = 1, pitchBend = 0.5): void {
 		const vel = this.ctx.createGain();
-		const volume = this.ctx.createGain();
 		const release = this.ctx.createGain();
 		const freq = getFrequency(key, this.pitch);
 		const attack = this.ctx.createGain();
 		const decay = this.ctx.createGain();
-		let distortion: WaveShaperNode | undefined;
-		let overdriveAmp: WaveShaperNode | undefined;
 
 		let node: AudioBufferSourceNode | OscillatorNode | SamplePlayer;
 
@@ -177,33 +142,13 @@ export class ToneGenerator {
 			this.ctx.currentTime + this.attack + this.decay
 		);
 
-		/* apply distortion */
-		if (this.distort > 0) {
-			distortion = this.ctx.createWaveShaper();
-			distortion.curve = this.makeDistortionCurve();
-			distortion.oversample = "2x";
-		}
-
-		if (this.overdrive > 0) {
-			overdriveAmp = this.ctx.createWaveShaper();
-			overdriveAmp.curve = this.makeOverdriveCurve();
-			overdriveAmp.oversample = "2x";
-		}
-
-		/* apply key velocity */
 		vel.gain.value = vel.gain.value * velocity;
-
-		/* applay master volume */
-		volume.gain.value = volume.gain.value * (this.volume / 100);
 
 		/* configure release */
 		attack.connect(decay);
 		decay.connect(vel);
-		vel.connect(distortion || overdriveAmp || release);
-		distortion?.connect(overdriveAmp || release);
-		overdriveAmp?.connect(release);
-		release.connect(volume);
-		volume.connect(this.audioRecorder.master);
+		vel.connect(release);
+		release.connect(this.drive.input);
 
 		/* apply pre-existing pitch bend */
 		if (node instanceof OscillatorNode) {
@@ -369,6 +314,9 @@ export class ToneGenerator {
 			this.distort = parseFloat(data[`distort-${this.id}`] as string);
 			this.overdrive = parseFloat(data[`overdrive-${this.id}`] as string);
 
+			this.drive.setVolume(this.volume / 100);
+			this.drive.setDrive(this.overdrive / 100, this.distort / 100);
+
 			if (this.wave !== "sample" && this.sampler.recording) {
 				this.stopSampling(); // switching away mid-recording still keeps the sample
 			}
@@ -439,6 +387,7 @@ export class ToneGenerator {
 		});
 
 		this.nodes = {};
+		this.drive.destroy();
 		this.sampler.destroy();
 		this.controls.el.remove();
 
