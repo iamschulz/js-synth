@@ -4,6 +4,28 @@ import { getKeyName, getNote, midiOctaveOffset } from "./keys.ts";
 import { ToneGenerator } from "./ToneGenerator.ts";
 import { Slider } from "./Slider.ts";
 
+/* scroll distance needed for a full pitch bend in either direction */
+const PITCH_WHEEL_RANGE = 400;
+
+/* rough pixel equivalents for browsers that report scrolling in lines or pages */
+const LINE_HEIGHT = 16;
+const PAGE_HEIGHT = 400;
+
+/**
+ * Normalizes a wheel event to pixels, whichever unit the browser reports in.
+ */
+const scrollDistance = (e: WheelEvent): number => {
+	if (e.deltaMode === WheelEvent.DOM_DELTA_LINE) {
+		return e.deltaY * LINE_HEIGHT;
+	}
+
+	if (e.deltaMode === WheelEvent.DOM_DELTA_PAGE) {
+		return e.deltaY * PAGE_HEIGHT;
+	}
+
+	return e.deltaY;
+};
+
 export class Main {
 	ctx: AudioContext;
 	keys: {
@@ -13,6 +35,7 @@ export class Main {
 		};
 	};
 	pitchBend: number;
+	pitchWheelDelta: number;
 	activeNotes: string[];
 	pressedKeys: Set<string>;
 	keyBtns: NodeListOf<HTMLButtonElement>;
@@ -47,6 +70,7 @@ export class Main {
 		});
 
 		this.pitchBend = 0.5;
+		this.pitchWheelDelta = 0;
 		this.sustain = false;
 		this.activeNotes = [];
 		this.pressedKeys = new Set();
@@ -64,6 +88,7 @@ export class Main {
 
 		this.keyboardControls();
 		this.buttonControls();
+		this.pitchWheelControls();
 		this.updateLegend();
 
 		if (this.toneGenerators.length === 1) {
@@ -237,6 +262,44 @@ export class Main {
 			this.pressedKeys.delete(note);
 
 			this.endNote(note);
+			this.releasePitchWheel(); // after the note is gone, so its release tail keeps the bend
+		});
+	}
+
+	pitchWheelControls(): void {
+		document.addEventListener(
+			"wheel",
+			(e) => {
+				if (this.pressedKeys.size === 0 || Math.abs(e.deltaX) > Math.abs(e.deltaY)) {
+					return; // no held note, or a sideways scroll meant for the synth slider
+				}
+
+				e.preventDefault(); // the gesture bends the pitch instead of scrolling the page
+
+				this.pitchWheelDelta = Math.min(
+					Math.max(this.pitchWheelDelta - scrollDistance(e), -PITCH_WHEEL_RANGE),
+					PITCH_WHEEL_RANGE
+				);
+
+				this.setPitchBend(0.5 + this.pitchWheelDelta / (2 * PITCH_WHEEL_RANGE));
+			},
+			{ passive: false } // wheel listeners on the document are passive by default
+		);
+	}
+
+	releasePitchWheel(): void {
+		if (this.pressedKeys.size > 0 || this.pitchWheelDelta === 0) {
+			return;
+		}
+
+		this.pitchWheelDelta = 0;
+		this.setPitchBend(0.5);
+	}
+	
+	setPitchBend(offset: number): void {
+		this.pitchBend = offset;
+		this.toneGenerators.forEach((toneGenerator) => {
+			toneGenerator.pitchBend(offset);
 		});
 	}
 
@@ -291,6 +354,7 @@ export class Main {
 		note = this.transpose(note, -midiOctaveOffset);
 		this.pressedKeys.delete(note);
 		this.endNote(note);
+		this.releasePitchWheel(); // after the note is gone, so its release tail keeps the bend
 	}
 
 	/**
@@ -299,10 +363,9 @@ export class Main {
 	 * @param offset - Pitch offset, between 0 and 1, 0.5 is no offset.
 	 */
 	onMidiPitchBend(offset: number): void {
-		this.pitchBend = offset;
-		this.toneGenerators.forEach((toneGenerator) => {
-			toneGenerator.pitchBend(offset);
-		});
+		/* keep the mouse wheel in sync, so it picks up where the hardware wheel left off */
+		this.pitchWheelDelta = (offset - 0.5) * 2 * PITCH_WHEEL_RANGE;
+		this.setPitchBend(offset);
 	}
 
 	onMidiSustain(toggle: number): void {
