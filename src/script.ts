@@ -7,6 +7,9 @@ import { Slider } from "./Slider.ts";
 /* scroll distance needed for a full pitch bend in either direction */
 const PITCH_WHEEL_RANGE = 400;
 
+/* set on the document while a held note turns the wheel into a pitch wheel */
+const SCROLL_LOCK_CLASS = "pitch-wheel-armed";
+
 /* rough pixel equivalents for browsers that report scrolling in lines or pages */
 const LINE_HEIGHT = 16;
 const PAGE_HEIGHT = 400;
@@ -249,6 +252,7 @@ export class Main {
 				}
 
 				this.pressedKeys.add(note);
+				this.lockScroll(true); // the wheel bends the pitch from here on
 				this.playNote(note);
 			}
 		});
@@ -275,6 +279,7 @@ export class Main {
 				}
 
 				e.preventDefault(); // the gesture bends the pitch instead of scrolling the page
+				this.lockScroll(true); // ...and preventDefault() is ignored on a latched gesture
 
 				this.pitchWheelDelta = Math.min(
 					Math.max(this.pitchWheelDelta - scrollDistance(e), -PITCH_WHEEL_RANGE),
@@ -285,15 +290,47 @@ export class Main {
 			},
 			{ passive: false } // wheel listeners on the document are passive by default
 		);
+
+		/* a keyup can go missing while the tab is away, so never leave the page frozen */
+		window.addEventListener("blur", () => this.lockScroll(false));
 	}
 
 	releasePitchWheel(): void {
-		if (this.pressedKeys.size > 0 || this.pitchWheelDelta === 0) {
+		if (this.pressedKeys.size > 0) {
+			return;
+		}
+
+		this.lockScroll(false);
+
+		if (this.pitchWheelDelta === 0) {
 			return;
 		}
 
 		this.pitchWheelDelta = 0;
 		this.setPitchBend(0.5);
+	}
+
+	/**
+	 * Freezes the page while the pitch wheel is armed. Preventing the wheel event
+	 * isn't enough on its own: browsers mark wheel events non-cancelable once a
+	 * scroll gesture is already rolling, so a note started mid-scroll (or the
+	 * momentum tail of a trackpad flick) would still scroll the page away.
+	 *
+	 * @param locked - Whether scrolling should be blocked.
+	 */
+	lockScroll(locked: boolean): void {
+		const root = document.documentElement;
+
+		if (locked === root.classList.contains(SCROLL_LOCK_CLASS)) {
+			return;
+		}
+
+		if (locked) {
+			/* measure before locking, so the layout doesn't jump when the scrollbar goes */
+			root.style.setProperty("--scrollbar-width", `${window.innerWidth - root.clientWidth}px`);
+		}
+
+		root.classList.toggle(SCROLL_LOCK_CLASS, locked);
 	}
 	
 	setPitchBend(offset: number): void {
@@ -334,6 +371,7 @@ export class Main {
 		}
 
 		this.pressedKeys.add(note);
+		this.lockScroll(true); // the wheel bends the pitch from here on
 		this.playNote(note, velocity);
 	}
 

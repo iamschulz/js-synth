@@ -74,6 +74,12 @@
 
 html {
 	overscroll-behavior: none;
+
+	/* a held note turns the wheel into a pitch wheel, so the page must stay put */
+	&.pitch-wheel-armed {
+		overflow: hidden;
+		padding-right: var(--scrollbar-width, 0px);
+	}
 }
 
 body {
