@@ -72,6 +72,8 @@ export class Main {
 			activeToneGenerator?.drawAdsr();
 		});
 
+		Promise.all(this.toneGenerators.map((tg) => tg.ready)).then(() => this.activeToneGenerator()?.drawAdsr());
+
 		this.pitchBend = 0.5;
 		this.pitchWheelDelta = 0;
 		this.sustain = false;
@@ -106,6 +108,11 @@ export class Main {
 		});
 
 		this.killDeadNodes();
+	}
+
+	activeToneGenerator(): ToneGenerator | undefined {
+		const id = this.slider?.activeItem?.id.split("-")[2];
+		return this.toneGenerators.find((tg) => tg.id === id) || this.toneGenerators[0];
 	}
 
 	loadSavedToneGenerators(): ToneGenerator[] {

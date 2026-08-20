@@ -3,12 +3,12 @@ const RELATIVE_THRESHOLD = 0.05; // The signal starts where a window rises this 
 const NOISE_FLOOR = 0.003; // Nothing below this counts as signal
 const PREROLL = 0.01; // Kept in front of the transient in seconds, so the attack survives the cut
 
-export const trimLeadingSilence = (buffer: AudioBuffer, ctx: BaseAudioContext): AudioBuffer => {
+export const findSampleStart = (buffer: AudioBuffer): number => {
 	const data = buffer.getChannelData(0);
 	const windows = Math.floor(data.length / WINDOW);
 
 	if (windows < 2) {
-		return buffer;
+		return 0;
 	}
 
 	const levels = new Float32Array(windows);
@@ -29,17 +29,29 @@ export const trimLeadingSilence = (buffer: AudioBuffer, ctx: BaseAudioContext): 
 	const first = levels.findIndex((level) => level >= threshold);
 
 	if (first <= 0) {
-		return buffer; // the sound starts right away, or never rises above the floor
+		return 0; // sound starts right away or never rises above floor
 	}
 
 	const offset = Math.max(0, first * WINDOW - Math.round(PREROLL * buffer.sampleRate));
-	const length = buffer.length - offset;
 
-	if (offset === 0 || length < WINDOW * 4) {
+	if (buffer.length - offset < WINDOW * 4) {
+		return 0; // what is left would be too short to play
+	}
+
+	return offset;
+};
+
+/**
+ * Cuts everything before the offset off. Returns the buffer untouched when the
+ * offset leaves nothing to cut, which keeps a restored sample identical to the
+ * one that was recorded.
+ */
+export const sliceFrom = (buffer: AudioBuffer, offset: number, ctx: BaseAudioContext): AudioBuffer => {
+	if (offset <= 0 || offset >= buffer.length) {
 		return buffer;
 	}
 
-	const trimmed = ctx.createBuffer(buffer.numberOfChannels, length, buffer.sampleRate);
+	const trimmed = ctx.createBuffer(buffer.numberOfChannels, buffer.length - offset, buffer.sampleRate);
 	for (let channel = 0; channel < buffer.numberOfChannels; channel++) {
 		trimmed.getChannelData(channel).set(buffer.getChannelData(channel).subarray(offset));
 	}

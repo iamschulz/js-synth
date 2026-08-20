@@ -29,6 +29,7 @@ export class ToneGenerator {
 	sampler: Sampler;
 	sampleOption!: HTMLElement;
 	drive: DriveChain;
+	ready: Promise<void>; // resolves once a sample from an earlier session is back
 
 	constructor(id: string, audioRecorder: AudioRecorder, ctx: AudioContext, headerDiagram: SVGElement) {
 		this.id = id;
@@ -46,11 +47,30 @@ export class ToneGenerator {
 		this.overdrive = 0;
 		this.nodes = {};
 		this.headerDiagram = headerDiagram;
-		this.sampler = new Sampler(this.ctx);
+		this.sampler = new Sampler(this.ctx, this.id);
 		this.sampler.onFrame = (data) => this.drawSampleWave(data);
 		/* has to exist before the controls, they push their initial values into it */
 		this.drive = new DriveChain(this.ctx, this.audioRecorder.master);
 		this.controls = this.createControls();
+		this.ready = this.restoreSample();
+	}
+
+	/**
+	 * Pulls the stored sample back out of IndexedDB. Drawing it is left to the
+	 * caller, the header diagram is shared and only shows the visible generator.
+	 */
+	private async restoreSample(): Promise<void> {
+		const restored = await this.sampler.restore();
+
+		if (!restored) {
+			return;
+		}
+
+		this.updateSampleControls(false);
+
+		if (this.wave === "sample") {
+			loadSamplePlayer(this.ctx).catch((e) => console.error("Could not load the sample player.", e));
+		}
 	}
 
 	/**
@@ -389,6 +409,7 @@ export class ToneGenerator {
 		this.nodes = {};
 		this.drive.destroy();
 		this.sampler.destroy();
+		this.sampler.forget();
 		this.controls.el.remove();
 
 		localStorage.removeItem(`synth-controls-${this.id}`);
