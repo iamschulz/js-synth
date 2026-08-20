@@ -1,9 +1,11 @@
+import { deleteSynthSettings, loadSynthSettings, saveSynthSettings, SynthSettings } from "./settingsStore.ts";
+
 type Attribute = {
 	name: string;
 	value: string | number | boolean;
 };
 
-type Data = { [k: string]: FormDataEntryValue };
+type Data = SynthSettings;
 
 type Callback = (data: Data) => void;
 
@@ -12,11 +14,14 @@ export class Controls {
 	el: HTMLFormElement;
 	attributes: Attribute[];
 	callback: Callback;
+	ready: Promise<void>; // resolves once the stored values are in the form
+	private touched: boolean; // the user got ahead of the stored values
 
 	constructor(name: string, el: HTMLFormElement, callback: Callback) {
 		this.name = name;
 		this.el = el;
 		this.callback = callback;
+		this.touched = false;
 
 		this.attributes = Array.from(el.elements).map((element) => {
 			const input = element as HTMLInputElement | HTMLSelectElement;
@@ -36,19 +41,34 @@ export class Controls {
 			} as Attribute;
 		});
 
-		this.loadData();
-		this.applyData();
-		this.persistData();
-
+		/* listens right away, so nothing typed while the store opens gets lost */
 		this.el.addEventListener("input", () => {
+			this.touched = true;
 			this.applyData();
 			this.persistData();
 		});
+
+		this.ready = this.init();
 	}
 
-	loadData(): void {
-		const str = localStorage.getItem(this.name);
-		const obj = JSON.parse(str || "{}") as { [k: string]: FormDataEntryValue };
+	private async init(): Promise<void> {
+		await this.loadData();
+		this.applyData();
+		this.persistData();
+	}
+
+	async loadData(): Promise<void> {
+		let obj: Data | undefined;
+
+		try {
+			obj = await loadSynthSettings(this.name);
+		} catch (e) {
+			console.error("Could not read the stored controls.", e);
+		}
+
+		if (!obj || this.touched) {
+			return; // a live edit wins over the stored values
+		}
 
 		this.attributes.forEach((attr) => {
 			if (obj[attr.name] !== undefined) {
@@ -69,11 +89,15 @@ export class Controls {
 	}
 
 	persistData(): void {
-		localStorage.setItem(this.name, JSON.stringify(this.readData()));
+		saveSynthSettings(this.name, this.readData()).catch((e) => console.error("Could not store the controls.", e));
 	}
 
 	applyData() {
 		this.callback(this.readData());
+	}
+
+	forget(): void {
+		deleteSynthSettings(this.name).catch((e) => console.error("Could not delete the stored controls.", e));
 	}
 
 	toggleDisable(toggle = true): void {

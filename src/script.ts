@@ -3,6 +3,7 @@ import { MidiAdapter } from "./midi.ts";
 import { getKeyName, getNote, midiOctaveOffset } from "./keys.ts";
 import { ToneGenerator } from "./ToneGenerator.ts";
 import { Slider } from "./Slider.ts";
+import { listSynthSettings } from "./settingsStore.ts";
 
 /* scroll distance needed for a full pitch bend in either direction */
 const PITCH_WHEEL_RANGE = 400;
@@ -52,6 +53,7 @@ export class Main {
 	removeBtn: HTMLButtonElement;
 	slider: Slider;
 	sustain: boolean;
+	ready: Promise<void>; // resolves once the synths of an earlier session are back
 
 	constructor() {
 		if (!window.AudioContext) {
@@ -63,16 +65,7 @@ export class Main {
 		this.headerDiagram = document.querySelector("#header-vis")!;
 
 		this.AudioRecorder = new AudioRecorder(this.ctx);
-		this.toneGenerators = this.loadSavedToneGenerators();
-		this.toneGenerators[0].drawAdsr();
-
-		this.slider = new Slider((el: HTMLElement) => {
-			const id = el.id.split("-")[2];
-			const activeToneGenerator = this.toneGenerators.find((tg) => tg.id === id);
-			activeToneGenerator?.drawAdsr();
-		});
-
-		Promise.all(this.toneGenerators.map((tg) => tg.ready)).then(() => this.activeToneGenerator()?.drawAdsr());
+		this.toneGenerators = [];
 
 		this.pitchBend = 0.5;
 		this.pitchWheelDelta = 0;
@@ -87,6 +80,7 @@ export class Main {
 		});
 
 		this.removeBtn = document.querySelector("#remove-synth") as HTMLButtonElement;
+		this.removeBtn.disabled = true; // nothing to remove until the stored synths are back
 		this.removeBtn.addEventListener("click", () => {
 			this.removeSynth();
 		});
@@ -96,10 +90,6 @@ export class Main {
 		this.pitchWheelControls();
 		this.updateLegend();
 
-		if (this.toneGenerators.length === 1) {
-			this.removeBtn.disabled = true; // disable remove button if only one synth is left
-		}
-
 		this.MidiAdapter = new MidiAdapter({
 			playCallback: this.onMidiPlay.bind(this),
 			releaseCallback: this.onMidiRelease.bind(this),
@@ -108,6 +98,8 @@ export class Main {
 		});
 
 		this.killDeadNodes();
+
+		this.ready = this.restoreSynths();
 	}
 
 	activeToneGenerator(): ToneGenerator | undefined {
@@ -115,19 +107,40 @@ export class Main {
 		return this.toneGenerators.find((tg) => tg.id === id) || this.toneGenerators[0];
 	}
 
-	loadSavedToneGenerators(): ToneGenerator[] {
-		const items = { ...localStorage };
-		const toneGenerators = Object.keys(items)
-			.filter((key) => key.startsWith("synth-controls-"))
-			.sort((a, b) => {
-				const aId = parseInt(a.split("-")[2]);
-				const bId = parseInt(b.split("-")[2]);
-				return aId - bId;
-			})
-			.map((key) => {
-				const id = key.split("-")[2];
-				return new ToneGenerator(id, this.AudioRecorder, this.ctx, this.headerDiagram);
-			});
+	/**
+	 * Brings back the synths of the last session. The slider follows them, it
+	 * measures the controls once they are in the DOM.
+	 */
+	private async restoreSynths(): Promise<void> {
+		this.toneGenerators = await this.loadSavedToneGenerators();
+		this.toneGenerators[0].drawAdsr();
+
+		this.slider = new Slider((el: HTMLElement) => {
+			const id = el.id.split("-")[2];
+			const activeToneGenerator = this.toneGenerators.find((tg) => tg.id === id);
+			activeToneGenerator?.drawAdsr();
+		});
+
+		if (this.toneGenerators.length > 1) {
+			this.removeBtn.disabled = false; // enable remove button once a second synth is around
+		}
+
+		await Promise.all(this.toneGenerators.map((tg) => tg.ready));
+		this.activeToneGenerator()?.drawAdsr();
+	}
+
+	async loadSavedToneGenerators(): Promise<ToneGenerator[]> {
+		let stored: string[] = [];
+
+		try {
+			stored = await listSynthSettings();
+		} catch (e) {
+			console.error("Could not read the stored synths.", e);
+		}
+
+		const toneGenerators = stored.map(
+			(name) => new ToneGenerator(name.split("-")[2], this.AudioRecorder, this.ctx, this.headerDiagram)
+		);
 
 		if (toneGenerators.length === 0) {
 			const tg = new ToneGenerator(Date.now().toString(), this.AudioRecorder, this.ctx, this.headerDiagram);
@@ -145,7 +158,7 @@ export class Main {
 			this.headerDiagram
 		);
 		this.toneGenerators.push(toneGenerator);
-		this.slider.animateScrollSliderToTarget(toneGenerator.controls.el);
+		this.slider?.animateScrollSliderToTarget(toneGenerator.controls.el);
 
 		this.removeBtn.disabled = false; // enble remove button when a second synth is added
 	}
@@ -155,7 +168,7 @@ export class Main {
 			return; // cannot remove the last synth
 		}
 
-		const activeElement = this.slider.activeItem;
+		const activeElement = this.slider?.activeItem;
 		const synthId = activeElement?.id.split("-")[2];
 		const activeToneGenerator = this.toneGenerators.find((tg) => tg.id === synthId);
 		if (!activeToneGenerator) {
@@ -164,7 +177,7 @@ export class Main {
 
 		const scrollTarget = (activeToneGenerator.controls.el.nextSibling ||
 			activeToneGenerator.controls.el.previousSibling) as HTMLElement;
-		this.slider.animateScrollSliderToTarget(scrollTarget);
+		this.slider?.animateScrollSliderToTarget(scrollTarget);
 		activeToneGenerator.controls.el.style.opacity = "0";
 
 		window.setTimeout(() => {

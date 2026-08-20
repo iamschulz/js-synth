@@ -1,15 +1,19 @@
+import { loadSliderPosition, saveSliderPosition } from "./settingsStore.ts";
+
 export class Slider {
 	el: HTMLDivElement;
-	activeItem: HTMLElement;
+	activeItem!: HTMLElement;
 	prevBtn: HTMLButtonElement;
 	nextBtn: HTMLButtonElement;
 	changeCallback: (el: HTMLElement) => void;
+	private restored: boolean; // the stored position is in, later scrolls may overwrite it
 
 	constructor(changeCallback: (el: HTMLElement) => void) {
 		this.el = document.querySelector(".controls-slider")!;
 		this.prevBtn = document.querySelector("#prev") as HTMLButtonElement;
 		this.nextBtn = document.querySelector("#next") as HTMLButtonElement;
 		this.changeCallback = changeCallback;
+		this.restored = false;
 
 		this.registerSliderControls();
 		this.updateButtons();
@@ -56,7 +60,12 @@ export class Slider {
 			}
 			this.activeItem = activeItem;
 
-			localStorage.setItem("slider-position", this.el.scrollLeft.toString());
+			if (this.restored) {
+				/* observing fires before the stored position is back, don't clobber it */
+				saveSliderPosition(this.el.scrollLeft).catch((e) =>
+					console.error("Could not store the slider position.", e)
+				);
+			}
 
 			window.requestAnimationFrame(() => {
 				this.updateButtons();
@@ -68,9 +77,18 @@ export class Slider {
 		observer.observe(el);
 	}
 
-	restoreSliderPosition(): void {
+	async restoreSliderPosition(): Promise<void> {
+		let position = 0;
+
+		try {
+			position = await loadSliderPosition();
+		} catch (e) {
+			console.error("Could not read the stored slider position.", e);
+		}
+
 		window.requestAnimationFrame(() => {
-			this.el.scrollLeft = parseInt(localStorage.getItem("slider-position") || "0");
+			this.el.scrollLeft = position;
+			this.restored = true;
 		});
 	}
 
