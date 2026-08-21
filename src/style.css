@@ -191,12 +191,20 @@ a {
 	}
 }
 
-.add-remove-synths {
+.add-remove-synths,
+.save-load-config {
 	max-width: calc(var(--ui-width) * var(--octaves));
-	margin: 0.5rem auto 2rem;
 	display: flex;
 	gap: 1rem;
 	justify-content: center;
+}
+
+.add-remove-synths {
+	margin: 0.5rem auto;
+}
+
+.save-load-config {
+	margin: 0 auto 2rem;
 }
 
 .midi-controls {

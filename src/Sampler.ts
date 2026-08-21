@@ -4,6 +4,10 @@ import { deleteSample, loadSample, saveSample } from "./sampleStore.ts";
 
 const DEFAULT_FREQUENCY = 261.63; // Fallback base pitch (C4)
 
+const MIME_TYPES = ["audio/webm;codecs=opus", "audio/webm", "audio/ogg;codecs=opus", "audio/ogg", "audio/mp4"];
+
+const recorderMimeType = (): string | undefined => MIME_TYPES.find((type) => MediaRecorder.isTypeSupported?.(type));
+
 export class Sampler {
 	ctx: AudioContext;
 	id: string; // keys the sample in storage, one per tone generator
@@ -68,7 +72,9 @@ export class Sampler {
 		this.source.connect(this.analyser);
 
 		this.chunks = [];
-		this.recorder = new MediaRecorder(this.stream);
+
+		const mimeType = recorderMimeType();
+		this.recorder = new MediaRecorder(this.stream, mimeType ? { mimeType } : undefined);
 		this.recorder.addEventListener("dataavailable", (e) => {
 			if (e.data.size > 0) {
 				this.chunks.push(e.data);

@@ -8,6 +8,7 @@ import { Sampler } from "./Sampler.ts";
 import { flatWaveformPoints, waveformPoints } from "./waveformPoints.ts";
 import { canPlaySamples, loadSamplePlayer, SamplePlayer } from "./SamplePlayer.ts";
 import { DriveChain } from "./DriveChain.ts";
+import { synthSettingsName } from "./settingsStore.ts";
 
 export class ToneGenerator {
 	id: string;
@@ -326,7 +327,7 @@ export class ToneGenerator {
 			this.toggleSampling();
 		});
 
-		const controls = new Controls(`synth-controls-${this.id}`, el, (data) => {
+		const controls = new Controls(synthSettingsName(this.id), el, (data) => {
 			this.volume = parseFloat(data[`volume-${this.id}`] as string);
 			this.wave = data[`waveform-${this.id}`] as Waveform;
 			this.pitch = parseFloat(data[`pitch-${this.id}`] as string);

@@ -3,7 +3,17 @@ import { MidiAdapter } from "./midi.ts";
 import { getKeyName, getNote, midiOctaveOffset } from "./keys.ts";
 import { ToneGenerator } from "./ToneGenerator.ts";
 import { Slider } from "./Slider.ts";
-import { listSynthSettings } from "./settingsStore.ts";
+import { listSynthSettings, saveSynthSettings, synthSettingsName } from "./settingsStore.ts";
+import { loadSample, saveSample } from "./sampleStore.ts";
+import {
+	parsePreset,
+	PresetSynth,
+	sampleFromPreset,
+	sampleToPreset,
+	serializePreset,
+	settingsFromPreset,
+	settingsToPreset,
+} from "./presetFile.ts";
 
 /* scroll distance needed for a full pitch bend in either direction */
 const PITCH_WHEEL_RANGE = 400;
@@ -30,6 +40,31 @@ const scrollDistance = (e: WheelEvent): number => {
 	return e.deltaY;
 };
 
+/**
+ * Puts a message in front of the user, in the same modal the app uses elsewhere.
+ * The dialog is thrown away once it closes.
+ */
+const showMessage = (message: string): void => {
+	const dialog = document.createElement("dialog");
+	const text = document.createElement("p");
+	text.textContent = message;
+
+	const buttons = document.createElement("div");
+	buttons.className = "buttons";
+
+	const closeBtn = document.createElement("button");
+	closeBtn.className = "close";
+	closeBtn.textContent = "Close";
+	closeBtn.addEventListener("click", () => dialog.close());
+
+	buttons.appendChild(closeBtn);
+	dialog.append(text, buttons);
+	dialog.addEventListener("close", () => dialog.remove());
+
+	document.body.appendChild(dialog);
+	dialog.showModal();
+};
+
 export class Main {
 	ctx: AudioContext;
 	keys: {
@@ -51,6 +86,9 @@ export class Main {
 	toneGenerators: ToneGenerator[];
 	addBtn: HTMLButtonElement;
 	removeBtn: HTMLButtonElement;
+	saveBtn: HTMLButtonElement;
+	loadBtn: HTMLButtonElement;
+	loadInput: HTMLInputElement;
 	slider: Slider;
 	sustain: boolean;
 	ready: Promise<void>; // resolves once the synths of an earlier session are back
@@ -84,6 +122,11 @@ export class Main {
 		this.removeBtn.addEventListener("click", () => {
 			this.removeSynth();
 		});
+
+		this.saveBtn = document.querySelector("#save-config") as HTMLButtonElement;
+		this.loadBtn = document.querySelector("#load-config") as HTMLButtonElement;
+		this.loadInput = document.querySelector("#load-config-file") as HTMLInputElement;
+		this.configControls();
 
 		this.keyboardControls();
 		this.buttonControls();
@@ -191,6 +234,102 @@ export class Main {
 			}
 			this.slider.updateButtons();
 		}, 520);
+	}
+
+	configControls(): void {
+		this.saveBtn.addEventListener("click", () => {
+			this.saveConfig();
+		});
+
+		/* the file input is hidden, the styled button stands in for it */
+		this.loadBtn.addEventListener("click", () => {
+			this.loadInput.click();
+		});
+
+		this.loadInput.addEventListener("change", () => {
+			const file = this.loadInput.files?.[0];
+			this.loadInput.value = ""; // so picking the same file again fires another change
+
+			if (file) {
+				this.loadConfig(file);
+			}
+		});
+	}
+
+	async saveConfig(): Promise<void> {
+		this.saveBtn.disabled = true;
+
+		try {
+			await this.ready; // an export before the stored synths are back would be empty
+
+			const synths: PresetSynth[] = await Promise.all(
+				this.toneGenerators.map(async (tg) => {
+					const stored = await loadSample(tg.id);
+
+					return {
+						settings: settingsToPreset(tg.controls.readData(), tg.id),
+						sample: stored ? await sampleToPreset(stored) : null,
+					};
+				})
+			);
+
+			const url = URL.createObjectURL(new Blob([serializePreset(synths)], { type: "application/json" }));
+			const link = document.createElement("a");
+			link.href = url;
+			link.download = `jssynth-preset-${new Date().toISOString().slice(0, 10)}.json`;
+			link.click();
+			URL.revokeObjectURL(url);
+		} catch (e) {
+			console.error("Could not save the configuration.", e);
+			showMessage("The configuration could not be saved.");
+		} finally {
+			this.saveBtn.disabled = false;
+		}
+	}
+
+	async loadConfig(file: File): Promise<void> {
+		this.loadBtn.disabled = true;
+
+		try {
+			const synths = parsePreset(await file.text());
+			await this.replaceSynths(synths);
+		} catch (e) {
+			console.error("Could not load the configuration.", e);
+			showMessage(e instanceof Error ? e.message : "The configuration could not be loaded.");
+		} finally {
+			this.loadBtn.disabled = false;
+		}
+	}
+
+	private async replaceSynths(synths: PresetSynth[]): Promise<void> {
+		await this.ready; // the restore of the last session would otherwise land on top
+
+		this.activeNotes.slice().forEach((key) => this.endNote(key, true));
+		this.toneGenerators.forEach((tg) => tg.destroy()); // also drops their stored settings and samples
+		this.toneGenerators = [];
+
+		const base = Date.now();
+
+		for (const [i, synth] of synths.entries()) {
+			const id = (base + i).toString(); // ordered ids, so a reload brings them back in order
+
+			await saveSynthSettings(synthSettingsName(id), settingsFromPreset(synth.settings, id));
+
+			if (synth.sample) {
+				await saveSample(id, sampleFromPreset(synth.sample));
+			}
+
+			this.toneGenerators.push(new ToneGenerator(id, this.AudioRecorder, this.ctx, this.headerDiagram));
+		}
+
+		this.removeBtn.disabled = this.toneGenerators.length <= 1;
+
+		this.slider.el.scrollLeft = 0;
+		this.slider.activeItem = this.toneGenerators[0].controls.el;
+		this.slider.updateButtons();
+
+		await Promise.all(this.toneGenerators.map((tg) => tg.ready));
+		this.activeToneGenerator()?.drawAdsr();
 	}
 
 	/**
