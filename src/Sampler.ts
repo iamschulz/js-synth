@@ -1,10 +1,16 @@
 import { detectFrequency, frequencyToNoteName } from "./pitch.ts";
-import { trimLeadingSilence } from "./trimSample.ts";
+import { findSampleStart, sliceFrom } from "./trimSample.ts";
+import { deleteSample, loadSample, saveSample } from "./sampleStore.ts";
 
 const DEFAULT_FREQUENCY = 261.63; // Fallback base pitch (C4)
 
+const MIME_TYPES = ["audio/webm;codecs=opus", "audio/webm", "audio/ogg;codecs=opus", "audio/ogg", "audio/mp4"];
+
+const recorderMimeType = (): string | undefined => MIME_TYPES.find((type) => MediaRecorder.isTypeSupported?.(type));
+
 export class Sampler {
 	ctx: AudioContext;
+	id: string; // keys the sample in storage, one per tone generator
 	buffer: AudioBuffer | null;
 	frequency: number; // Base frequency the sample plays back at unaltered
 	note: string | null; // Detected note name
@@ -19,8 +25,9 @@ export class Sampler {
 	private chunks: Blob[];
 	private frame: number;
 
-	constructor(ctx: AudioContext) {
+	constructor(ctx: AudioContext, id: string) {
 		this.ctx = ctx;
+		this.id = id;
 		this.buffer = null;
 		this.frequency = DEFAULT_FREQUENCY;
 		this.note = null;
@@ -65,7 +72,9 @@ export class Sampler {
 		this.source.connect(this.analyser);
 
 		this.chunks = [];
-		this.recorder = new MediaRecorder(this.stream);
+
+		const mimeType = recorderMimeType();
+		this.recorder = new MediaRecorder(this.stream, mimeType ? { mimeType } : undefined);
 		this.recorder.addEventListener("dataavailable", (e) => {
 			if (e.data.size > 0) {
 				this.chunks.push(e.data);
@@ -107,16 +116,60 @@ export class Sampler {
 			}
 
 			const decoded = await this.ctx.decodeAudioData(await blob.arrayBuffer());
-			this.buffer = trimLeadingSilence(decoded, this.ctx);
+			const offset = findSampleStart(decoded);
+			this.buffer = sliceFrom(decoded, offset, this.ctx);
 
 			const frequency = detectFrequency(this.buffer);
 			this.frequency = frequency || DEFAULT_FREQUENCY;
 			this.note = frequency ? frequencyToNoteName(frequency) : null;
+
+			saveSample(this.id, {
+				blob,
+				frequency: this.frequency,
+				note: this.note,
+				trimOffset: offset,
+			}).catch((e) => console.error("Could not store the sample.", e));
 		} catch (e) {
 			console.error("Could not decode the recorded sample.", e);
 		} finally {
 			this.pending = false;
 		}
+	}
+
+	async restore(): Promise<boolean> {
+		if (this.buffer || this.recording || this.pending) {
+			return false; // a fresh recording always wins over the stored one
+		}
+
+		let stored;
+		try {
+			stored = await loadSample(this.id);
+		} catch (e) {
+			console.error("Could not read the stored sample.", e);
+			return false;
+		}
+
+		if (!stored || this.buffer || this.recording || this.pending) {
+			return false;
+		}
+
+		this.pending = true;
+		try {
+			const decoded = await this.ctx.decodeAudioData(await stored.blob.arrayBuffer());
+			this.buffer = sliceFrom(decoded, stored.trimOffset, this.ctx);
+			this.frequency = stored.frequency;
+			this.note = stored.note;
+			return true;
+		} catch (e) {
+			console.error("Could not decode the stored sample.", e);
+			return false;
+		} finally {
+			this.pending = false;
+		}
+	}
+
+	forget(): void {
+		deleteSample(this.id).catch((e) => console.error("Could not delete the stored sample.", e));
 	}
 
 	destroy(): void {

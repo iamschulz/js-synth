@@ -73,10 +73,19 @@
 }
 
 html {
-	overscroll-behavior: none;
+	/* a held note turns the wheel into a pitch wheel, so the page must stay put */
+	&.pitch-wheel-armed {
+		overflow: hidden;
+		padding-right: var(--scrollbar-width, 0px);
+	}
 }
 
 body {
+	/* keeps Safari from bouncing the page off its fixed background. It belongs on the
+	   body, not the root: WebKit eats every wheel event once a root-level
+	   overscroll-behavior meets a non-passive wheel listener, like the pitch wheel's */
+	overscroll-behavior: none;
+
 	color: var(--fg);
 	background-color: var(--bg);
 	accent-color: var(--accent);
@@ -185,12 +194,20 @@ a {
 	}
 }
 
-.add-remove-synths {
+.add-remove-synths,
+.save-load-config {
 	max-width: calc(var(--ui-width) * var(--octaves));
-	margin: 0.5rem auto 2rem;
 	display: flex;
 	gap: 1rem;
 	justify-content: center;
+}
+
+.add-remove-synths {
+	margin: 0.5rem auto;
+}
+
+.save-load-config {
+	margin: 0 auto 2rem;
 }
 
 .midi-controls {

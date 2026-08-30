@@ -8,6 +8,7 @@ import { Sampler } from "./Sampler.ts";
 import { flatWaveformPoints, waveformPoints } from "./waveformPoints.ts";
 import { canPlaySamples, loadSamplePlayer, SamplePlayer } from "./SamplePlayer.ts";
 import { DriveChain } from "./DriveChain.ts";
+import { synthSettingsName } from "./settingsStore.ts";
 
 export class ToneGenerator {
 	id: string;
@@ -29,6 +30,7 @@ export class ToneGenerator {
 	sampler: Sampler;
 	sampleOption!: HTMLElement;
 	drive: DriveChain;
+	ready: Promise<void>; // resolves once the settings and sample of an earlier session are back
 
 	constructor(id: string, audioRecorder: AudioRecorder, ctx: AudioContext, headerDiagram: SVGElement) {
 		this.id = id;
@@ -46,11 +48,33 @@ export class ToneGenerator {
 		this.overdrive = 0;
 		this.nodes = {};
 		this.headerDiagram = headerDiagram;
-		this.sampler = new Sampler(this.ctx);
+		this.sampler = new Sampler(this.ctx, this.id);
 		this.sampler.onFrame = (data) => this.drawSampleWave(data);
 		/* has to exist before the controls, they push their initial values into it */
 		this.drive = new DriveChain(this.ctx, this.audioRecorder.master);
 		this.controls = this.createControls();
+		this.ready = this.restore();
+	}
+
+	/**
+	 * Pulls the stored controls and sample back out of IndexedDB. Drawing them is
+	 * left to the caller, the header diagram is shared and only shows the visible
+	 * generator.
+	 */
+	private async restore(): Promise<void> {
+		await this.controls.ready; // the stored waveform decides whether a sample is needed
+
+		const restored = await this.sampler.restore();
+
+		if (!restored) {
+			return;
+		}
+
+		this.updateSampleControls(false);
+
+		if (this.wave === "sample") {
+			loadSamplePlayer(this.ctx).catch((e) => console.error("Could not load the sample player.", e));
+		}
 	}
 
 	/**
@@ -303,7 +327,7 @@ export class ToneGenerator {
 			this.toggleSampling();
 		});
 
-		const controls = new Controls(`synth-controls-${this.id}`, el, (data) => {
+		const controls = new Controls(synthSettingsName(this.id), el, (data) => {
 			this.volume = parseFloat(data[`volume-${this.id}`] as string);
 			this.wave = data[`waveform-${this.id}`] as Waveform;
 			this.pitch = parseFloat(data[`pitch-${this.id}`] as string);
@@ -389,8 +413,8 @@ export class ToneGenerator {
 		this.nodes = {};
 		this.drive.destroy();
 		this.sampler.destroy();
+		this.sampler.forget();
+		this.controls.forget();
 		this.controls.el.remove();
-
-		localStorage.removeItem(`synth-controls-${this.id}`);
 	}
 }

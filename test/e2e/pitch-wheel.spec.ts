@@ -42,3 +42,54 @@ test("pitch wheel", async ({ page }) => {
 	await page.keyboard.up("KeyQ");
 	await expect(await getPitchBend(page)).toBe(0.5);
 });
+
+test("pitch wheel locks page scrolling", async ({ page, isMobile }) => {
+	/* no wheel to speak of on a phone: mobile WebKit refuses to fake one, and mobile
+	   Chrome scales and animates the scroll it fakes, so the pixels below don't hold */
+	test.skip(!!isMobile, "the pitch wheel needs a mouse wheel and a keyboard");
+
+	await page.setViewportSize({ width: 800, height: 400 }); // small enough for the page to scroll
+	await page.goto("/");
+	await sleep(500);
+	await page.mouse.move(400, 200);
+
+	const state = () =>
+		page.evaluate(() => ({
+			scrollY: window.scrollY,
+			right: document.body.getBoundingClientRect().right,
+		}));
+
+	/* the scroll is animated, so wait for it to land instead of guessing at a delay */
+	const scrolledTo = (y: number) => expect.poll(() => page.evaluate(() => window.scrollY)).toBe(y);
+
+	/* no held note, so the page scrolls as usual */
+	await page.mouse.wheel(0, 100);
+	await scrolledTo(100);
+	const unlocked = await state();
+
+	await page.keyboard.down("KeyQ");
+
+	/* the wheel bends the pitch and leaves the page where it is */
+	await page.mouse.wheel(0, 200);
+	await sleep(300);
+	const bending = await state();
+	await expect(bending.scrollY).toBe(100);
+	await expect(await getPitchBend(page)).toBeLessThan(0.5);
+
+	/* hiding the scrollbar must not shove the layout sideways */
+	await expect(bending.right).toBe(unlocked.right);
+
+	/* a gesture already rolling gives us events we can't cancel, and still can't scroll */
+	await page.evaluate(() =>
+		document.body.dispatchEvent(
+			new WheelEvent("wheel", { deltaY: 300, bubbles: true, cancelable: false })
+		)
+	);
+	await sleep(300);
+	await expect((await state()).scrollY).toBe(100);
+
+	/* releasing the key hands scrolling back to the page */
+	await page.keyboard.up("KeyQ");
+	await page.mouse.wheel(0, 100);
+	await scrolledTo(200);
+});

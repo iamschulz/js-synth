@@ -3,9 +3,23 @@ import { MidiAdapter } from "./midi.ts";
 import { getKeyName, getNote, midiOctaveOffset } from "./keys.ts";
 import { ToneGenerator } from "./ToneGenerator.ts";
 import { Slider } from "./Slider.ts";
+import { listSynthSettings, saveSynthSettings, synthSettingsName } from "./settingsStore.ts";
+import { loadSample, saveSample } from "./sampleStore.ts";
+import {
+	parsePreset,
+	PresetSynth,
+	sampleFromPreset,
+	sampleToPreset,
+	serializePreset,
+	settingsFromPreset,
+	settingsToPreset,
+} from "./presetFile.ts";
 
 /* scroll distance needed for a full pitch bend in either direction */
 const PITCH_WHEEL_RANGE = 400;
+
+/* set on the document while a held note turns the wheel into a pitch wheel */
+const SCROLL_LOCK_CLASS = "pitch-wheel-armed";
 
 /* rough pixel equivalents for browsers that report scrolling in lines or pages */
 const LINE_HEIGHT = 16;
@@ -24,6 +38,31 @@ const scrollDistance = (e: WheelEvent): number => {
 	}
 
 	return e.deltaY;
+};
+
+/**
+ * Puts a message in front of the user, in the same modal the app uses elsewhere.
+ * The dialog is thrown away once it closes.
+ */
+const showMessage = (message: string): void => {
+	const dialog = document.createElement("dialog");
+	const text = document.createElement("p");
+	text.textContent = message;
+
+	const buttons = document.createElement("div");
+	buttons.className = "buttons";
+
+	const closeBtn = document.createElement("button");
+	closeBtn.className = "close";
+	closeBtn.textContent = "Close";
+	closeBtn.addEventListener("click", () => dialog.close());
+
+	buttons.appendChild(closeBtn);
+	dialog.append(text, buttons);
+	dialog.addEventListener("close", () => dialog.remove());
+
+	document.body.appendChild(dialog);
+	dialog.showModal();
 };
 
 export class Main {
@@ -47,8 +86,12 @@ export class Main {
 	toneGenerators: ToneGenerator[];
 	addBtn: HTMLButtonElement;
 	removeBtn: HTMLButtonElement;
+	saveBtn: HTMLButtonElement;
+	loadBtn: HTMLButtonElement;
+	loadInput: HTMLInputElement;
 	slider: Slider;
 	sustain: boolean;
+	ready: Promise<void>; // resolves once the synths of an earlier session are back
 
 	constructor() {
 		if (!window.AudioContext) {
@@ -60,14 +103,7 @@ export class Main {
 		this.headerDiagram = document.querySelector("#header-vis")!;
 
 		this.AudioRecorder = new AudioRecorder(this.ctx);
-		this.toneGenerators = this.loadSavedToneGenerators();
-		this.toneGenerators[0].drawAdsr();
-
-		this.slider = new Slider((el: HTMLElement) => {
-			const id = el.id.split("-")[2];
-			const activeToneGenerator = this.toneGenerators.find((tg) => tg.id === id);
-			activeToneGenerator?.drawAdsr();
-		});
+		this.toneGenerators = [];
 
 		this.pitchBend = 0.5;
 		this.pitchWheelDelta = 0;
@@ -82,18 +118,20 @@ export class Main {
 		});
 
 		this.removeBtn = document.querySelector("#remove-synth") as HTMLButtonElement;
+		this.removeBtn.disabled = true; // nothing to remove until the stored synths are back
 		this.removeBtn.addEventListener("click", () => {
 			this.removeSynth();
 		});
+
+		this.saveBtn = document.querySelector("#save-config") as HTMLButtonElement;
+		this.loadBtn = document.querySelector("#load-config") as HTMLButtonElement;
+		this.loadInput = document.querySelector("#load-config-file") as HTMLInputElement;
+		this.configControls();
 
 		this.keyboardControls();
 		this.buttonControls();
 		this.pitchWheelControls();
 		this.updateLegend();
-
-		if (this.toneGenerators.length === 1) {
-			this.removeBtn.disabled = true; // disable remove button if only one synth is left
-		}
 
 		this.MidiAdapter = new MidiAdapter({
 			playCallback: this.onMidiPlay.bind(this),
@@ -103,21 +141,49 @@ export class Main {
 		});
 
 		this.killDeadNodes();
+
+		this.ready = this.restoreSynths();
 	}
 
-	loadSavedToneGenerators(): ToneGenerator[] {
-		const items = { ...localStorage };
-		const toneGenerators = Object.keys(items)
-			.filter((key) => key.startsWith("synth-controls-"))
-			.sort((a, b) => {
-				const aId = parseInt(a.split("-")[2]);
-				const bId = parseInt(b.split("-")[2]);
-				return aId - bId;
-			})
-			.map((key) => {
-				const id = key.split("-")[2];
-				return new ToneGenerator(id, this.AudioRecorder, this.ctx, this.headerDiagram);
-			});
+	activeToneGenerator(): ToneGenerator | undefined {
+		const id = this.slider?.activeItem?.id.split("-")[2];
+		return this.toneGenerators.find((tg) => tg.id === id) || this.toneGenerators[0];
+	}
+
+	/**
+	 * Brings back the synths of the last session. The slider follows them, it
+	 * measures the controls once they are in the DOM.
+	 */
+	private async restoreSynths(): Promise<void> {
+		this.toneGenerators = await this.loadSavedToneGenerators();
+		this.toneGenerators[0].drawAdsr();
+
+		this.slider = new Slider((el: HTMLElement) => {
+			const id = el.id.split("-")[2];
+			const activeToneGenerator = this.toneGenerators.find((tg) => tg.id === id);
+			activeToneGenerator?.drawAdsr();
+		});
+
+		if (this.toneGenerators.length > 1) {
+			this.removeBtn.disabled = false; // enable remove button once a second synth is around
+		}
+
+		await Promise.all(this.toneGenerators.map((tg) => tg.ready));
+		this.activeToneGenerator()?.drawAdsr();
+	}
+
+	async loadSavedToneGenerators(): Promise<ToneGenerator[]> {
+		let stored: string[] = [];
+
+		try {
+			stored = await listSynthSettings();
+		} catch (e) {
+			console.error("Could not read the stored synths.", e);
+		}
+
+		const toneGenerators = stored.map(
+			(name) => new ToneGenerator(name.split("-")[2], this.AudioRecorder, this.ctx, this.headerDiagram)
+		);
 
 		if (toneGenerators.length === 0) {
 			const tg = new ToneGenerator(Date.now().toString(), this.AudioRecorder, this.ctx, this.headerDiagram);
@@ -135,7 +201,7 @@ export class Main {
 			this.headerDiagram
 		);
 		this.toneGenerators.push(toneGenerator);
-		this.slider.animateScrollSliderToTarget(toneGenerator.controls.el);
+		this.slider?.animateScrollSliderToTarget(toneGenerator.controls.el);
 
 		this.removeBtn.disabled = false; // enble remove button when a second synth is added
 	}
@@ -145,7 +211,7 @@ export class Main {
 			return; // cannot remove the last synth
 		}
 
-		const activeElement = this.slider.activeItem;
+		const activeElement = this.slider?.activeItem;
 		const synthId = activeElement?.id.split("-")[2];
 		const activeToneGenerator = this.toneGenerators.find((tg) => tg.id === synthId);
 		if (!activeToneGenerator) {
@@ -154,7 +220,7 @@ export class Main {
 
 		const scrollTarget = (activeToneGenerator.controls.el.nextSibling ||
 			activeToneGenerator.controls.el.previousSibling) as HTMLElement;
-		this.slider.animateScrollSliderToTarget(scrollTarget);
+		this.slider?.animateScrollSliderToTarget(scrollTarget);
 		activeToneGenerator.controls.el.style.opacity = "0";
 
 		window.setTimeout(() => {
@@ -168,6 +234,102 @@ export class Main {
 			}
 			this.slider.updateButtons();
 		}, 520);
+	}
+
+	configControls(): void {
+		this.saveBtn.addEventListener("click", () => {
+			this.saveConfig();
+		});
+
+		/* the file input is hidden, the styled button stands in for it */
+		this.loadBtn.addEventListener("click", () => {
+			this.loadInput.click();
+		});
+
+		this.loadInput.addEventListener("change", () => {
+			const file = this.loadInput.files?.[0];
+			this.loadInput.value = ""; // so picking the same file again fires another change
+
+			if (file) {
+				this.loadConfig(file);
+			}
+		});
+	}
+
+	async saveConfig(): Promise<void> {
+		this.saveBtn.disabled = true;
+
+		try {
+			await this.ready; // an export before the stored synths are back would be empty
+
+			const synths: PresetSynth[] = await Promise.all(
+				this.toneGenerators.map(async (tg) => {
+					const stored = await loadSample(tg.id);
+
+					return {
+						settings: settingsToPreset(tg.controls.readData(), tg.id),
+						sample: stored ? await sampleToPreset(stored) : null,
+					};
+				})
+			);
+
+			const url = URL.createObjectURL(new Blob([serializePreset(synths)], { type: "application/json" }));
+			const link = document.createElement("a");
+			link.href = url;
+			link.download = `jssynth-preset-${new Date().toISOString().slice(0, 10)}.json`;
+			link.click();
+			URL.revokeObjectURL(url);
+		} catch (e) {
+			console.error("Could not save the configuration.", e);
+			showMessage("The configuration could not be saved.");
+		} finally {
+			this.saveBtn.disabled = false;
+		}
+	}
+
+	async loadConfig(file: File): Promise<void> {
+		this.loadBtn.disabled = true;
+
+		try {
+			const synths = parsePreset(await file.text());
+			await this.replaceSynths(synths);
+		} catch (e) {
+			console.error("Could not load the configuration.", e);
+			showMessage(e instanceof Error ? e.message : "The configuration could not be loaded.");
+		} finally {
+			this.loadBtn.disabled = false;
+		}
+	}
+
+	private async replaceSynths(synths: PresetSynth[]): Promise<void> {
+		await this.ready; // the restore of the last session would otherwise land on top
+
+		this.activeNotes.slice().forEach((key) => this.endNote(key, true));
+		this.toneGenerators.forEach((tg) => tg.destroy()); // also drops their stored settings and samples
+		this.toneGenerators = [];
+
+		const base = Date.now();
+
+		for (const [i, synth] of synths.entries()) {
+			const id = (base + i).toString(); // ordered ids, so a reload brings them back in order
+
+			await saveSynthSettings(synthSettingsName(id), settingsFromPreset(synth.settings, id));
+
+			if (synth.sample) {
+				await saveSample(id, sampleFromPreset(synth.sample));
+			}
+
+			this.toneGenerators.push(new ToneGenerator(id, this.AudioRecorder, this.ctx, this.headerDiagram));
+		}
+
+		this.removeBtn.disabled = this.toneGenerators.length <= 1;
+
+		this.slider.el.scrollLeft = 0;
+		this.slider.activeItem = this.toneGenerators[0].controls.el;
+		this.slider.updateButtons();
+
+		await Promise.all(this.toneGenerators.map((tg) => tg.ready));
+		this.activeToneGenerator()?.drawAdsr();
 	}
 
 	/**
@@ -249,6 +411,7 @@ export class Main {
 				}
 
 				this.pressedKeys.add(note);
+				this.lockScroll(true); // the wheel bends the pitch from here on
 				this.playNote(note);
 			}
 		});
@@ -275,6 +438,7 @@ export class Main {
 				}
 
 				e.preventDefault(); // the gesture bends the pitch instead of scrolling the page
+				this.lockScroll(true); // ...and preventDefault() is ignored on a latched gesture
 
 				this.pitchWheelDelta = Math.min(
 					Math.max(this.pitchWheelDelta - scrollDistance(e), -PITCH_WHEEL_RANGE),
@@ -285,15 +449,47 @@ export class Main {
 			},
 			{ passive: false } // wheel listeners on the document are passive by default
 		);
+
+		/* a keyup can go missing while the tab is away, so never leave the page frozen */
+		window.addEventListener("blur", () => this.lockScroll(false));
 	}
 
 	releasePitchWheel(): void {
-		if (this.pressedKeys.size > 0 || this.pitchWheelDelta === 0) {
+		if (this.pressedKeys.size > 0) {
+			return;
+		}
+
+		this.lockScroll(false);
+
+		if (this.pitchWheelDelta === 0) {
 			return;
 		}
 
 		this.pitchWheelDelta = 0;
 		this.setPitchBend(0.5);
+	}
+
+	/**
+	 * Freezes the page while the pitch wheel is armed. Preventing the wheel event
+	 * isn't enough on its own: browsers mark wheel events non-cancelable once a
+	 * scroll gesture is already rolling, so a note started mid-scroll (or the
+	 * momentum tail of a trackpad flick) would still scroll the page away.
+	 *
+	 * @param locked - Whether scrolling should be blocked.
+	 */
+	lockScroll(locked: boolean): void {
+		const root = document.documentElement;
+
+		if (locked === root.classList.contains(SCROLL_LOCK_CLASS)) {
+			return;
+		}
+
+		if (locked) {
+			/* measure before locking, so the layout doesn't jump when the scrollbar goes */
+			root.style.setProperty("--scrollbar-width", `${window.innerWidth - root.clientWidth}px`);
+		}
+
+		root.classList.toggle(SCROLL_LOCK_CLASS, locked);
 	}
 	
 	setPitchBend(offset: number): void {
@@ -334,6 +530,7 @@ export class Main {
 		}
 
 		this.pressedKeys.add(note);
+		this.lockScroll(true); // the wheel bends the pitch from here on
 		this.playNote(note, velocity);
 	}
 
