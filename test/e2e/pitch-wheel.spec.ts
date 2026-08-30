@@ -43,8 +43,10 @@ test("pitch wheel", async ({ page }) => {
 	await expect(await getPitchBend(page)).toBe(0.5);
 });
 
-test("pitch wheel locks page scrolling", async ({ page, browserName, isMobile }) => {
-	test.skip(browserName === "webkit" && !!isMobile, "mobile WebKit has no mouse wheel to drive");
+test("pitch wheel locks page scrolling", async ({ page, isMobile }) => {
+	/* no wheel to speak of on a phone: mobile WebKit refuses to fake one, and mobile
+	   Chrome scales and animates the scroll it fakes, so the pixels below don't hold */
+	test.skip(!!isMobile, "the pitch wheel needs a mouse wheel and a keyboard");
 
 	await page.setViewportSize({ width: 800, height: 400 }); // small enough for the page to scroll
 	await page.goto("/");
@@ -57,11 +59,13 @@ test("pitch wheel locks page scrolling", async ({ page, browserName, isMobile })
 			right: document.body.getBoundingClientRect().right,
 		}));
 
+	/* the scroll is animated, so wait for it to land instead of guessing at a delay */
+	const scrolledTo = (y: number) => expect.poll(() => page.evaluate(() => window.scrollY)).toBe(y);
+
 	/* no held note, so the page scrolls as usual */
 	await page.mouse.wheel(0, 100);
-	await sleep(300);
+	await scrolledTo(100);
 	const unlocked = await state();
-	await expect(unlocked.scrollY).toBe(100);
 
 	await page.keyboard.down("KeyQ");
 
@@ -87,6 +91,5 @@ test("pitch wheel locks page scrolling", async ({ page, browserName, isMobile })
 	/* releasing the key hands scrolling back to the page */
 	await page.keyboard.up("KeyQ");
 	await page.mouse.wheel(0, 100);
-	await sleep(300);
-	await expect((await state()).scrollY).toBe(200);
+	await scrolledTo(200);
 });
