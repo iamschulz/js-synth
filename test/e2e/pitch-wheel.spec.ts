@@ -43,7 +43,9 @@ test("pitch wheel", async ({ page }) => {
 	await expect(await getPitchBend(page)).toBe(0.5);
 });
 
-test("pitch wheel locks page scrolling", async ({ page }) => {
+test("pitch wheel locks page scrolling", async ({ page, browserName, isMobile }) => {
+	test.skip(browserName === "webkit" && !!isMobile, "mobile WebKit has no mouse wheel to drive");
+
 	await page.setViewportSize({ width: 800, height: 400 }); // small enough for the page to scroll
 	await page.goto("/");
 	await sleep(500);

@@ -73,8 +73,6 @@
 }
 
 html {
-	overscroll-behavior: none;
-
 	/* a held note turns the wheel into a pitch wheel, so the page must stay put */
 	&.pitch-wheel-armed {
 		overflow: hidden;
@@ -83,6 +81,11 @@ html {
 }
 
 body {
+	/* keeps Safari from bouncing the page off its fixed background. It belongs on the
+	   body, not the root: WebKit eats every wheel event once a root-level
+	   overscroll-behavior meets a non-passive wheel listener, like the pitch wheel's */
+	overscroll-behavior: none;
+
 	color: var(--fg);
 	background-color: var(--bg);
 	accent-color: var(--accent);
